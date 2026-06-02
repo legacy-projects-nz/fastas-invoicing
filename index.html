@@ -75,13 +75,15 @@
   .call-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(37,99,235,.45);}
   .call-btn svg{width:22px;height:22px;fill:#fff;}
 
-  /* floating call UI: hidden until the button is clicked, then centered + scaled (verified live) */
-  elevenlabs-convai{
+  /* floating call UI: FULLY hidden (display:none) until the button is clicked — this prevents
+     the invisible widget from covering and blocking the Start a call button. Then centered + scaled. */
+  elevenlabs-convai{display:none !important;}
+  elevenlabs-convai.fastas-show{
+    display:block !important;
     position:fixed !important;left:0 !important;right:0 !important;width:100vw !important;
     bottom:20px !important;transform:scale(0.72) !important;transform-origin:bottom center !important;
-    z-index:99999 !important;opacity:0 !important;pointer-events:none !important;transition:opacity .2s ease;
+    z-index:99999 !important;opacity:1 !important;pointer-events:auto !important;
   }
-  elevenlabs-convai.fastas-show{opacity:1 !important;pointer-events:auto !important;}
 
   footer{margin-top:auto;padding:24px;font-size:13px;color:#98a2b3;}
   @media (max-width:600px){ h1{font-size:34px;} header{padding-top:52px;} }
