@@ -75,16 +75,13 @@
   .call-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(37,99,235,.45);}
   .call-btn svg{width:22px;height:22px;fill:#fff;}
 
-  /* center the floating widget on screen and make it smaller */
+  /* floating call UI: hidden until the button is clicked, then centered + scaled (verified live) */
   elevenlabs-convai{
-    position:fixed !important;
-    left:50% !important;
-    right:auto !important;
-    bottom:40px !important;
-    transform:translateX(-50%) scale(0.8) !important;
-    transform-origin:bottom center !important;
-    z-index:99999 !important;
+    position:fixed !important;left:0 !important;right:0 !important;width:100vw !important;
+    bottom:20px !important;transform:scale(0.72) !important;transform-origin:bottom center !important;
+    z-index:99999 !important;opacity:0 !important;pointer-events:none !important;transition:opacity .2s ease;
   }
+  elevenlabs-convai.fastas-show{opacity:1 !important;pointer-events:auto !important;}
 
   footer{margin-top:auto;padding:24px;font-size:13px;color:#98a2b3;}
   @media (max-width:600px){ h1{font-size:34px;} header{padding-top:52px;} }
@@ -135,22 +132,34 @@
 
   <footer>© FASTAS Invoicing</footer>
 
-  <!-- widget floats freely so it renders correctly in every state -->
+  <!-- floating call UI: hidden until the Start a call button is clicked, then centered + scaled -->
   <elevenlabs-convai agent-id="agent_01jyqjybh6fgxvw9tnv2qs7d9n"></elevenlabs-convai>
   <script>
     (function(){
-      function openCall(){
-        var w=document.querySelector('elevenlabs-convai');
-        if(!w) return;
-        var root=w.shadowRoot;
-        if(root){
-          var b=root.querySelector('button,[role="button"]');
-          if(b){ b.click(); return; }
+      var host=document.querySelector('elevenlabs-convai');
+      // center the widget's internal panel (its content anchors bottom-right by default)
+      function injectCenter(){
+        if(host&&host.shadowRoot&&!host.shadowRoot.getElementById('fastas-center')){
+          var st=document.createElement('style');st.id='fastas-center';
+          st.textContent='.overlay{align-items:center !important; justify-content:flex-end !important;}';
+          host.shadowRoot.appendChild(st);return true;
         }
-        w.click();
+        return false;
+      }
+      var t=0,iv=setInterval(function(){ if(injectCenter()||t++>40) clearInterval(iv); },150);
+      function startCall(){
+        if(!host) return;
+        host.classList.add('fastas-show');   // reveal it only now
+        injectCenter();
+        var n=0;
+        (function go(){                       // open the call inside the widget
+          var r=host.shadowRoot;
+          if(r){ var b=r.querySelector('button,[role="button"]'); if(b){ b.click(); return; } }
+          if(n++<12) setTimeout(go,300);
+        })();
       }
       document.addEventListener('click',function(e){
-        if(e.target.closest('#startcall')){ e.preventDefault(); openCall(); }
+        if(e.target.closest('#startcall')){ e.preventDefault(); startCall(); }
       });
     })();
   </script>
