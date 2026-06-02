@@ -65,11 +65,12 @@
   .wa-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(37,211,102,.45);}
   .wa-btn svg{width:22px;height:22px;fill:#fff;}
 
-  /* the transform anchors the widget inside this card instead of the screen corner */
+  /* the transform anchors the widget inside this centered column AND scales it down to fit */
   .voice-wrap{
-    position:relative;transform:translateZ(0);width:100%;
-    min-height:300px;display:flex;align-items:center;justify-content:center;
-    overflow:visible;padding-bottom:16px;
+    position:relative;transform:scale(0.78);transform-origin:center center;
+    width:300px;max-width:100%;margin:0 auto;
+    min-height:240px;display:flex;align-items:center;justify-content:center;
+    overflow:visible;
   }
 
   footer{margin-top:auto;padding:24px;font-size:13px;color:#98a2b3;}
