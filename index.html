@@ -75,6 +75,17 @@
   .call-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(37,99,235,.45);}
   .call-btn svg{width:22px;height:22px;fill:#fff;}
 
+  /* center the floating widget on screen and make it smaller */
+  elevenlabs-convai{
+    position:fixed !important;
+    left:50% !important;
+    right:auto !important;
+    bottom:40px !important;
+    transform:translateX(-50%) scale(0.8) !important;
+    transform-origin:bottom center !important;
+    z-index:99999 !important;
+  }
+
   footer{margin-top:auto;padding:24px;font-size:13px;color:#98a2b3;}
   @media (max-width:600px){ h1{font-size:34px;} header{padding-top:52px;} }
 </style>
