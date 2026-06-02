@@ -169,10 +169,25 @@
       }
       var t=0,iv=setInterval(function(){ if(injectCenter()||t++>40) clearInterval(iv); },150);
 
+      // Show the close (X) ONLY once a call is underway — never on the Terms/Accept screen.
+      function onTermsScreen(){
+        try{
+          var bs=host.shadowRoot.querySelectorAll('button');
+          for(var i=0;i<bs.length;i++){
+            var l=(bs[i].textContent||'').toLowerCase();
+            if(l.indexOf('accept')>-1||l.indexOf('agree')>-1) return true;
+          }
+        }catch(e){}
+        return false;
+      }
+      setInterval(function(){
+        if(host.classList.contains('fastas-show') && !onTermsScreen()) closeBtn.style.display='flex';
+        else closeBtn.style.display='none';
+      },300);
+
       function startCall(){
         if(!host) return;
         host.classList.add('fastas-show');   // reveal it only now
-        closeBtn.style.display='flex';        // show the close button alongside
         injectCenter();
         var n=0;
         (function go(){                       // open the call inside the widget
