@@ -139,6 +139,25 @@
   <script>
     (function(){
       var host=document.querySelector('elevenlabs-convai');
+
+      // Close (X) button — lets the user fully dismiss the widget after a call.
+      var closeBtn=document.createElement('button');
+      closeBtn.id='fastasClose';
+      closeBtn.setAttribute('aria-label','Close');
+      closeBtn.textContent='✕';
+      closeBtn.style.cssText='position:fixed;left:calc(50% + 62px);bottom:50px;z-index:100001;width:34px;height:34px;border-radius:50%;border:1px solid #e0e0e0;background:#fff;color:#333;font-size:16px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);display:none;align-items:center;justify-content:center;padding:0;';
+      document.body.appendChild(closeBtn);
+      closeBtn.addEventListener('click',function(){
+        try{
+          host.shadowRoot.querySelectorAll('button').forEach(function(b){
+            var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase();
+            if(l.indexOf('end')>-1||l.indexOf('hang')>-1) b.click();   // end any active call
+          });
+        }catch(e){}
+        host.classList.remove('fastas-show');   // hide the widget
+        closeBtn.style.display='none';
+      });
+
       // center the widget's internal panel (its content anchors bottom-right by default)
       function injectCenter(){
         if(host&&host.shadowRoot&&!host.shadowRoot.getElementById('fastas-center')){
@@ -149,9 +168,11 @@
         return false;
       }
       var t=0,iv=setInterval(function(){ if(injectCenter()||t++>40) clearInterval(iv); },150);
+
       function startCall(){
         if(!host) return;
         host.classList.add('fastas-show');   // reveal it only now
+        closeBtn.style.display='flex';        // show the close button alongside
         injectCenter();
         var n=0;
         (function go(){                       // open the call inside the widget
