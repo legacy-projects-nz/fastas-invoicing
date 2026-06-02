@@ -65,12 +65,12 @@
   .wa-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(37,211,102,.45);}
   .wa-btn svg{width:22px;height:22px;fill:#fff;}
 
-  /* the transform anchors the widget inside this column at its natural size (no scaling) */
+  /* the transform anchors the widget inside this column; overflow:hidden clips the overspilling orb */
   .voice-wrap{
     position:relative;transform:translateZ(0);transform-origin:bottom center;
-    width:320px;max-width:100%;margin:auto auto 0;
-    min-height:300px;display:flex;align-items:flex-end;justify-content:center;
-    overflow:visible;padding-bottom:40px;
+    width:300px;max-width:100%;margin:auto auto 0;
+    height:300px;display:flex;align-items:flex-end;justify-content:center;
+    overflow:hidden;border-radius:18px;padding-bottom:30px;
   }
 
   footer{margin-top:auto;padding:24px;font-size:13px;color:#98a2b3;}
