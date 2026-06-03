@@ -45,18 +45,20 @@ How to open it: sign in on the home page as the admin, then click **"⚙ Admin p
 
 ---
 
-## 2. Pricing  (`/pricing.html`)
+## 2. Items & pricing  (`/pricing.html`)
 
-**As a licensee (e.g. FAST NZ):** you only ever see **your own** price list.
+This list is the **single source of truth** for line items and prices — it feeds the invoice flow.
+
+**As a licensee (e.g. FAST NZ):** you see and manage **only your own** list.
 1. Click the **Pricing** button on the home page.
-2. Type a new price in any row → the save bar appears → **Save changes**.
-3. Use the search box to find an item; **Show inactive** to see disabled items.
+2. **Edit** a description or price inline, or change a row's **Active/Inactive** status → the save bar appears → **Save changes**.
+3. **Add** an item: **+ Add item** → code, description, price → **Add**.
+4. **Delete** an item: click **Delete** on its row (then **Save changes**); **Undo** before saving if needed.
+5. Search by code or name; **Show inactive** to see disabled items.
 
-**As an admin:** you get a **"Viewing prices for:"** licensee picker.
-1. Pick the licensee whose list you want.
-2. Edit prices the same way, or click **+ Add item** to add a code/description/price (used when setting up a new licensee's empty list).
+**As an admin:** you get an **"Editing list for:"** licensee picker, then full add / edit / delete on whichever licensee you choose (e.g. to set up a new licensee's list).
 
-Saved prices feed the invoice flow automatically (see section 4).
+Every change is saved to Supabase and feeds the invoice flow automatically (see section 4).
 
 ---
 

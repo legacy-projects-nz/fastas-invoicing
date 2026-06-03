@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FASTAS · Pricing</title>
+<title>FASTAS · Pricing & items</title>
 <style>
-  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--amber:#d97706;--bg1:#f7f9fc;--bg2:#eef2f8;--ok:#067647;}
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--amber:#d97706;--red:#dc2626;--bg1:#f7f9fc;--bg2:#eef2f8;--ok:#067647;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;}
@@ -14,7 +14,7 @@
   .brand b{font-size:17px;}
   .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;}
   .topbar .who{font-size:13px;color:var(--muted);}
-  .wrap{max-width:920px;margin:0 auto;padding:26px 20px 60px;}
+  .wrap{max-width:1000px;margin:0 auto;padding:26px 20px 60px;}
   h1{font-size:28px;margin:6px 0 4px;}
   .sub{color:var(--muted);margin:0 0 18px;font-size:15px;}
   .ownerbar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:16px;}
@@ -22,7 +22,7 @@
   .ownerbar label{font-size:13px;font-weight:700;color:#344054;}
   .ownerbar select{padding:9px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;min-width:240px;}
   .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
-  .toolbar input[type=search]{flex:1 1 240px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;outline:none;}
+  .toolbar input[type=search]{flex:1 1 220px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;outline:none;}
   .toolbar input:focus{border-color:var(--brand);}
   .savebar{position:sticky;bottom:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -6px 20px rgba(16,24,40,.06);margin-top:18px;}
   .savebar.hidden{display:none;}
@@ -30,54 +30,60 @@
   button.primary:disabled{opacity:.5;cursor:default;}
   button.ghost{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer;font-size:14px;}
   table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
-  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);font-size:14px;}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle;}
   th{background:#f8fafc;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
   tr:last-child td{border-bottom:none;}
-  td.code{font-family:ui-monospace,Menlo,monospace;font-weight:600;}
+  td.code{font-family:ui-monospace,Menlo,monospace;font-weight:600;white-space:nowrap;}
+  input.name{width:100%;min-width:160px;padding:8px 10px;border:1px solid transparent;border-radius:8px;font-size:14px;background:transparent;}
+  input.name:hover{border-color:var(--line);}
+  input.name:focus{border-color:var(--amber);background:#fff;outline:none;box-shadow:0 0 0 3px rgba(217,119,6,.12);}
   input.price{width:96px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;text-align:right;outline:none;}
   input.price:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.15);}
+  select.status{padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;}
   tr.changed{background:#fffbeb;}
-  tr.inactive td.code{opacity:.5;}
-  .tag{font-size:11px;padding:2px 8px;border-radius:999px;background:#eef2f8;color:var(--muted);}
+  tr.del{background:#fef2f2;text-decoration:line-through;opacity:.6;}
+  button.rm{background:#fff;border:1px solid #f4c4c4;color:var(--red);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;}
+  button.undo{background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;}
   .msg{font-size:14px;} .msg.ok{color:var(--ok);} .msg.err{color:#d92d20;}
   .loading{padding:40px;text-align:center;color:var(--muted);}
-  .additem{display:none;background:#fff;border:1px dashed #c9d2e3;border-radius:12px;padding:14px;margin-top:14px;gap:10px;align-items:end;flex-wrap:wrap;}
+  .additem{display:none;background:#fff;border:1px dashed #c9d2e3;border-radius:12px;padding:14px;margin-bottom:14px;gap:10px;align-items:end;flex-wrap:wrap;}
   .additem.show{display:flex;}
   .additem .f{display:flex;flex-direction:column;gap:5px;} .additem label{font-size:12px;font-weight:600;color:#344054;}
   .additem input{padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:14px;}
-  @media(max-width:560px){ th:nth-child(2),td:nth-child(2){display:none;} }
+  @media(max-width:620px){ th:nth-child(3),td:nth-child(3){display:none;} }
 </style>
 </head>
 <body>
   <div class="topbar">
-    <div class="brand"><div class="brand-mark">FA</div><b>Pricing</b></div>
+    <div class="brand"><div class="brand-mark">FA</div><b>Pricing &amp; items</b></div>
     <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Back</a></div>
   </div>
 
   <div class="wrap">
-    <h1>Item pricing</h1>
-    <p class="sub" id="sub">Edit any unit price. Saved prices feed straight into the invoice flow.</p>
+    <h1>Items &amp; pricing</h1>
+    <p class="sub" id="sub">Add, edit or remove items and prices. This list is the single source of truth — it feeds the invoice flow.</p>
 
     <div class="ownerbar hidden" id="ownerbar">
-      <label>Viewing prices for:</label>
+      <label>Editing list for:</label>
       <select id="ownerSel"></select>
-      <button class="ghost" id="toggleAdd">+ Add item</button>
+    </div>
+
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="Search by code or name…">
+      <button class="ghost" id="toggleInactive">Show inactive</button>
+      <button class="primary" id="toggleAdd" style="margin-left:auto;">+ Add item</button>
     </div>
 
     <div class="additem" id="additem">
-      <div class="f"><label>Item code</label><input id="aiCode" placeholder="e.g. FEC - Testing"></div>
-      <div class="f"><label>Description</label><input id="aiName" placeholder="Fire Extinguisher Certification"></div>
+      <div class="f"><label>Item code *</label><input id="aiCode" placeholder="e.g. FEC - Testing"></div>
+      <div class="f" style="flex:1 1 220px;"><label>Description *</label><input id="aiName" placeholder="Fire Extinguisher Certification" style="width:100%"></div>
       <div class="f"><label>Price (NZD)</label><input id="aiPrice" type="number" step="0.01" min="0" value="0" style="width:110px"></div>
       <button class="primary" id="aiSave">Add</button>
+      <button class="ghost" id="aiCancel">Cancel</button>
       <span class="msg" id="aiMsg"></span>
     </div>
 
-    <div class="toolbar" style="margin-top:14px;">
-      <input type="search" id="search" placeholder="Search by code or name…">
-      <button class="ghost" id="toggleInactive">Show inactive</button>
-    </div>
-
-    <div id="tableHost"><div class="loading">Loading prices…</div></div>
+    <div id="tableHost"><div class="loading">Loading…</div></div>
 
     <div class="savebar hidden" id="savebar">
       <span class="msg" id="saveMsg"><b id="changeCount">0</b> unsaved change(s)</span>
@@ -101,95 +107,111 @@
     document.getElementById('who').textContent=session.user.email+' · '+role;
 
     let items=[], showInactive=false, ownerId=session.user.id;
-    const edits={};
+    const edits={};      // id -> {item_name?, unit_price?, status?}
+    const dels=new Set(); // ids marked for delete
     const host=document.getElementById('tableHost');
     const search=document.getElementById('search');
     const savebar=document.getElementById('savebar');
     const changeCount=document.getElementById('changeCount');
     const saveMsg=document.getElementById('saveMsg');
 
-    // ----- admin: licensee picker + add item -----
     if(role==='admin'){
       document.getElementById('ownerbar').classList.remove('hidden');
-      document.getElementById('sub').textContent='Pick a licensee to view and edit their price list. Admins can also add items.';
+      document.getElementById('sub').textContent='Pick a licensee, then add / edit / remove their items and prices.';
       const {data:licensees}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
       const sel=document.getElementById('ownerSel');
       sel.innerHTML=(licensees||[]).map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('') || '<option value="">No licensees yet</option>';
       ownerId=licensees&&licensees.length?licensees[0].id:'';
-      sel.addEventListener('change',()=>{ ownerId=sel.value; for(const k in edits) delete edits[k]; refreshSaveBar(); load(); });
-      document.getElementById('toggleAdd').addEventListener('click',()=>document.getElementById('additem').classList.toggle('show'));
-      document.getElementById('aiSave').addEventListener('click',addItem);
+      sel.addEventListener('change',()=>{ ownerId=sel.value; resetPending(); load(); });
     }
+
+    function resetPending(){ for(const k in edits) delete edits[k]; dels.clear(); refreshSaveBar(); }
 
     async function load(){
       if(!ownerId){ host.innerHTML='<div class="loading">No licensee selected.</div>'; return; }
       let q=sb.from('pricing_items').select('*').order('sort_order');
-      if(role==='admin') q=q.eq('owner_id',ownerId); // licensees are auto-scoped by RLS
+      if(role==='admin') q=q.eq('owner_id',ownerId);
       const {data,error}=await q;
       if(error){ host.innerHTML='<div class="loading">Error: '+error.message+'</div>'; return; }
       items=data; render();
     }
 
+    function cur(it,field){ return (edits[it.id] && edits[it.id][field]!==undefined) ? edits[it.id][field] : it[field]; }
+    function setEdit(it,field,val){
+      const orig=it[field];
+      edits[it.id]=edits[it.id]||{};
+      if(String(val)===String(orig)){ delete edits[it.id][field]; if(!Object.keys(edits[it.id]).length) delete edits[it.id]; }
+      else edits[it.id][field]=val;
+      refreshSaveBar();
+    }
+
     function render(){
       const q=(search.value||'').toLowerCase();
-      const rows=items.filter(it=>(showInactive||it.status==='active'))
-        .filter(it=>!q||it.item_code.toLowerCase().includes(q)||it.item_name.toLowerCase().includes(q));
-      if(!rows.length){ host.innerHTML='<div class="loading">No items'+(role==='admin'?' — use “Add item” to build this list.':'.')+'</div>'; return; }
-      let html='<table><thead><tr><th>Code</th><th>Description</th><th>Status</th><th style="text-align:right">Unit price (NZD)</th></tr></thead><tbody>';
+      const rows=items.filter(it=>(showInactive||cur(it,'status')==='active'||dels.has(it.id)))
+        .filter(it=>!q||it.item_code.toLowerCase().includes(q)||String(cur(it,'item_name')).toLowerCase().includes(q));
+      if(!rows.length){ host.innerHTML='<div class="loading">No items yet — use “+ Add item”.</div>'; return; }
+      let html='<table><thead><tr><th>Code</th><th>Description</th><th>Status</th><th style="text-align:right">Unit price (NZD)</th><th></th></tr></thead><tbody>';
       for(const it of rows){
-        const cur = edits[it.id]!==undefined ? edits[it.id] : it.unit_price;
-        const changed = edits[it.id]!==undefined && Number(edits[it.id])!==Number(it.unit_price);
-        html+=`<tr class="${changed?'changed':''} ${it.status!=='active'?'inactive':''}">
-          <td class="code">${it.item_code}</td><td>${it.item_name}</td>
-          <td>${it.status==='active'?'<span class="tag" style="background:#ecfdf3;color:#067647">active</span>':'<span class="tag">inactive</span>'}</td>
-          <td><div style="display:flex;align-items:center;gap:4px;justify-content:flex-end"><span style="color:#667085">$</span><input class="price" type="number" step="0.01" min="0" value="${Number(cur).toFixed(2)}" data-id="${it.id}"></div></td>
+        const isDel=dels.has(it.id);
+        const changed=!!edits[it.id];
+        html+=`<tr class="${isDel?'del':(changed?'changed':'')}" data-id="${it.id}">
+          <td class="code">${it.item_code}</td>
+          <td><input class="name" data-id="${it.id}" value="${String(cur(it,'item_name')).replace(/"/g,'&quot;')}" ${isDel?'disabled':''}></td>
+          <td><select class="status" data-id="${it.id}" ${isDel?'disabled':''}><option value="active"${cur(it,'status')==='active'?' selected':''}>Active</option><option value="inactive"${cur(it,'status')!=='active'?' selected':''}>Inactive</option></select></td>
+          <td><div style="display:flex;align-items:center;gap:4px;justify-content:flex-end"><span style="color:#667085">$</span><input class="price" type="number" step="0.01" min="0" value="${Number(cur(it,'unit_price')).toFixed(2)}" data-id="${it.id}" ${isDel?'disabled':''}></div></td>
+          <td style="text-align:right">${isDel?`<button class="undo" data-id="${it.id}">Undo</button>`:`<button class="rm" data-id="${it.id}">Delete</button>`}</td>
         </tr>`;
       }
       host.innerHTML=html+'</tbody></table>';
-      host.querySelectorAll('input.price').forEach(inp=>inp.addEventListener('input',()=>{
-        const id=inp.dataset.id, orig=items.find(x=>x.id===id).unit_price;
-        if(Number(inp.value)===Number(orig)) delete edits[id]; else edits[id]=inp.value;
-        inp.closest('tr').classList.toggle('changed', edits[id]!==undefined);
-        refreshSaveBar();
-      }));
+      host.querySelectorAll('input.name').forEach(i=>i.addEventListener('input',()=>setEdit(items.find(x=>x.id===i.dataset.id),'item_name',i.value)));
+      host.querySelectorAll('input.price').forEach(i=>i.addEventListener('input',()=>{ setEdit(items.find(x=>x.id===i.dataset.id),'unit_price',i.value); i.closest('tr').classList.toggle('changed',!!edits[i.dataset.id]); }));
+      host.querySelectorAll('select.status').forEach(s=>s.addEventListener('change',()=>setEdit(items.find(x=>x.id===s.dataset.id),'status',s.value)));
+      host.querySelectorAll('button.rm').forEach(b=>b.addEventListener('click',()=>{ dels.add(b.dataset.id); delete edits[b.dataset.id]; render(); refreshSaveBar(); }));
+      host.querySelectorAll('button.undo').forEach(b=>b.addEventListener('click',()=>{ dels.delete(b.dataset.id); render(); refreshSaveBar(); }));
     }
     function refreshSaveBar(){
-      const n=Object.keys(edits).length;
+      const n=Object.keys(edits).length+dels.size;
       changeCount.textContent=n; saveMsg.innerHTML=`<b>${n}</b> unsaved change(s)`; saveMsg.className='msg';
       savebar.classList.toggle('hidden', n===0);
     }
 
     search.addEventListener('input',render);
     document.getElementById('toggleInactive').addEventListener('click',(e)=>{ showInactive=!showInactive; e.target.textContent=showInactive?'Hide inactive':'Show inactive'; render(); });
-    document.getElementById('discard').addEventListener('click',()=>{ for(const k in edits) delete edits[k]; render(); refreshSaveBar(); });
+    document.getElementById('discard').addEventListener('click',()=>{ resetPending(); render(); });
 
     document.getElementById('save').addEventListener('click',async()=>{
       const btn=document.getElementById('save'); btn.disabled=true; saveMsg.textContent='Saving…'; saveMsg.className='msg';
       try{
-        for(const [id,val] of Object.entries(edits)){
-          const {error}=await sb.from('pricing_items').update({unit_price:Number(val)}).eq('id',id);
-          if(error) throw error;
+        for(const [id,fields] of Object.entries(edits)){
+          if(dels.has(id)) continue;
+          const payload={}; if(fields.item_name!==undefined)payload.item_name=fields.item_name; if(fields.unit_price!==undefined)payload.unit_price=Number(fields.unit_price); if(fields.status!==undefined)payload.status=fields.status;
+          const {error}=await sb.from('pricing_items').update(payload).eq('id',id); if(error) throw error;
         }
-        for(const k in edits) delete edits[k];
-        await load(); refreshSaveBar();
+        for(const id of dels){ const {error}=await sb.from('pricing_items').delete().eq('id',id); if(error) throw error; }
+        resetPending(); await load();
         saveMsg.textContent='Saved ✓'; saveMsg.className='msg ok'; savebar.classList.remove('hidden');
         setTimeout(()=>savebar.classList.add('hidden'),1500);
       }catch(err){ saveMsg.textContent='Error: '+err.message; saveMsg.className='msg err'; }
       btn.disabled=false;
     });
 
-    async function addItem(){
+    // add item (all roles, scoped to current ownerId)
+    const additem=document.getElementById('additem');
+    document.getElementById('toggleAdd').addEventListener('click',()=>additem.classList.toggle('show'));
+    document.getElementById('aiCancel').addEventListener('click',()=>additem.classList.remove('show'));
+    document.getElementById('aiSave').addEventListener('click',async()=>{
       const msg=document.getElementById('aiMsg'); msg.textContent='';
       const code=document.getElementById('aiCode').value.trim();
       const name=document.getElementById('aiName').value.trim();
       const price=Number(document.getElementById('aiPrice').value||0);
       if(!code||!name){ msg.textContent='Code and description required.'; msg.className='msg err'; return; }
+      if(!ownerId){ msg.textContent='No licensee selected.'; msg.className='msg err'; return; }
       const sort=(items.reduce((m,i)=>Math.max(m,i.sort_order||0),0))+10;
       const {error}=await sb.from('pricing_items').insert({item_code:code,item_name:name,unit_price:price,owner_id:ownerId,sort_order:sort,status:'active'});
       if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
       document.getElementById('aiCode').value=document.getElementById('aiName').value=''; document.getElementById('aiPrice').value='0';
       msg.textContent='Added ✓'; msg.className='msg ok'; load();
-    }
+    });
 
     load();
   </script>
