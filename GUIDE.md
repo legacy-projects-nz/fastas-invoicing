@@ -12,9 +12,9 @@ Logins created for you:
 1. **Deploy** the `FASTAS/` folder to your Render static site (publish dir `.`).
 2. **Turn off open sign-up:** Supabase → Authentication → Providers → Email → turn OFF "Allow new users to sign up". (Accounts are created from the admin portal instead.)
 3. **Enable email security:** Authentication → Policies → turn on leaked-password protection + a minimum password length.
-4. **Email sending (so training emails go out):** create a Resend account, verify the `fastnz.nz` domain, then in Supabase → Project Settings → Edge Functions → Secrets add:
+4. **Email sending (so training emails go out):** create a Resend account, verify the `fastas.nz` domain, then in Supabase → Project Settings → Edge Functions → Secrets add:
    - `RESEND_API_KEY` = your Resend key
-   - `EMAIL_FROM` = `FAST NZ <noreply@fastnz.nz>`
+   - `EMAIL_FROM` = `FAST AS <support@fastas.nz>`
 5. **(Optional) Lock CORS to your site:** add secret `ALLOWED_ORIGINS` = `https://your-site.onrender.com`.
 6. **(Optional) Spam-protect the training form:** create a Cloudflare Turnstile widget, paste the **site key** into `TURNSTILE_SITEKEY` near the top of `training.html`, and add the **secret** as Supabase secret `TURNSTILE_SECRET`.
 
