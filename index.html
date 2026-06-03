@@ -12,7 +12,7 @@
 <style>
   :root{
     --ink:#101828; --muted:#667085; --line:#e6e9ef;
-    --green:#25D366; --brand:#2563eb;
+    --green:#25D366; --brand:#2563eb; --amber:#d97706; --red:#dc2626;
     --bg1:#f7f9fc; --bg2:#eef2f8;
   }
   *{box-sizing:border-box;}
@@ -24,8 +24,8 @@
     min-height:100vh;
     display:flex;flex-direction:column;align-items:center;
   }
-  header{text-align:center;padding:48px 24px 8px;}
-  .brand{display:inline-flex;align-items:center;gap:12px;margin-bottom:18px;}
+  header{text-align:center;padding:42px 24px 4px;}
+  .brand{display:inline-flex;align-items:center;gap:12px;margin-bottom:16px;}
   .brand-mark{
     width:46px;height:46px;border-radius:12px;
     background:linear-gradient(135deg,var(--brand),#7c3aed);
@@ -34,49 +34,48 @@
     box-shadow:0 8px 20px rgba(37,99,235,.35);
   }
   .brand-name{font-size:22px;font-weight:800;letter-spacing:.5px;}
-  h1{margin:0;font-size:44px;line-height:1.1;font-weight:800;letter-spacing:-1px;}
+  h1{margin:0;font-size:42px;line-height:1.1;font-weight:800;letter-spacing:-1px;}
   h1 span{color:var(--brand);}
-  .subtitle{margin:16px auto 0;max-width:520px;font-size:17px;line-height:1.6;color:var(--muted);}
+  .subtitle{margin:14px auto 0;max-width:520px;font-size:17px;line-height:1.6;color:var(--muted);}
+
+  /* top-right session bar */
+  .userbar{position:fixed;top:14px;right:16px;z-index:1000;display:none;align-items:center;gap:10px;font-size:13px;color:var(--muted);}
+  .userbar .pill{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;box-shadow:0 4px 12px rgba(16,24,40,.06);}
+  .userbar .role{font-weight:700;color:var(--brand);text-transform:capitalize;}
+  .userbar button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--ink);}
+  .userbar button:hover{background:#f3f4f6;}
 
   .cards{
-    display:flex;flex-wrap:wrap;gap:24px;justify-content:center;
-    padding:24px 24px 48px;width:100%;max-width:920px;
+    display:flex;flex-wrap:wrap;gap:22px;justify-content:center;
+    padding:22px 24px 48px;width:100%;max-width:1180px;
   }
   .card{
-    flex:1 1 360px;max-width:430px;background:#fff;border:1px solid var(--line);
-    border-radius:20px;padding:34px 28px;text-align:center;
+    flex:1 1 250px;max-width:280px;background:#fff;border:1px solid var(--line);
+    border-radius:20px;padding:30px 24px;text-align:center;
     box-shadow:0 10px 30px rgba(16,24,40,.06);
     display:flex;flex-direction:column;align-items:center;
   }
-  .icon{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+  .icon{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
   .icon.voice{background:linear-gradient(135deg,#2563eb,#7c3aed);}
   .icon.wa{background:var(--green);}
-  .icon svg{width:34px;height:34px;fill:#fff;}
-  .card h2{margin:0 0 8px;font-size:22px;font-weight:700;}
-  .card p{margin:0 0 22px;font-size:15px;line-height:1.55;color:var(--muted);}
+  .icon.price{background:linear-gradient(135deg,#d97706,#f59e0b);}
+  .icon.train{background:linear-gradient(135deg,#dc2626,#f43f5e);}
+  .icon svg{width:32px;height:32px;fill:#fff;}
+  .card h2{margin:0 0 8px;font-size:20px;font-weight:700;}
+  .card p{margin:0 0 22px;font-size:14px;line-height:1.55;color:var(--muted);}
 
-  .wa-btn{
-    display:inline-flex;align-items:center;gap:10px;background:var(--green);
-    color:#fff!important;text-decoration:none;font-weight:600;font-size:16px;
-    padding:14px 26px;border-radius:999px;margin-top:auto;
-    transition:transform .15s ease,box-shadow .15s ease;
-    box-shadow:0 6px 18px rgba(37,211,102,.35);
-  }
-  .wa-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(37,211,102,.45);}
-  .wa-btn svg{width:22px;height:22px;fill:#fff;}
-
-  .call-btn{
+  .btn{
     display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;margin-top:auto;
-    background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;
-    font-weight:600;font-size:16px;padding:14px 26px;border-radius:999px;
+    color:#fff;font-weight:600;font-size:15px;padding:13px 22px;border-radius:999px;text-decoration:none;
     transition:transform .15s ease,box-shadow .15s ease;
-    box-shadow:0 6px 18px rgba(37,99,235,.35);
   }
-  .call-btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(37,99,235,.45);}
-  .call-btn svg{width:22px;height:22px;fill:#fff;}
+  .btn:hover{transform:translateY(-2px);}
+  .btn svg{width:20px;height:20px;fill:#fff;}
+  .btn.voice{background:linear-gradient(135deg,#2563eb,#7c3aed);box-shadow:0 6px 18px rgba(37,99,235,.35);}
+  .btn.wa{background:var(--green);color:#fff!important;box-shadow:0 6px 18px rgba(37,211,102,.35);}
+  .btn.price{background:linear-gradient(135deg,#d97706,#f59e0b);box-shadow:0 6px 18px rgba(217,119,6,.35);}
+  .btn.train{background:linear-gradient(135deg,#dc2626,#f43f5e);box-shadow:0 6px 18px rgba(220,38,38,.35);}
 
-  /* floating call UI: FULLY hidden (display:none) until the button is clicked — this prevents
-     the invisible widget from covering and blocking the Start a call button. Then centered + scaled. */
   elevenlabs-convai{display:none !important;}
   elevenlabs-convai.fastas-show{
     display:block !important;
@@ -85,11 +84,51 @@
     z-index:99999 !important;opacity:1 !important;pointer-events:auto !important;
   }
 
-  footer{margin-top:auto;padding:24px;font-size:13px;color:#98a2b3;}
-  @media (max-width:600px){ h1{font-size:34px;} header{padding-top:52px;} }
+  footer{margin-top:auto;padding:22px;font-size:13px;color:#98a2b3;}
+  @media (max-width:600px){ h1{font-size:32px;} header{padding-top:48px;} }
+
+  /* ===== LOGIN GATE (Supabase Auth) ===== */
+  #gate{position:fixed;inset:0;z-index:200000;background:linear-gradient(160deg,var(--bg1),var(--bg2));display:flex;align-items:center;justify-content:center;padding:24px;}
+  #gate.hidden{display:none;}
+  .gate-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:34px 30px;width:100%;max-width:380px;text-align:center;box-shadow:0 12px 34px rgba(16,24,40,.12);}
+  .gate-card .brand-mark{margin:0 auto 18px;}
+  .gate-card h2{margin:0 0 6px;font-size:22px;font-weight:800;letter-spacing:-.3px;}
+  .gate-card p{margin:0 0 20px;font-size:14px;line-height:1.5;color:var(--muted);}
+  .gate-card input{width:100%;padding:13px 14px;font-size:16px;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;outline:none;}
+  .gate-card input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,.15);}
+  .gate-card button.primary{width:100%;padding:13px;font-size:16px;font-weight:700;color:#fff;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(135deg,#2563eb,#7c3aed);box-shadow:0 6px 18px rgba(37,99,235,.35);transition:transform .15s ease;}
+  .gate-card button.primary:hover{transform:translateY(-1px);}
+  .gate-card button.primary:disabled{opacity:.6;cursor:default;transform:none;}
+  .gate-msg{font-size:13px;min-height:18px;margin:2px 0 10px;}
+  .gate-msg.err{color:#d92d20;}
+  .gate-msg.ok{color:#067647;}
+  .gate-toggle{margin-top:16px;font-size:13px;color:var(--muted);}
+  .gate-toggle a{color:var(--brand);cursor:pointer;font-weight:600;text-decoration:none;}
+  body.locked{overflow:hidden;}
+  .hide{display:none!important;}
 </style>
 </head>
-<body>
+<body class="locked">
+
+  <!-- ===================== LOGIN (Supabase Auth) ===================== -->
+  <div id="gate">
+    <form class="gate-card" id="gateForm" autocomplete="on">
+      <div class="brand-mark">FA</div>
+      <h2 id="gateTitle">FASTAS Invoicing</h2>
+      <p id="gateSub">Sign in to continue.</p>
+      <div class="gate-msg" id="gateMsg"></div>
+      <input type="email" id="gateEmail" placeholder="Email" autocomplete="email" required>
+      <input type="password" id="gatePass" placeholder="Password" autocomplete="current-password" required>
+      <button type="submit" class="primary" id="gateBtn">Sign in</button>
+      <div class="gate-toggle">Need an account? Ask your administrator to add you.</div>
+    </form>
+  </div>
+
+  <!-- ===================== SESSION BAR ===================== -->
+  <div class="userbar" id="userbar">
+    <span class="pill"><span id="ubEmail"></span> · <span class="role" id="ubRole"></span></span>
+    <button id="signout">Sign out</button>
+  </div>
 
   <header>
     <div class="brand">
@@ -97,122 +136,157 @@
       <div class="brand-name">FASTAS</div>
     </div>
     <h1>FASTAS <span>Invoicing</span></h1>
-    <p class="subtitle">Create new invoices by voice, or request changes to an existing one — all in one place.</p>
+    <p class="subtitle">Create invoices by voice, manage pricing, and run on-site fire safety training — all in one place.</p>
   </header>
 
   <section class="cards">
 
-    <!-- Invoice Generator (ElevenLabs voice) -->
+    <!-- 1. Invoice Generator (ElevenLabs voice) -->
     <div class="card">
       <div class="icon voice">
         <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2z"/></svg>
       </div>
       <h2>Invoice Generator</h2>
       <p>Talk to our AI assistant and it will build your invoice for you.</p>
-      <button type="button" id="startcall" class="call-btn">
+      <button type="button" id="startcall" class="btn voice">
         <svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z"/></svg>
         Start a call
       </button>
     </div>
 
-    <!-- Invoice Changes (WhatsApp) -->
+    <!-- 2. Invoice Changes (WhatsApp) -->
     <div class="card">
       <div class="icon wa">
         <svg viewBox="0 0 32 32"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.7L.5 31.5l8-2.1c2.2 1.2 4.8 1.9 7.5 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm0 28c-2.4 0-4.7-.6-6.7-1.8l-.5-.3-4.7 1.2 1.3-4.6-.3-.5A12.4 12.4 0 1 1 28.5 16c0 6.9-5.6 12.5-12.5 12.5zm6.9-9.4c-.4-.2-2.2-1.1-2.6-1.2-.3-.1-.6-.2-.8.2-.2.4-.9 1.2-1.1 1.4-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.6-.2-.4 0-.6.2-.8.2-.2.4-.4.5-.7.2-.2.2-.4.4-.7.1-.3 0-.5 0-.7-.1-.2-.8-2-1.1-2.7-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-.9.4-.3.4-1.2 1.2-1.2 2.9 0 1.7 1.2 3.3 1.4 3.6.2.2 2.5 3.8 6 5.3.8.4 1.5.6 2 .8.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.7.3-.9.3-1.6.2-1.7-.1-.2-.3-.3-.7-.5z"/></svg>
       </div>
       <h2>Invoice Changes</h2>
       <p>Need to amend an existing invoice? Message us directly on WhatsApp.</p>
-      <a class="wa-btn"
-         href="https://wa.me/64275383292"
-         target="_blank" rel="noopener">
+      <a class="btn wa" href="https://wa.me/64275383292" target="_blank" rel="noopener">
         <svg viewBox="0 0 32 32"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.7L.5 31.5l8-2.1c2.2 1.2 4.8 1.9 7.5 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm6.9 18.1c-.4-.2-2.2-1.1-2.6-1.2-.3-.1-.6-.2-.8.2-.2.4-.9 1.2-1.1 1.4-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.6-.2-.4 0-.6.2-.8.2-.2.4-.4.5-.7.2-.2.2-.4.4-.7.1-.3 0-.5 0-.7-.1-.2-.8-2-1.1-2.7-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-.9.4-.3.4-1.2 1.2-1.2 2.9 0 1.7 1.2 3.3 1.4 3.6.2.2 2.5 3.8 6 5.3.8.4 1.5.6 2 .8.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.7.3-.9.3-1.6.2-1.7-.1-.1-.3-.2-.7-.4z"/></svg>
         Chat on WhatsApp
       </a>
     </div>
 
+    <!-- 3. Pricing -->
+    <div class="card">
+      <div class="icon price">
+        <svg viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h9.2a2 2 0 0 1 1.41.59l4.8 4.8a2 2 0 0 1 0 2.82l-7.8 7.8a2 2 0 0 1-2.82 0l-6.6-6.6A2 2 0 0 1 3 11.8V6zm4 1.5A1.5 1.5 0 1 0 7 10.5 1.5 1.5 0 0 0 7 7.5z"/></svg>
+      </div>
+      <h2>Pricing</h2>
+      <p>View and update the price of any item. Changes feed straight into the invoice flow.</p>
+      <a class="btn price" href="pricing.html">
+        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        Edit pricing
+      </a>
+    </div>
+
+    <!-- 4. Training (public kiosk form) -->
+    <div class="card">
+      <div class="icon train">
+        <svg viewBox="0 0 24 24"><path d="M12 2C9 6 7 8.5 7 12a5 5 0 0 0 10 0c0-1.7-.6-3.2-1.6-4.6-.4 1.2-1.1 1.9-2 2.1.6-2.3-.4-5-3.4-7.5z"/></svg>
+      </div>
+      <h2>Training</h2>
+      <p>On-site fire safety training sign-up. Leave this open for the business owner to fill out.</p>
+      <a class="btn train" href="training.html">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        Open training form
+      </a>
+    </div>
+
   </section>
+
+  <p class="subtitle" id="adminLink" style="margin-top:-24px;margin-bottom:24px;display:none;">
+    <a href="admin.html" style="color:var(--brand);font-weight:700;text-decoration:none;font-size:15px;">⚙ Admin portal →</a>
+  </p>
 
   <footer>© FASTAS Invoicing</footer>
 
-  <!-- floating call UI: hidden until the Start a call button is clicked, then centered + scaled -->
+  <!-- floating call UI -->
   <elevenlabs-convai agent-id="agent_01jyqjybh6fgxvw9tnv2qs7d9n"></elevenlabs-convai>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    // ===== FASTAS Supabase config =====
+    const SUPABASE_URL = 'https://ecgvkifvlrcfrnqbades.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
+    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+    window.fastasSB = sb;
+
+    const gate=document.getElementById('gate');
+    const form=document.getElementById('gateForm');
+    const email=document.getElementById('gateEmail');
+    const pass=document.getElementById('gatePass');
+    const msg=document.getElementById('gateMsg');
+    const btn=document.getElementById('gateBtn');
+
+    function setMsg(t,kind){ msg.textContent=t||''; msg.className='gate-msg '+(kind||''); }
+    function unlock(){ gate.classList.add('hidden'); document.body.classList.remove('locked'); }
+    function lock(){ gate.classList.remove('hidden'); document.body.classList.add('locked'); }
+
+    form.addEventListener('submit',async(e)=>{
+      e.preventDefault(); setMsg(''); btn.disabled=true;
+      try{
+        const {error}=await sb.auth.signInWithPassword({email:email.value.trim(),password:pass.value});
+        if(error) throw error;
+      }catch(err){
+        setMsg(err.message||'Could not sign in.','err'); btn.disabled=false; return;
+      }
+      btn.disabled=false;
+    });
+
+    // session bar
+    const userbar=document.getElementById('userbar');
+    const ubEmail=document.getElementById('ubEmail');
+    const ubRole=document.getElementById('ubRole');
+    const adminLink=document.getElementById('adminLink');
+    document.getElementById('signout').addEventListener('click',async()=>{ await sb.auth.signOut(); location.reload(); });
+
+    async function applySession(session){
+      if(!session){ lock(); userbar.style.display='none'; adminLink.style.display='none'; return; }
+      unlock(); userbar.style.display='flex'; ubEmail.textContent=session.user.email;
+      const {data:prof}=await sb.from('profiles').select('role').eq('id',session.user.id).single();
+      const role=prof?.role||'licensee';
+      ubRole.textContent=role;
+      adminLink.style.display = role==='admin' ? 'block' : 'none';
+    }
+    const {data:{session}}=await sb.auth.getSession();
+    await applySession(session);
+    sb.auth.onAuthStateChange((_e,s)=>applySession(s));
+  </script>
+
+  <!-- voice widget controller (unchanged behaviour) -->
   <script>
     (function(){
       var host=document.querySelector('elevenlabs-convai');
-
-      // Close (X) button — lets the user fully dismiss the widget after a call.
       var closeBtn=document.createElement('button');
-      closeBtn.id='fastasClose';
-      closeBtn.setAttribute('aria-label','Close');
-      closeBtn.textContent='✕';
+      closeBtn.id='fastasClose'; closeBtn.setAttribute('aria-label','Close'); closeBtn.textContent='✕';
       closeBtn.style.cssText='position:fixed;left:calc(50% + 62px);bottom:50px;z-index:100001;width:34px;height:34px;border-radius:50%;border:1px solid #e0e0e0;background:#fff;color:#333;font-size:16px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);display:none;align-items:center;justify-content:center;padding:0;';
       document.body.appendChild(closeBtn);
       closeBtn.addEventListener('click',function(){
-        try{
-          host.shadowRoot.querySelectorAll('button').forEach(function(b){
-            var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase();
-            if(l.indexOf('end')>-1||l.indexOf('hang')>-1) b.click();   // end any active call
-          });
-        }catch(e){}
-        location.reload();   // reset back to a clean landing page
+        try{ host.shadowRoot.querySelectorAll('button').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('end')>-1||l.indexOf('hang')>-1) b.click(); }); }catch(e){}
+        location.reload();
       });
-
-      // center the widget's internal panel (its content anchors bottom-right by default)
       function injectCenter(){
         if(host&&host.shadowRoot&&!host.shadowRoot.getElementById('fastas-center')){
           var st=document.createElement('style');st.id='fastas-center';
           st.textContent='.overlay{align-items:center !important; justify-content:flex-end !important;}';
           host.shadowRoot.appendChild(st);return true;
-        }
-        return false;
+        } return false;
       }
       var t=0,iv=setInterval(function(){ if(injectCenter()||t++>40) clearInterval(iv); },150);
-
-      // Show the close (X) ONLY once a call is underway — never on the Terms/Accept screen.
-      function onTermsScreen(){
-        try{
-          var bs=host.shadowRoot.querySelectorAll('button');
-          for(var i=0;i<bs.length;i++){
-            var l=(bs[i].textContent||'').toLowerCase();
-            if(l.indexOf('accept')>-1||l.indexOf('agree')>-1) return true;
-          }
-        }catch(e){}
-        return false;
-      }
-      setInterval(function(){
-        if(host.classList.contains('fastas-show') && !onTermsScreen()) closeBtn.style.display='flex';
-        else closeBtn.style.display='none';
-      },300);
-
-      // When an active call ends, refresh the page so it returns to a clean landing state
-      // (prevents the stale "end conversation" screen showing next time Start a call is pressed).
+      function onTermsScreen(){ try{ var bs=host.shadowRoot.querySelectorAll('button'); for(var i=0;i<bs.length;i++){ var l=(bs[i].textContent||'').toLowerCase(); if(l.indexOf('accept')>-1||l.indexOf('agree')>-1) return true; } }catch(e){} return false; }
+      setInterval(function(){ if(host.classList.contains('fastas-show') && !onTermsScreen()) closeBtn.style.display='flex'; else closeBtn.style.display='none'; },300);
       var callWasActive=false;
       setInterval(function(){
         var active=false;
-        try{
-          host.shadowRoot.querySelectorAll('button,[role="button"]').forEach(function(b){
-            var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase();
-            if(l.indexOf('mute')>-1||l.indexOf('hang')>-1) active=true;   // these only exist mid-call
-          });
-        }catch(e){}
-        if(active){ callWasActive=true; }
-        else if(callWasActive){ callWasActive=false; setTimeout(function(){ location.reload(); },800); }
+        try{ host.shadowRoot.querySelectorAll('button,[role="button"]').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('mute')>-1||l.indexOf('hang')>-1) active=true; }); }catch(e){}
+        if(active){ callWasActive=true; } else if(callWasActive){ callWasActive=false; setTimeout(function(){ location.reload(); },800); }
       },500);
-
       function startCall(){
-        if(!host) return;
-        host.classList.add('fastas-show');   // reveal it only now
-        injectCenter();
-        var n=0;
-        (function go(){                       // open the call inside the widget
-          var r=host.shadowRoot;
-          if(r){ var b=r.querySelector('button,[role="button"]'); if(b){ b.click(); return; } }
-          if(n++<12) setTimeout(go,300);
-        })();
+        if(!host) return; host.classList.add('fastas-show'); injectCenter();
+        var n=0;(function go(){ var r=host.shadowRoot; if(r){ var b=r.querySelector('button,[role="button"]'); if(b){ b.click(); return; } } if(n++<12) setTimeout(go,300); })();
       }
-      document.addEventListener('click',function(e){
-        if(e.target.closest('#startcall')){ e.preventDefault(); startCall(); }
-      });
+      document.addEventListener('click',function(e){ if(e.target.closest('#startcall')){ e.preventDefault(); startCall(); } });
     })();
   </script>
 </body>

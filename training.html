@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAST NZ · Fire Safety Training Sign-up</title>
+<style>
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--red:#dc2626;--brand:#2563eb;--bg1:#fff5f5;--bg2:#fef2f2;--ok:#067647;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
+  .hero{text-align:center;padding:36px 20px 10px;}
+  .badge{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 16px;box-shadow:0 6px 18px rgba(220,38,38,.12);}
+  .flame{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#dc2626,#f43f5e);display:flex;align-items:center;justify-content:center;}
+  .flame svg{width:18px;height:18px;fill:#fff;}
+  .badge b{font-weight:800;letter-spacing:.5px;}
+  h1{font-size:30px;margin:18px 0 6px;}
+  .sub{color:var(--muted);margin:0 auto;max-width:560px;font-size:15px;line-height:1.55;}
+  .wrap{max-width:840px;margin:0 auto;padding:18px 18px 70px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:20px;box-shadow:0 10px 30px rgba(16,24,40,.05);}
+  .card h2{margin:0 0 4px;font-size:18px;}
+  .card .hint{color:var(--muted);font-size:13px;margin:0 0 16px;}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:600px){.grid{grid-template-columns:1fr;}}
+  label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#344054;}
+  .req{color:var(--red);}
+  input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;outline:none;font-family:inherit;}
+  input:focus,select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,.12);}
+  .full{grid-column:1/-1;}
+  .att-row{display:grid;grid-template-columns:1.1fr 1.1fr 1.4fr 1.2fr auto;gap:8px;align-items:end;margin-bottom:10px;}
+  @media(max-width:700px){.att-row{grid-template-columns:1fr 1fr;}}
+  .att-row .rm{background:#fff;border:1px solid var(--line);border-radius:10px;width:42px;height:42px;cursor:pointer;font-size:18px;color:var(--red);}
+  .addbtn{background:#fff;border:1px dashed #f4a8a8;color:var(--red);border-radius:10px;padding:11px 16px;cursor:pointer;font-weight:600;font-size:14px;}
+  .submit{margin-top:22px;width:100%;background:linear-gradient(135deg,#dc2626,#f43f5e);color:#fff;border:none;border-radius:12px;padding:16px;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(220,38,38,.3);}
+  .submit:disabled{opacity:.6;cursor:default;}
+  .msg{text-align:center;margin-top:14px;font-size:14px;min-height:20px;}
+  .msg.err{color:#d92d20;} .msg.ok{color:var(--ok);}
+  .done{display:none;text-align:center;padding:40px 20px;}
+  .done .tick{width:74px;height:74px;border-radius:50%;background:#ecfdf3;color:#067647;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 16px;}
+  .done h2{font-size:24px;margin:0 0 8px;}
+  .done p{color:var(--muted);max-width:480px;margin:0 auto 22px;line-height:1.55;}
+  .done button{background:linear-gradient(135deg,#dc2626,#f43f5e);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:16px;font-weight:700;cursor:pointer;}
+  .pill-types{display:flex;gap:10px;flex-wrap:wrap;}
+  .pill-types label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;margin:0;}
+  .pill-types input{width:auto;}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="badge"><span class="flame"><svg viewBox="0 0 24 24"><path d="M12 2C9 6 7 8.5 7 12a5 5 0 0 0 10 0c0-1.7-.6-3.2-1.6-4.6-.4 1.2-1.1 1.9-2 2.1.6-2.3-.4-5-3.4-7.5z"/></svg></span><b>FAST NZ</b></div>
+    <h1>Fire Safety Training Sign-up</h1>
+    <p class="sub">Please add your business details and everyone who attended today's training. We'll email you the training report and send each attendee their certificate.</p>
+  </div>
+
+  <div class="wrap">
+    <form id="form">
+      <div class="card">
+        <h2>Business &amp; site details</h2>
+        <p class="hint">Where the training took place and who we should send the report to.</p>
+        <div class="grid">
+          <div><label>Business name <span class="req">*</span></label><input name="business_name" required></div>
+          <div><label>Site / branch</label><input name="site_branch"></div>
+          <div class="full"><label>Site address</label><input name="site_address"></div>
+          <div><label>Contact person <span class="req">*</span></label><input name="contact_person" required></div>
+          <div><label>Contact phone</label><input name="contact_phone" inputmode="tel"></div>
+          <div><label>Business email (for the report) <span class="req">*</span></label><input name="contact_email" type="email" required></div>
+          <div><label>Date of training <span class="req">*</span></label><input name="training_date" type="date" required></div>
+          <div class="full"><label>Trainer</label><input name="trainer_name" value="FAST NZ — Ben Kofoed"></div>
+          <div class="full">
+            <label>Training delivered <span class="req">*</span></label>
+            <div class="pill-types">
+              <label><input type="radio" name="training_type" value="fire_safety" checked> Fire safety</label>
+              <label><input type="radio" name="training_type" value="fire_warden"> Fire warden</label>
+              <label><input type="radio" name="training_type" value="both"> Both</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Attendees</h2>
+        <p class="hint">We email each person their certificate, so first name, last name and email are required.</p>
+        <div id="attendees"></div>
+        <button type="button" class="addbtn" id="addAtt">+ Add another attendee</button>
+      </div>
+
+      <div id="turnstileBox" style="display:flex;justify-content:center;margin-top:18px;"></div>
+      <button type="submit" class="submit" id="submitBtn">Submit &amp; generate certificates</button>
+      <div class="msg" id="msg"></div>
+    </form>
+
+    <div class="done" id="done">
+      <div class="tick">✓</div>
+      <h2>All done — thank you!</h2>
+      <p>The training report is on its way to the business email, and each attendee will receive their certificate by email shortly.</p>
+      <button id="again">Add another business</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
+    const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
+    const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+    // ===== Spam protection (Cloudflare Turnstile) =====
+    // Paste your Turnstile *site* key here to switch it on. Leave '' to disable.
+    // Also set TURNSTILE_SECRET as an Edge Function secret to enforce it server-side.
+    const TURNSTILE_SITEKEY='';
+    let turnstileToken='';
+    if(TURNSTILE_SITEKEY){
+      const s=document.createElement('script');
+      s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async=true; s.defer=true;
+      s.onload=()=>window.turnstile.render('#turnstileBox',{sitekey:TURNSTILE_SITEKEY,callback:t=>{turnstileToken=t;}});
+      document.head.appendChild(s);
+    }
+
+    const attHost=document.getElementById('attendees');
+    function attRow(){
+      const div=document.createElement('div'); div.className='att-row';
+      div.innerHTML=`
+        <div><label>First name *</label><input class="a-first" required></div>
+        <div><label>Last name</label><input class="a-last"></div>
+        <div><label>Email *</label><input class="a-email" type="email" required></div>
+        <div><label>Position / role</label><input class="a-role"></div>
+        <button type="button" class="rm" title="Remove">×</button>`;
+      div.querySelector('.rm').addEventListener('click',()=>{ if(attHost.children.length>1) div.remove(); });
+      return div;
+    }
+    attHost.appendChild(attRow());
+    document.getElementById('addAtt').addEventListener('click',()=>attHost.appendChild(attRow()));
+
+    const form=document.getElementById('form');
+    const msg=document.getElementById('msg');
+    const submitBtn=document.getElementById('submitBtn');
+
+    form.addEventListener('submit',async(e)=>{
+      e.preventDefault(); msg.textContent=''; msg.className='msg';
+      const fd=new FormData(form);
+      const attendees=[...attHost.children].map(r=>({
+        first_name:r.querySelector('.a-first').value.trim(),
+        last_name:r.querySelector('.a-last').value.trim(),
+        email:r.querySelector('.a-email').value.trim(),
+        position_role:r.querySelector('.a-role').value.trim()
+      })).filter(a=>a.first_name && a.email);
+      if(!attendees.length){ msg.textContent='Add at least one attendee with a name and email.'; msg.className='msg err'; return; }
+      if(TURNSTILE_SITEKEY && !turnstileToken){ msg.textContent='Please complete the “I’m human” check.'; msg.className='msg err'; return; }
+
+      const payload={
+        business_name:fd.get('business_name'), site_branch:fd.get('site_branch'),
+        site_address:fd.get('site_address'), contact_person:fd.get('contact_person'),
+        contact_phone:fd.get('contact_phone'), contact_email:fd.get('contact_email'),
+        training_date:fd.get('training_date'), trainer_name:fd.get('trainer_name'),
+        training_type:fd.get('training_type'), attendees, turnstile_token:turnstileToken
+      };
+      submitBtn.disabled=true; submitBtn.textContent='Submitting…';
+      try{
+        const res=await fetch(`${SUPABASE_URL}/functions/v1/submit-training`,{
+          method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_KEY}`,'apikey':SUPABASE_KEY},
+          body:JSON.stringify(payload)
+        });
+        const out=await res.json().catch(()=>({}));
+        if(!res.ok) throw new Error(out.error||('Server error ('+res.status+')'));
+        form.style.display='none'; document.getElementById('done').style.display='block';
+        window.scrollTo({top:0,behavior:'smooth'});
+      }catch(err){
+        msg.textContent='Could not submit: '+err.message; msg.className='msg err';
+      }
+      submitBtn.disabled=false; submitBtn.textContent='Submit & generate certificates';
+    });
+
+    document.getElementById('again').addEventListener('click',()=>location.reload());
+  </script>
+</body>
+</html>

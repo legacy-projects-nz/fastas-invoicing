@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASTAS · Pricing</title>
+<style>
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--amber:#d97706;--bg1:#f7f9fc;--bg2:#eef2f8;--ok:#067647;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .brand b{font-size:17px;}
+  .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;}
+  .topbar .who{font-size:13px;color:var(--muted);}
+  .wrap{max-width:920px;margin:0 auto;padding:26px 20px 60px;}
+  h1{font-size:28px;margin:6px 0 4px;}
+  .sub{color:var(--muted);margin:0 0 18px;font-size:15px;}
+  .ownerbar{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:16px;}
+  .ownerbar.hidden{display:none;}
+  .ownerbar label{font-size:13px;font-weight:700;color:#344054;}
+  .ownerbar select{padding:9px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;min-width:240px;}
+  .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+  .toolbar input[type=search]{flex:1 1 240px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;outline:none;}
+  .toolbar input:focus{border-color:var(--brand);}
+  .savebar{position:sticky;bottom:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -6px 20px rgba(16,24,40,.06);margin-top:18px;}
+  .savebar.hidden{display:none;}
+  button.primary{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:15px;cursor:pointer;}
+  button.primary:disabled{opacity:.5;cursor:default;}
+  button.ghost{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer;font-size:14px;}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);font-size:14px;}
+  th{background:#f8fafc;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
+  tr:last-child td{border-bottom:none;}
+  td.code{font-family:ui-monospace,Menlo,monospace;font-weight:600;}
+  input.price{width:96px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;text-align:right;outline:none;}
+  input.price:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.15);}
+  tr.changed{background:#fffbeb;}
+  tr.inactive td.code{opacity:.5;}
+  .tag{font-size:11px;padding:2px 8px;border-radius:999px;background:#eef2f8;color:var(--muted);}
+  .msg{font-size:14px;} .msg.ok{color:var(--ok);} .msg.err{color:#d92d20;}
+  .loading{padding:40px;text-align:center;color:var(--muted);}
+  .additem{display:none;background:#fff;border:1px dashed #c9d2e3;border-radius:12px;padding:14px;margin-top:14px;gap:10px;align-items:end;flex-wrap:wrap;}
+  .additem.show{display:flex;}
+  .additem .f{display:flex;flex-direction:column;gap:5px;} .additem label{font-size:12px;font-weight:600;color:#344054;}
+  .additem input{padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:14px;}
+  @media(max-width:560px){ th:nth-child(2),td:nth-child(2){display:none;} }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><div class="brand-mark">FA</div><b>Pricing</b></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Back</a></div>
+  </div>
+
+  <div class="wrap">
+    <h1>Item pricing</h1>
+    <p class="sub" id="sub">Edit any unit price. Saved prices feed straight into the invoice flow.</p>
+
+    <div class="ownerbar hidden" id="ownerbar">
+      <label>Viewing prices for:</label>
+      <select id="ownerSel"></select>
+      <button class="ghost" id="toggleAdd">+ Add item</button>
+    </div>
+
+    <div class="additem" id="additem">
+      <div class="f"><label>Item code</label><input id="aiCode" placeholder="e.g. FEC - Testing"></div>
+      <div class="f"><label>Description</label><input id="aiName" placeholder="Fire Extinguisher Certification"></div>
+      <div class="f"><label>Price (NZD)</label><input id="aiPrice" type="number" step="0.01" min="0" value="0" style="width:110px"></div>
+      <button class="primary" id="aiSave">Add</button>
+      <span class="msg" id="aiMsg"></span>
+    </div>
+
+    <div class="toolbar" style="margin-top:14px;">
+      <input type="search" id="search" placeholder="Search by code or name…">
+      <button class="ghost" id="toggleInactive">Show inactive</button>
+    </div>
+
+    <div id="tableHost"><div class="loading">Loading prices…</div></div>
+
+    <div class="savebar hidden" id="savebar">
+      <span class="msg" id="saveMsg"><b id="changeCount">0</b> unsaved change(s)</span>
+      <span style="display:flex;gap:10px;">
+        <button class="ghost" id="discard">Discard</button>
+        <button class="primary" id="save">Save changes</button>
+      </span>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
+    const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
+    const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.href='index.html'; }
+    const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',session.user.id).single();
+    const role=prof?.role||'licensee';
+    document.getElementById('who').textContent=session.user.email+' · '+role;
+
+    let items=[], showInactive=false, ownerId=session.user.id;
+    const edits={};
+    const host=document.getElementById('tableHost');
+    const search=document.getElementById('search');
+    const savebar=document.getElementById('savebar');
+    const changeCount=document.getElementById('changeCount');
+    const saveMsg=document.getElementById('saveMsg');
+
+    // ----- admin: licensee picker + add item -----
+    if(role==='admin'){
+      document.getElementById('ownerbar').classList.remove('hidden');
+      document.getElementById('sub').textContent='Pick a licensee to view and edit their price list. Admins can also add items.';
+      const {data:licensees}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
+      const sel=document.getElementById('ownerSel');
+      sel.innerHTML=(licensees||[]).map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('') || '<option value="">No licensees yet</option>';
+      ownerId=licensees&&licensees.length?licensees[0].id:'';
+      sel.addEventListener('change',()=>{ ownerId=sel.value; for(const k in edits) delete edits[k]; refreshSaveBar(); load(); });
+      document.getElementById('toggleAdd').addEventListener('click',()=>document.getElementById('additem').classList.toggle('show'));
+      document.getElementById('aiSave').addEventListener('click',addItem);
+    }
+
+    async function load(){
+      if(!ownerId){ host.innerHTML='<div class="loading">No licensee selected.</div>'; return; }
+      let q=sb.from('pricing_items').select('*').order('sort_order');
+      if(role==='admin') q=q.eq('owner_id',ownerId); // licensees are auto-scoped by RLS
+      const {data,error}=await q;
+      if(error){ host.innerHTML='<div class="loading">Error: '+error.message+'</div>'; return; }
+      items=data; render();
+    }
+
+    function render(){
+      const q=(search.value||'').toLowerCase();
+      const rows=items.filter(it=>(showInactive||it.status==='active'))
+        .filter(it=>!q||it.item_code.toLowerCase().includes(q)||it.item_name.toLowerCase().includes(q));
+      if(!rows.length){ host.innerHTML='<div class="loading">No items'+(role==='admin'?' — use “Add item” to build this list.':'.')+'</div>'; return; }
+      let html='<table><thead><tr><th>Code</th><th>Description</th><th>Status</th><th style="text-align:right">Unit price (NZD)</th></tr></thead><tbody>';
+      for(const it of rows){
+        const cur = edits[it.id]!==undefined ? edits[it.id] : it.unit_price;
+        const changed = edits[it.id]!==undefined && Number(edits[it.id])!==Number(it.unit_price);
+        html+=`<tr class="${changed?'changed':''} ${it.status!=='active'?'inactive':''}">
+          <td class="code">${it.item_code}</td><td>${it.item_name}</td>
+          <td>${it.status==='active'?'<span class="tag" style="background:#ecfdf3;color:#067647">active</span>':'<span class="tag">inactive</span>'}</td>
+          <td><div style="display:flex;align-items:center;gap:4px;justify-content:flex-end"><span style="color:#667085">$</span><input class="price" type="number" step="0.01" min="0" value="${Number(cur).toFixed(2)}" data-id="${it.id}"></div></td>
+        </tr>`;
+      }
+      host.innerHTML=html+'</tbody></table>';
+      host.querySelectorAll('input.price').forEach(inp=>inp.addEventListener('input',()=>{
+        const id=inp.dataset.id, orig=items.find(x=>x.id===id).unit_price;
+        if(Number(inp.value)===Number(orig)) delete edits[id]; else edits[id]=inp.value;
+        inp.closest('tr').classList.toggle('changed', edits[id]!==undefined);
+        refreshSaveBar();
+      }));
+    }
+    function refreshSaveBar(){
+      const n=Object.keys(edits).length;
+      changeCount.textContent=n; saveMsg.innerHTML=`<b>${n}</b> unsaved change(s)`; saveMsg.className='msg';
+      savebar.classList.toggle('hidden', n===0);
+    }
+
+    search.addEventListener('input',render);
+    document.getElementById('toggleInactive').addEventListener('click',(e)=>{ showInactive=!showInactive; e.target.textContent=showInactive?'Hide inactive':'Show inactive'; render(); });
+    document.getElementById('discard').addEventListener('click',()=>{ for(const k in edits) delete edits[k]; render(); refreshSaveBar(); });
+
+    document.getElementById('save').addEventListener('click',async()=>{
+      const btn=document.getElementById('save'); btn.disabled=true; saveMsg.textContent='Saving…'; saveMsg.className='msg';
+      try{
+        for(const [id,val] of Object.entries(edits)){
+          const {error}=await sb.from('pricing_items').update({unit_price:Number(val)}).eq('id',id);
+          if(error) throw error;
+        }
+        for(const k in edits) delete edits[k];
+        await load(); refreshSaveBar();
+        saveMsg.textContent='Saved ✓'; saveMsg.className='msg ok'; savebar.classList.remove('hidden');
+        setTimeout(()=>savebar.classList.add('hidden'),1500);
+      }catch(err){ saveMsg.textContent='Error: '+err.message; saveMsg.className='msg err'; }
+      btn.disabled=false;
+    });
+
+    async function addItem(){
+      const msg=document.getElementById('aiMsg'); msg.textContent='';
+      const code=document.getElementById('aiCode').value.trim();
+      const name=document.getElementById('aiName').value.trim();
+      const price=Number(document.getElementById('aiPrice').value||0);
+      if(!code||!name){ msg.textContent='Code and description required.'; msg.className='msg err'; return; }
+      const sort=(items.reduce((m,i)=>Math.max(m,i.sort_order||0),0))+10;
+      const {error}=await sb.from('pricing_items').insert({item_code:code,item_name:name,unit_price:price,owner_id:ownerId,sort_order:sort,status:'active'});
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      document.getElementById('aiCode').value=document.getElementById('aiName').value=''; document.getElementById('aiPrice').value='0';
+      msg.textContent='Added ✓'; msg.className='msg ok'; load();
+    }
+
+    load();
+  </script>
+</body>
+</html>

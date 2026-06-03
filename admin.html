@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASTAS · Admin</title>
+<style>
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--red:#dc2626;--bg1:#f7f9fc;--bg2:#eef2f8;--ok:#067647;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;}
+  .who{font-size:13px;color:var(--muted);}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 20px 70px;}
+  h1{font-size:26px;margin:4px 0 18px;}
+  .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .tab{padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .panel{display:none;} .panel.active{display:block;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(16,24,40,.05);}
+  .card h2{margin:0 0 4px;font-size:17px;} .card .hint{color:var(--muted);font-size:13px;margin:0 0 16px;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
+  input,select{padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;outline:none;font-family:inherit;}
+  input:focus,select:focus{border-color:var(--brand);}
+  button.primary{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-weight:700;cursor:pointer;font-size:14px;}
+  button.primary:disabled{opacity:.5;}
+  button.ghost{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;}
+  button.danger{color:var(--red);border-color:#f4c4c4;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
+  .row .f{display:flex;flex-direction:column;gap:5px;} .row .f label{font-size:12px;font-weight:600;color:#344054;}
+  .pill{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:700;}
+  .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);}
+  .pill.emailed{background:#ecfdf3;color:var(--ok);} .pill.generated{background:#fff7ed;color:#b45309;} .pill.submitted{background:#f2f4f7;color:var(--muted);}
+  .msg{font-size:13px;margin-top:10px;min-height:18px;} .msg.ok{color:var(--ok);} .msg.err{color:var(--red);}
+  a.dl{color:var(--brand);text-decoration:none;font-weight:600;font-size:13px;}
+  .empty{color:var(--muted);font-size:14px;padding:14px 0;}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><div class="brand-mark">FA</div><b>Admin portal</b></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Back to app</a></div>
+  </div>
+
+  <div class="wrap" id="app" style="display:none;">
+    <h1>FASTAS Administration</h1>
+    <div class="tabs">
+      <div class="tab active" data-tab="users">Users &amp; roles</div>
+      <div class="tab" data-tab="reports">Training reports</div>
+      <div class="tab" data-tab="templates">Report template</div>
+      <div class="tab" data-tab="pricing">Pricing</div>
+    </div>
+
+    <!-- USERS -->
+    <div class="panel active" id="panel-users">
+      <div class="card">
+        <h2>Add a user</h2>
+        <p class="hint">Creates a ready-to-use account (no email confirmation needed). Share the password with them.</p>
+        <div class="row">
+          <div class="f"><label>Full name</label><input id="nuName" placeholder="Jane Admin"></div>
+          <div class="f"><label>Email</label><input id="nuEmail" type="email" placeholder="jane@fastnz.nz"></div>
+          <div class="f"><label>Temp password</label><input id="nuPass" placeholder="min 6 chars"></div>
+          <div class="f"><label>Role</label><select id="nuRole"><option value="licensee">Licensee</option><option value="admin">Admin</option></select></div>
+          <button class="primary" id="nuAdd">Add user</button>
+        </div>
+        <div class="msg" id="nuMsg"></div>
+      </div>
+      <div class="card">
+        <h2>Existing users</h2>
+        <div id="usersHost"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="panel" id="panel-reports">
+      <div class="card">
+        <h2>Fire safety training reports</h2>
+        <p class="hint">Generated from the training form. Download the business report or any attendee certificate.</p>
+        <div id="reportsHost"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- TEMPLATES -->
+    <div class="panel" id="panel-templates">
+      <div class="card">
+        <h2>Training report template</h2>
+        <p class="hint">Upload your master .docx template for reference. (Reports are currently generated as branded PDFs; this stores your template on file.)</p>
+        <div class="row">
+          <div class="f"><label>Template file (.docx)</label><input id="tplFile" type="file" accept=".docx"></div>
+          <button class="primary" id="tplUpload">Upload template</button>
+        </div>
+        <div class="msg" id="tplMsg"></div>
+        <div id="tplHost" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- PRICING -->
+    <div class="panel" id="panel-pricing">
+      <div class="card">
+        <h2>Pricing</h2>
+        <p class="hint">Item prices feed the invoice flow. Both admins and licensees can edit them.</p>
+        <a class="primary" style="display:inline-block;text-decoration:none;" href="pricing.html">Open pricing editor →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap" id="denied" style="display:none;"><div class="card"><h2>Admins only</h2><p class="hint">You're signed in but this area is for admins. <a href="index.html">Back to app</a></p></div></div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
+    const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
+    const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+    const FN=SUPABASE_URL+'/functions/v1/admin-users';
+
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.href='index.html'; }
+    const {data:prof}=await sb.from('profiles').select('role').eq('id',session.user.id).single();
+    document.getElementById('who').textContent=session.user.email+' · '+(prof?.role||'licensee');
+    if(prof?.role!=='admin'){ document.getElementById('denied').style.display='block'; }
+    else { document.getElementById('app').style.display='block'; init(); }
+
+    function token(){ return session.access_token; }
+    async function callFn(payload){
+      const res=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+token()},body:JSON.stringify(payload)});
+      const out=await res.json().catch(()=>({})); if(!res.ok) throw new Error(out.error||('Error '+res.status)); return out;
+    }
+
+    function init(){
+      document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active'); document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+      }));
+      loadUsers(); loadReports(); loadTemplates();
+
+      document.getElementById('nuAdd').addEventListener('click',async()=>{
+        const msg=document.getElementById('nuMsg'); msg.textContent='';
+        try{
+          await callFn({action:'create_user',full_name:nuName.value.trim(),email:nuEmail.value.trim(),password:nuPass.value,role:nuRole.value});
+          msg.textContent='User created ✓'; msg.className='msg ok'; nuName.value=nuEmail.value=nuPass.value='';
+          loadUsers();
+        }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
+      });
+      document.getElementById('tplUpload').addEventListener('click',uploadTemplate);
+    }
+
+    async function loadUsers(){
+      const host=document.getElementById('usersHost');
+      try{
+        const {users}=await callFn({action:'list_users'});
+        if(!users.length){ host.innerHTML='<div class="empty">No users.</div>'; return; }
+        let h='<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
+        for(const u of users){
+          h+=`<tr><td>${u.full_name||'—'}</td><td>${u.email}</td>
+            <td><span class="pill ${u.role}">${u.role}</span></td>
+            <td style="text-align:right">
+              <select data-uid="${u.id}" class="roleSel"><option value="licensee"${u.role==='licensee'?' selected':''}>Licensee</option><option value="admin"${u.role==='admin'?' selected':''}>Admin</option></select>
+              ${u.id===session.user.id?'':`<button class="ghost danger delUser" data-uid="${u.id}" data-email="${u.email}">Remove</button>`}
+            </td></tr>`;
+        }
+        host.innerHTML=h+'</tbody></table>';
+        host.querySelectorAll('.roleSel').forEach(s=>s.addEventListener('change',async()=>{ try{ await callFn({action:'set_role',user_id:s.dataset.uid,role:s.value}); loadUsers(); }catch(e){ alert(e.message); } }));
+        host.querySelectorAll('.delUser').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Remove '+b.dataset.email+'?')) return; try{ await callFn({action:'delete_user',user_id:b.dataset.uid}); loadUsers(); }catch(e){ alert(e.message); } }));
+      }catch(e){ host.innerHTML='<div class="empty">'+e.message+'</div>'; }
+    }
+
+    async function loadReports(){
+      const host=document.getElementById('reportsHost');
+      const {data:reps,error}=await sb.from('training_reports').select('*').order('created_at',{ascending:false});
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      if(!reps.length){ host.innerHTML='<div class="empty">No training reports yet.</div>'; return; }
+      let h='<table><thead><tr><th>Ref</th><th>Business</th><th>Date</th><th>Type</th><th>Att.</th><th>Status</th><th>Report</th><th>Certificates</th><th></th></tr></thead><tbody>';
+      for(const r of reps){
+        h+=`<tr><td><b>${r.report_ref||'—'}</b></td><td>${r.business_name}</td><td>${r.training_date||'—'}</td>
+          <td>${r.training_type.replace('_',' ')}</td><td>${r.total_attendees}</td>
+          <td><span class="pill ${r.status}">${r.status}</span></td>
+          <td>${r.report_pdf_path?`<a class="dl" data-bucket="reports" data-path="${r.report_pdf_path}" href="#">Download</a>`:'—'}</td>
+          <td id="certs-${r.id}"><a class="dl loadCerts" data-id="${r.id}" href="#">Show</a></td>
+          <td style="text-align:right"><button class="ghost danger delRep" data-id="${r.id}" data-ref="${r.report_ref}">Delete</button></td></tr>`;
+      }
+      host.innerHTML=h+'</tbody></table>';
+      host.querySelectorAll('a.dl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
+      host.querySelectorAll('a.loadCerts').forEach(a=>a.addEventListener('click',async e=>{e.preventDefault();showCerts(a.dataset.id);}));
+      host.querySelectorAll('button.delRep').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Delete report '+b.dataset.ref+'? This removes its attendees too.')) return; await sb.from('training_reports').delete().eq('id',b.dataset.id); loadReports(); }));
+    }
+    async function showCerts(id){
+      const cell=document.getElementById('certs-'+id);
+      const {data:att}=await sb.from('training_attendees').select('*').eq('report_id',id);
+      cell.innerHTML = att.map(a=>`<a class="dl certdl" data-path="${a.certificate_pdf_path||''}" href="#">${a.first_name} ${a.cert_emailed?'✓':''}</a>`).join('<br>');
+      cell.querySelectorAll('a.certdl').forEach(a=>a.addEventListener('click',e=>{e.preventDefault(); if(a.dataset.path) download('certificates',a.dataset.path); else alert('No certificate file');}));
+    }
+    async function download(bucket,path){
+      const {data,error}=await sb.storage.from(bucket).createSignedUrl(path,120);
+      if(error){ alert(error.message); return; }
+      window.open(data.signedUrl,'_blank');
+    }
+
+    async function loadTemplates(){
+      const host=document.getElementById('tplHost');
+      const {data}=await sb.from('report_templates').select('*').order('created_at',{ascending:false});
+      if(!data||!data.length){ host.innerHTML='<div class="empty">No template uploaded yet.</div>'; return; }
+      host.innerHTML='<table><thead><tr><th>Name</th><th>Active</th><th>Uploaded</th><th></th></tr></thead><tbody>'+
+        data.map(t=>`<tr><td>${t.name}</td><td>${t.is_active?'Yes':'No'}</td><td>${new Date(t.created_at).toLocaleDateString()}</td><td style="text-align:right"><a class="dl tpldl" data-path="${t.storage_path}" href="#">Download</a></td></tr>`).join('')+'</tbody></table>';
+      host.querySelectorAll('a.tpldl').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download('templates',a.dataset.path);}));
+    }
+    async function uploadTemplate(){
+      const msg=document.getElementById('tplMsg'); msg.textContent='';
+      const f=document.getElementById('tplFile').files[0];
+      if(!f){ msg.textContent='Choose a .docx file first.'; msg.className='msg err'; return; }
+      const path='training/'+Date.now()+'-'+f.name;
+      const {error}=await sb.storage.from('templates').upload(path,f,{upsert:true});
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      await sb.from('report_templates').update({is_active:false}).eq('kind','training');
+      await sb.from('report_templates').insert({name:f.name,kind:'training',storage_path:path,is_active:true,uploaded_by:session.user.id});
+      msg.textContent='Template uploaded ✓'; msg.className='msg ok'; document.getElementById('tplFile').value=''; loadTemplates();
+    }
+  </script>
+</body>
+</html>
