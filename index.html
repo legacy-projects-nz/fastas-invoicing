@@ -154,8 +154,7 @@
             if(l.indexOf('end')>-1||l.indexOf('hang')>-1) b.click();   // end any active call
           });
         }catch(e){}
-        host.classList.remove('fastas-show');   // hide the widget
-        closeBtn.style.display='none';
+        location.reload();   // reset back to a clean landing page
       });
 
       // center the widget's internal panel (its content anchors bottom-right by default)
@@ -184,6 +183,21 @@
         if(host.classList.contains('fastas-show') && !onTermsScreen()) closeBtn.style.display='flex';
         else closeBtn.style.display='none';
       },300);
+
+      // When an active call ends, refresh the page so it returns to a clean landing state
+      // (prevents the stale "end conversation" screen showing next time Start a call is pressed).
+      var callWasActive=false;
+      setInterval(function(){
+        var active=false;
+        try{
+          host.shadowRoot.querySelectorAll('button,[role="button"]').forEach(function(b){
+            var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase();
+            if(l.indexOf('mute')>-1||l.indexOf('hang')>-1) active=true;   // these only exist mid-call
+          });
+        }catch(e){}
+        if(active){ callWasActive=true; }
+        else if(callWasActive){ callWasActive=false; setTimeout(function(){ location.reload(); },800); }
+      },500);
 
       function startCall(){
         if(!host) return;
