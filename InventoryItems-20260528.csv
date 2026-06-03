@@ -1,0 +1,40 @@
+*ItemCode,ItemName,Quantity,PurchasesDescription,PurchasesUnitPrice,PurchasesAccount,PurchasesTaxRate,SalesDescription,SalesUnitPrice,SalesAccount,SalesTaxRate,InventoryAssetAccount,CostOfGoodsSoldAccount,Status,InventoryType
+0001,Smoke Alarm,,,24.00,,,"Smoke Alarm (10yr,bluetooth)",55.00,,,,,Active,Untracked
+FBC,Fire Blanket Certification,,,,,,Fire Extinguisher Certification,15.00,200,15% GST on Income,,,Active,Untracked
+FCGM,Fire Cabinet - Steel Galvanised - Medium 4.5kg,,Fire Cabinet - Steel Galvanised - Medium 4.5kg,115.00,,15% GST on Expenses,Fire Cabinet - Steel Galvanised - Medium 4.5kg,172.00,200,15% GST on Income,,,Active,Untracked
+FCLPM,Fire Cabinet - Lockable Lightweight - Medium,,Fire Cabinet - Lockable Lightweight - Medium,69.95,310,15% GST on Expenses,Fire Cabinet - Lockable Lightweight - Medium,128.00,200,15% GST on Income,,,Active,Untracked
+FE-1.5-ABE,Fire Extinguisher-1.5Kg ABE Powder,0.00,Fire Extinguisher-1.5Kg ABE Powder,0.00,,15% GST on Expenses,Fire Extinguisher-1.5Kg ABE Powder,119.00,200,15% GST on Income,630,310,Active,Tracked
+FEC - Testing,Fire Extinguisher Certification,,,,,,Fire Extinguisher Certification,15.00,200,15% GST on Income,,,Active,Untracked
+FIM,Fire - Extinguisher Install/Reinstall/Uninstall,,,,,,Fire - Extinguisher Install/Reinstall/Uninstall,35.00,200,15% GST on Income,,,Active,Untracked
+FP,Fire Extinguisher - Pressure Test,,Fire Extinguisher - Pressure Test,0.00,,,Fire Extinguisher - Pressure Test,50.00,200,15% GST on Income,,,Active,Untracked
+FR,Fire - Report,,,,,,Fire - Report,20.00,200,15% GST on Income,,,Active,Untracked
+FR - 2.5,Fire Extinguisher Refill - 2.5kg ABE Powder,,,,,,Fire Extinguisher Refill - 2.5kg ABE Powder,95.00,200,15% GST on Income,,,Active,Untracked
+FRP - 4.5kg,Fire Extinguisher Refill - 4.5kg ABE Powder,,Fire Extinguisher Refill - 4.5kg ABE Powder,0.00,,,Fire Extinguisher Refill - 4.5kg ABE Powder,105.00,200,15% GST on Income,,,Active,Untracked
+FS,Fire Signage,,,,,,Fire Signage,26.00,200,15% GST on Income,,,Active,Untracked
+FSA,Fire - Smoke Alarm,45.00,Fire - Smoke Alarm,38.00,,15% GST on Expenses,Fire - Smoke Alarm,47.00,200,15% GST on Income,630,310,Active,Tracked
+FSAI,Fire - Smoke Alarm Install,,,,,,Fire - Smoke Alarm Install,20.00,200,15% GST on Income,,,Active,Untracked
+FSE - 1.0kg ABE,Fire Extinguisher - 1.0kg ABE Powder,2.00,Fire Extinguisher - 1.0kg ABE Powder,21.95,,15% GST on Expenses,Fire Safety Extinguisher - 1.0kg ABE Powder,109.00,200,15% GST on Income,630,310,Active,Tracked
+FSE - 2.5kg ABE,Fire Extinguisher - 2.5kg ABE Powder,1.00,Fire Extinguisher - 2.5kg ABE Powder,44.95,,15% GST on Expenses,Fire Extinguisher - 2.5kg ABE Powder,129.00,200,15% GST on Income,630,310,Active,Tracked
+FSE - 3.5kg CO2,Fire Extinguisher - 3.5kg Carbon Dioxide,,,,,,Fire Extinguisher - 3.5kg Carbon Dioxide,224.00,200,15% GST on Income,,,Active,Untracked
+FSE - 4.5kg ABE Powder,Fire Extinguisher - 4.5kg ABE Powder,1.00,Fire Extinguisher - 4.5kg ABE Powder,58.95,,15% GST on Expenses,Fire Extinguisher - 4.5kg ABE Powder,149.00,200,15% GST on Income,630,310,Active,Tracked
+FSE 5.0kg CO2,Fire Extinguisher - 5.0kg Carbon Dioxide,,Fire Extinguisher - 5.0kg Carbon Dioxide,164.00,,,Fire Extinguisher - 5.0kg Carbon Dioxide,239.00,200,15% GST on Income,,,Active,Untracked
+FSE 9.0kg - ABE,Fire Extinguisher - 9.0kg ABE,,,,,,Fire Extinguisher - 5.0kg Carbon Dioxide,189.00,200,15% GST on Income,,,Active,Untracked
+FSS - DP,Fire Safety Signage - Dry Powder,4.00,Fire Safety Signage - Dry Powder,4.50,,15% GST on Expenses,Fire Safety Signage - Dry Powder,26.00,200,15% GST on Income,630,310,Active,Tracked
+FSS - ES,Fire Safety Signage - Exit Sign,,Fire Safety Signage - Dry Powder,4.50,310,15% GST on Expenses,Fire Safety Signage - Dry Powder,14.00,200,15% GST on Income,,,Active,Untracked
+FSS - FES,Fire Safety Signage - Fire Exit Sign,,Fire Safety Signage - Dry Powder,4.50,310,15% GST on Expenses,Fire Safety Signage - Dry Powder,14.00,200,15% GST on Income,,,Active,Untracked
+FST,Fire Safety Training,,,,,,Fire Safety Training,120.00,200,15% GST on Income,,,Active,Untracked
+FW,Fire Warden Training,,,,,,Fire Warden Training,59.00,200,15% GST on Income,,,Active,Untracked
+FWBR,2.5 Kg ABE Powder Wall Bracket,0.00,2.5 Kg ABE Powder Wall Bracket,0.00,,15% GST on Expenses,2.5 Kg ABE Powder Wall Bracket,0.00,,,630,310,Active,Tracked
+Office,Office Costs,,Office Costs,40.00,469,15% GST on Expenses,,,,,,,Active,Untracked
+Postage,Poastage Fee,,Poastage Fee,1.00,310,15% GST on Expenses,,,,,,,Active,Untracked
+Services,Services Received,,Services Received,50.00,303,15% GST on Expenses,,,,,,,Active,Untracked
+Site Fee,Site Fee - Inner Dunedin,,,,,,Site Fee - Inner Dunedin,45.00,200,15% GST on Income,,,Active,Untracked
+Site Fee - Wider,Site Fee - Wider Dunedin,,,,,,Site Fee - Wider Dunedin,65.00,200,15% GST on Income,,,Active,Untracked
+T & T Microwave-School,Test & Tag Microwave-School,,Test & Tag Microwave-School,0.00,310,15% GST on Expenses,Test & Tag Microwave-School,20.00,,,,,Active,Untracked
+T&T - 3P,Test and Tag - Three Phase,,,,,,Test & Tag - Three Phase,18.00,200,15% GST on Income,,,Active,Untracked
+T&T - MW,Test & Tag - Microwave,,,,,,Test & Tag - Microwave,25.00,200,15% GST on Income,,,Active,Untracked
+T&T - SP,Test and Tag - Single Phase,,,,,,Test & Tag - Single Phase,6.00,200,15% GST on Income,,,Active,Untracked
+T&T-SP-School,Test  & Tag- Single Phase- School,,Test  & Tag- Single Phase- School,0.00,310,15% GST on Expenses,Test  & Tag- Single Phase- School,4.50,,,,,Active,Untracked
+T7T-3P-School,Test & Tag 3 Phase-School,,Test & Tag 3 Phase-School,0.00,310,15% GST on Expenses,Test & Tag 3 Phase-School,14.00,,,,,Active,Untracked
+TT001,T&T - Single Phase,,,2.00,,,Test & Tag Single Phase Test,6.00,,,,,Active,Untracked
+Wall Bracket,2.5 Kg ABE,0.00,2.5 Kg ABE,0.00,,15% GST on Expenses,2.5 Kg ABE,0.00,,,630,310,Active,Tracked
