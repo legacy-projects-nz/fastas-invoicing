@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASTAS · Inv/Rep Checker</title>
+<style>
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--sky:#0ea5e9;--red:#dc2626;--ok:#067647;--amber:#b45309;--bg1:#f7f9fc;--bg2:#eef2f8;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--sky),var(--brand));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;}
+  .topbar .who{font-size:13px;color:var(--muted);}
+  .wrap{max-width:880px;margin:0 auto;padding:24px 20px 70px;}
+  h1{font-size:26px;margin:4px 0 6px;}
+  .sub{color:var(--muted);margin:0 0 18px;font-size:15px;}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tab{padding:8px 15px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .tab .n{display:inline-block;margin-left:6px;background:var(--red);color:#fff;border-radius:999px;padding:0 7px;font-size:12px;}
+  .tab.active .n{background:#fff;color:var(--ink);}
+  .doc{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 6px 18px rgba(16,24,40,.04);}
+  .doc .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .doc h3{margin:0 0 3px;font-size:17px;}
+  .doc .meta{color:var(--muted);font-size:13px;}
+  .type{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:3px 9px;border-radius:999px;}
+  .type.invoice{background:#eff6ff;color:var(--brand);} .type.report{background:#f0fdf4;color:var(--ok);}
+  .pill{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:700;}
+  .pill.pending{background:#fff7ed;color:var(--amber);} .pill.approved{background:#ecfdf3;color:var(--ok);} .pill.rejected{background:#fef2f2;color:var(--red);}
+  a.dl{display:inline-flex;align-items:center;gap:6px;color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;margin-top:10px;}
+  textarea{width:100%;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;resize:vertical;min-height:58px;outline:none;}
+  textarea:focus{border-color:var(--brand);}
+  .actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
+  button{border:none;border-radius:10px;padding:11px 18px;font-weight:700;font-size:14px;cursor:pointer;}
+  button.approve{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+  button.reject{background:#fff;border:1px solid #f4c4c4;color:var(--red);}
+  button:disabled{opacity:.5;cursor:default;}
+  .decided{font-size:13px;color:var(--muted);margin-top:10px;}
+  .note-shown{margin-top:10px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;}
+  .empty{color:var(--muted);text-align:center;padding:50px 0;}
+  .msg{font-size:13px;margin-top:8px;} .msg.ok{color:var(--ok);} .msg.err{color:var(--red);}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><div class="brand-mark">FA</div><b>Inv/Rep Checker</b></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Main menu</a></div>
+  </div>
+
+  <div class="wrap">
+    <h1>Invoices &amp; reports to review</h1>
+    <p class="sub">These were prepared for your businesses. Open each one, add a note if you'd like changes, then approve or reject.</p>
+
+    <div class="tabs">
+      <div class="tab active" data-f="pending">Pending <span class="n" id="nPending" style="display:none">0</span></div>
+      <div class="tab" data-f="approved">Approved</div>
+      <div class="tab" data-f="rejected">Rejected</div>
+      <div class="tab" data-f="all">All</div>
+    </div>
+
+    <div id="host"><div class="empty">Loading…</div></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
+    const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
+    const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.href='index.html'; }
+    const {data:prof}=await sb.from('profiles').select('role').eq('id',session.user.id).single();
+    document.getElementById('who').textContent=session.user.email+' · '+(prof?.role||'licensee');
+
+    let docs=[], filter='pending';
+    const host=document.getElementById('host');
+
+    async function load(){
+      const {data,error}=await sb.from('documents').select('*').order('created_at',{ascending:false});
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      docs=data||[];
+      const np=docs.filter(d=>d.status==='pending').length;
+      const nEl=document.getElementById('nPending'); if(np>0){ nEl.textContent=np; nEl.style.display='inline-block'; } else nEl.style.display='none';
+      render();
+    }
+    function render(){
+      const rows=docs.filter(d=>filter==='all'||d.status===filter);
+      if(!rows.length){ host.innerHTML='<div class="empty">Nothing '+(filter==='all'?'here yet':filter)+'.</div>'; return; }
+      host.innerHTML=rows.map(d=>`
+        <div class="doc" data-id="${d.id}">
+          <div class="hd">
+            <div>
+              <h3>${d.title||(d.doc_type==='invoice'?'Invoice':'Report')} <span class="type ${d.doc_type}">${d.doc_type}</span></h3>
+              <div class="meta">${d.business_name} · added ${new Date(d.created_at).toLocaleDateString()}</div>
+            </div>
+            <span class="pill ${d.status}">${d.status}</span>
+          </div>
+          ${d.storage_path?`<a class="dl" href="#" data-path="${d.storage_path}">⬇ Download file</a>`:'<div class="meta" style="margin-top:8px">No file attached</div>'}
+          ${d.status==='pending'?`
+            <textarea placeholder="Optional: note any changes you'd like (sent to admin)…" data-note="${d.id}"></textarea>
+            <div class="actions">
+              <button class="approve" data-act="approve" data-id="${d.id}">✓ Approve</button>
+              <button class="reject" data-act="reject" data-id="${d.id}">✕ Reject</button>
+            </div>
+            <div class="msg" id="m-${d.id}"></div>`
+          :`${d.licensee_note?`<div class="note-shown"><b>Your note:</b> ${d.licensee_note}</div>`:''}
+            <div class="decided">${d.status==='approved'?'Approved':'Rejected'}${d.decided_at?' · '+new Date(d.decided_at).toLocaleString():''}</div>`}
+        </div>`).join('');
+      host.querySelectorAll('a.dl').forEach(a=>a.addEventListener('click',async e=>{e.preventDefault();
+        const {data,error}=await sb.storage.from('documents').createSignedUrl(a.dataset.path,120);
+        if(error){ alert(error.message); return; } window.open(data.signedUrl,'_blank');
+      }));
+      host.querySelectorAll('button[data-act]').forEach(b=>b.addEventListener('click',()=>decide(b.dataset.id,b.dataset.act,b)));
+    }
+    async function decide(id,act,btn){
+      const note=(document.querySelector(`textarea[data-note="${id}"]`)||{}).value||null;
+      const msg=document.getElementById('m-'+id);
+      if(act==='reject' && !note){ msg.textContent='Please add a note explaining the rejection.'; msg.className='msg err'; return; }
+      btn.disabled=true; msg.textContent='Saving…'; msg.className='msg';
+      const {error}=await sb.from('documents').update({status:act==='approve'?'approved':'rejected',licensee_note:note,decided_at:new Date().toISOString()}).eq('id',id);
+      if(error){ msg.textContent=error.message; msg.className='msg err'; btn.disabled=false; return; }
+      await load();
+    }
+    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); filter=t.dataset.f; render(); }));
+    load();
+  </script>
+</body>
+</html>

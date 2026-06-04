@@ -45,6 +45,7 @@
 </style>
 </head>
 <body>
+  <a href="index.html" style="position:fixed;top:14px;left:16px;z-index:50;display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--red);text-decoration:none;box-shadow:0 4px 12px rgba(220,38,38,.12);">← Main menu</a>
   <div class="hero">
     <div class="badge"><span class="flame"><svg viewBox="0 0 24 24"><path d="M12 2C9 6 7 8.5 7 12a5 5 0 0 0 10 0c0-1.7-.6-3.2-1.6-4.6-.4 1.2-1.1 1.9-2 2.1.6-2.3-.4-5-3.4-7.5z"/></svg></span><b>FAST NZ</b></div>
     <h1>Fire Safety Training Sign-up</h1>
@@ -84,14 +85,14 @@
       </div>
 
       <div id="turnstileBox" style="display:flex;justify-content:center;margin-top:18px;"></div>
-      <button type="submit" class="submit" id="submitBtn">Submit &amp; generate certificates</button>
+      <button type="submit" class="submit" id="submitBtn">Submit for approval</button>
       <div class="msg" id="msg"></div>
     </form>
 
     <div class="done" id="done">
       <div class="tick">✓</div>
-      <h2>All done — thank you!</h2>
-      <p>The training report is on its way to the business email, and each attendee will receive their certificate by email shortly.</p>
+      <h2>Submitted — thank you!</h2>
+      <p>Your training record has been sent to FAST NZ for review. Once it's approved, the report will be emailed to the business and each attendee will receive their certificate.</p>
       <button id="again">Add another business</button>
     </div>
   </div>
@@ -166,7 +167,7 @@
       }catch(err){
         msg.textContent='Could not submit: '+err.message; msg.className='msg err';
       }
-      submitBtn.disabled=false; submitBtn.textContent='Submit & generate certificates';
+      submitBtn.disabled=false; submitBtn.textContent='Submit for approval';
     });
 
     document.getElementById('again').addEventListener('click',()=>location.reload());
