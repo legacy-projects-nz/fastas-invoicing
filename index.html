@@ -78,6 +78,7 @@
   .icon.crm{background:linear-gradient(135deg,#1f2937,#4b5563);box-shadow:0 8px 18px rgba(31,41,55,.45);}
   .icon.gar{background:linear-gradient(135deg,#475569,#94a3b8);box-shadow:0 8px 18px rgba(71,85,105,.45);}
   .icon.cal{background:linear-gradient(135deg,#3f3f46,#71717a);box-shadow:0 8px 18px rgba(63,63,70,.45);}
+  .icon.admin{background:linear-gradient(135deg,#111827,#374151);box-shadow:0 8px 18px rgba(17,24,39,.5);}
 
   .btn{
     display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;margin-top:auto;
@@ -108,7 +109,6 @@
     .subtitle{margin-top:6px;font-size:15px;}
     .cards{padding:18px 14px 8px;gap:14px;}
     .card{min-height:136px;padding:14px 8px;gap:13px;width:calc(50% - 7px);}
-    #patguardCard{display:none;} /* desktop-only tool */
     .icon{width:74px;height:74px;border-radius:19px;}
     .icon svg{width:38px;height:38px;}
     .card h2{font-size:14.5px;}
@@ -192,13 +192,21 @@
       <h2>Price Setting</h2>
     </a>
 
-    <!-- Row 3 (dark grey — review & external): Inv/Rep Checker + OnePageCRM -->
+    <!-- Row 3 (dark grey — review & external): Inv/Rep Checker (licensee) / Admin Portal (admin) + OnePageCRM -->
     <a class="card t-grey" id="checkerCard" href="checker.html" style="display:none;">
       <span class="cardbadge" id="checkBadge">0</span>
       <div class="icon check">
         <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
       </div>
       <h2>Inv/Rep Checker</h2>
+    </a>
+
+    <a class="card t-grey" id="adminCard" href="admin.html" style="display:none;">
+      <span class="cardbadge" id="adminBadge">0</span>
+      <div class="icon admin">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.56-1.63.94l-2.39-.96a.5.5 0 0 0-.61.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.5.38 1.04.7 1.63.94l.36 2.54c.04.24.25.42.5.42h3.84c.25 0 .46-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.63-.94l2.39.96c.22.09.48 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg>
+      </div>
+      <h2>Admin Portal</h2>
     </a>
 
     <a class="card t-grey" href="https://app.onepagecrm.com" target="_blank" rel="noopener">
@@ -223,10 +231,6 @@
     </a>
 
   </section>
-
-  <p class="subtitle" id="adminLink" style="margin:0 0 10px;display:none;">
-    <a href="admin.html" style="color:var(--brand);font-weight:700;text-decoration:none;font-size:15px;">⚙ Admin portal →</a>
-  </p>
 
   <!-- ===================== SESSION BAR (bottom) ===================== -->
   <div class="userbar" id="userbar">
@@ -291,13 +295,14 @@
     const userbar=document.getElementById('userbar');
     const ubEmail=document.getElementById('ubEmail');
     const ubRole=document.getElementById('ubRole');
-    const adminLink=document.getElementById('adminLink');
     document.getElementById('signout').addEventListener('click',async()=>{ await sb.auth.signOut(); location.reload(); });
 
     const checkerCard=document.getElementById('checkerCard');
     const checkBadge=document.getElementById('checkBadge');
+    const adminCard=document.getElementById('adminCard');
+    const adminBadge=document.getElementById('adminBadge');
     async function applySession(session){
-      if(!session){ lock(); userbar.style.display='none'; adminLink.style.display='none'; checkerCard.style.display='none'; return; }
+      if(!session){ lock(); userbar.style.display='none'; checkerCard.style.display='none'; adminCard.style.display='none'; return; }
       unlock(); userbar.style.display='flex';
       const {data:prof}=await sb.from('profiles').select('role,full_name,whatsapp_link,calendar_link').eq('id',session.user.id).single();
       const role=prof?.role||'licensee';
@@ -310,13 +315,17 @@
       if(prof?.calendar_link){ bk.href=prof.calendar_link; bk.onclick=null; }
       else { bk.href='#'; bk.onclick=function(e){ e.preventDefault(); openProfile('Add your booking calendar link to use this button.'); }; }
       ubRole.textContent=role;
-      adminLink.style.display = role==='admin' ? 'block' : 'none';
-      // Inv/Rep Checker — shown to licensees; badge counts items awaiting their approval
+      // Inv/Rep Checker — licensees only; badge counts items awaiting their approval
       if(role==='licensee'){
-        checkerCard.style.display='flex';
+        checkerCard.style.display='flex'; adminCard.style.display='none';
         const {count}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('licensee_id',session.user.id).eq('status','pending');
         if(count&&count>0){ checkBadge.textContent=count; checkBadge.style.display='flex'; } else { checkBadge.style.display='none'; }
-      } else { checkerCard.style.display='none'; }
+      } else {
+        // Admin Portal tile — admins only; badge counts training sign-ups awaiting approval
+        checkerCard.style.display='none'; adminCard.style.display='flex';
+        const {count}=await sb.from('training_reports').select('id',{count:'exact',head:true}).eq('status','pending');
+        if(count&&count>0){ adminBadge.textContent=count; adminBadge.style.display='flex'; } else { adminBadge.style.display='none'; }
+      }
     }
     // ===== profile editor =====
     let currentProfile={};

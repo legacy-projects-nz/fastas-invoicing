@@ -60,6 +60,7 @@
       <div class="tab" data-tab="approvals">Training approvals <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
       <div class="tab" data-tab="records">Invoices &amp; reports</div>
       <div class="tab" data-tab="patguard">PatGuard files</div>
+      <div class="tab" data-tab="links">Quick links</div>
       <div class="tab" data-tab="reports">Training reports</div>
       <div class="tab" data-tab="templates">Templates</div>
       <div class="tab" data-tab="pricing">Pricing</div>
@@ -129,9 +130,45 @@
     <!-- PATGUARD FILES -->
     <div class="panel" id="panel-patguard">
       <div class="card">
+        <h2>Upload a .gar file</h2>
+        <p class="hint">Add a PatGuard backup on behalf of a licensee — it's stored against them, same as if they'd used the .gar Uploader.</p>
+        <div class="row">
+          <div class="f"><label>Licensee</label><select id="pgLic"></select></div>
+          <div class="f"><label>.gar file</label><input id="pgFile" type="file" accept=".gar"></div>
+          <button class="primary" id="pgUpload">Upload</button>
+        </div>
+        <div class="msg" id="pgMsg"></div>
+      </div>
+      <div class="card">
         <h2>PatGuard backups (.gar)</h2>
-        <p class="hint">Files uploaded by licensees through the PatGuard Uploader. Download to open in PATGuard.</p>
+        <p class="hint">All uploads — from licensees via the .gar Uploader, or added here. Download to open in PATGuard.</p>
         <div id="pgHost"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- QUICK LINKS -->
+    <div class="panel" id="panel-links">
+      <div class="card">
+        <h2>Quick links</h2>
+        <p class="hint">Jump to the tools around FastAs Admin.</p>
+        <div style="display:flex;flex-direction:column;gap:10px;max-width:460px;">
+          <a class="qlink" href="https://go.xero.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
+            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#13b5ea);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;">X</span>
+            Xero <span style="font-weight:400;color:var(--muted);font-size:13px;">— approve invoices</span>
+          </a>
+          <a class="qlink" href="mailto:support@fastas.nz" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
+            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#166534,#22c55e);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg></span>
+            Support inbox <span style="font-weight:400;color:var(--muted);font-size:13px;">— support@fastas.nz</span>
+          </a>
+          <a class="qlink" href="https://dashboard.render.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
+            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#111827,#374151);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;">▲</span>
+            Render <span style="font-weight:400;color:var(--muted);font-size:13px;">— website hosting</span>
+          </a>
+          <a class="qlink" href="https://supabase.com/dashboard/project/ecgvkifvlrcfrnqbades" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
+            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#15803d,#3ecf8e);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M13 2 3 14h7v8l10-12h-7V2z"/></svg></span>
+            Supabase <span style="font-weight:400;color:var(--muted);font-size:13px;">— database &amp; functions</span>
+          </a>
+        </div>
       </div>
     </div>
 
@@ -204,6 +241,17 @@
       }));
       loadUsers(); loadReports(); loadTemplates(); loadApprovals(); loadLicenseeOptions(); loadRecords(); loadWaGroups(); loadPatguard();
       document.getElementById('rcSend').addEventListener('click',sendRecord);
+      document.getElementById('pgUpload').addEventListener('click',uploadGar);
+      // auto-fill each title from the chosen file's name (editable; manual titles aren't overwritten)
+      [['rcF-inv','rcT-inv'],['rcF-r1','rcT-r1'],['rcF-r2','rcT-r2'],['rcF-r3','rcT-r3'],['rcF-r4','rcT-r4']].forEach(function(p){
+        var fi=document.getElementById(p[0]), ti=document.getElementById(p[1]);
+        fi.addEventListener('change',function(){
+          if(!fi.files[0]) return;
+          var name=fi.files[0].name.replace(/\.pdf$/i,'').replace(/[_-]+/g,' ').trim();
+          if(!ti.value.trim() || ti.dataset.auto==='1'){ ti.value=name; ti.dataset.auto='1'; }
+        });
+        ti.addEventListener('input',function(){ ti.dataset.auto=''; });
+      });
 
       document.getElementById('nuAdd').addEventListener('click',async()=>{
         const msg=document.getElementById('nuMsg'); msg.textContent='';
@@ -305,7 +353,28 @@
     async function loadLicenseeOptions(){
       const {data}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
       licenseeList=data||[];
-      document.getElementById('rcLic').innerHTML=licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('')||'<option value="">No licensees</option>';
+      const opts=licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('')||'<option value="">No licensees</option>';
+      document.getElementById('rcLic').innerHTML=opts;
+      document.getElementById('pgLic').innerHTML=opts;
+    }
+    async function uploadGar(){
+      const msg=document.getElementById('pgMsg'); msg.textContent='';
+      const licensee_id=document.getElementById('pgLic').value;
+      const file=document.getElementById('pgFile').files[0];
+      if(!licensee_id){ msg.textContent='Pick a licensee.'; msg.className='msg err'; return; }
+      if(!file){ msg.textContent='Choose a .gar file.'; msg.className='msg err'; return; }
+      if(!file.name.toLowerCase().endsWith('.gar')){ msg.textContent='That isn\'t a .gar file.'; msg.className='msg err'; return; }
+      const btn=document.getElementById('pgUpload'); btn.disabled=true; msg.textContent='Uploading…'; msg.className='msg';
+      try{
+        const path=licensee_id+'/'+Date.now()+'-'+file.name;
+        const {error:upErr}=await sb.storage.from('patguard').upload(path,file,{contentType:'application/octet-stream',upsert:true});
+        if(upErr) throw upErr;
+        const {error}=await sb.from('patguard_files').insert({licensee_id,file_name:file.name,storage_path:path});
+        if(error) throw error;
+        msg.textContent='Uploaded ✓'; msg.className='msg ok'; document.getElementById('pgFile').value='';
+        loadPatguard();
+      }catch(e){ msg.textContent='Upload failed: '+e.message; msg.className='msg err'; }
+      btn.disabled=false;
     }
     async function sendRecord(){
       const msg=document.getElementById('rcMsg'); msg.textContent='';
