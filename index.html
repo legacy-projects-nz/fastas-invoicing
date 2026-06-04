@@ -38,8 +38,8 @@
   h1 span{color:var(--brand);}
   .subtitle{margin:14px auto 0;max-width:520px;font-size:17px;line-height:1.6;color:var(--muted);}
 
-  /* top-right session bar */
-  .userbar{position:fixed;top:14px;right:16px;z-index:1000;display:none;align-items:center;gap:10px;font-size:13px;color:var(--muted);}
+  /* session bar — sits at the bottom of the page */
+  .userbar{display:none;align-items:center;justify-content:center;gap:10px;font-size:13px;color:var(--muted);margin-top:auto;padding:10px 16px 0;flex-wrap:wrap;}
   .userbar .pill{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;box-shadow:0 4px 12px rgba(16,24,40,.06);}
   .userbar .role{font-weight:700;color:var(--brand);text-transform:capitalize;}
   .userbar button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--ink);}
@@ -96,8 +96,20 @@
     z-index:99999 !important;opacity:1 !important;pointer-events:auto !important;
   }
 
-  footer{margin-top:auto;padding:22px;font-size:13px;color:#98a2b3;}
-  @media (max-width:600px){ h1{font-size:32px;} header{padding-top:48px;} }
+  footer{padding:12px 16px 18px;font-size:13px;color:#98a2b3;}
+  /* compact layout: all six tiles + header + session bar fit a standard phone screen */
+  @media (max-width:600px){
+    header{padding:14px 20px 0;}
+    .brand{display:none;}
+    h1{font-size:28px;}
+    .subtitle{margin-top:6px;font-size:15px;}
+    .cards{padding:14px 16px 8px;gap:10px;}
+    .card{min-height:104px;padding:12px 8px;gap:8px;width:calc(50% - 5px);}
+    .icon{width:46px;height:46px;border-radius:13px;}
+    .icon svg{width:24px;height:24px;}
+    .card h2{font-size:13.5px;}
+    footer{padding:8px 12px 12px;}
+  }
 
   /* ===== LOGIN GATE (Supabase Auth) ===== */
   #gate{position:fixed;inset:0;z-index:200000;background:linear-gradient(160deg,var(--bg1),var(--bg2));display:flex;align-items:center;justify-content:center;padding:24px;}
@@ -136,19 +148,13 @@
     </form>
   </div>
 
-  <!-- ===================== SESSION BAR ===================== -->
-  <div class="userbar" id="userbar">
-    <span class="pill"><span id="ubEmail"></span> · <span class="role" id="ubRole"></span></span>
-    <button id="signout">Sign out</button>
-  </div>
-
   <header>
     <div class="brand">
       <div class="brand-mark">FA</div>
       <div class="brand-name">FASTAS</div>
     </div>
     <h1>FASTAS <span>Invoicing</span></h1>
-    <p class="subtitle">Create invoices by voice, manage pricing, and run on-site fire safety training — all in one place.</p>
+    <p class="subtitle">Fast &amp; Easy as.</p>
   </header>
 
   <section class="cards">
@@ -201,9 +207,15 @@
 
   </section>
 
-  <p class="subtitle" id="adminLink" style="margin-top:-24px;margin-bottom:24px;display:none;">
+  <p class="subtitle" id="adminLink" style="margin:0 0 10px;display:none;">
     <a href="admin.html" style="color:var(--brand);font-weight:700;text-decoration:none;font-size:15px;">⚙ Admin portal →</a>
   </p>
+
+  <!-- ===================== SESSION BAR (bottom) ===================== -->
+  <div class="userbar" id="userbar">
+    <span class="pill"><span id="ubEmail"></span> · <span class="role" id="ubRole"></span></span>
+    <button id="signout">Sign out</button>
+  </div>
 
   <footer>© FASTAS Invoicing</footer>
 
