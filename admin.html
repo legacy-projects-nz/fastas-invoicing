@@ -76,6 +76,11 @@
         <h2>Existing users</h2>
         <div id="usersHost"><div class="empty">Loading…</div></div>
       </div>
+      <div class="card">
+        <h2>Licensee WhatsApp groups</h2>
+        <p class="hint">Each licensee has their own WhatsApp group for invoice changes. The link you save here is what their "Join the WhatsApp group" button opens.</p>
+        <div id="waHost"><div class="empty">Loading…</div></div>
+      </div>
     </div>
 
     <!-- TRAINING APPROVALS -->
@@ -96,7 +101,7 @@
           <div class="f"><label>Licensee</label><select id="rcLic"></select></div>
           <div class="f"><label>Type</label><select id="rcType"><option value="invoice">Invoice</option><option value="report">Report</option></select></div>
           <div class="f" style="flex:1 1 180px;"><label>Business name</label><input id="rcBiz" placeholder="e.g. Acme Ltd"></div>
-          <div class="f" style="flex:1 1 180px;"><label>Title (optional)</label><input id="rcTitle" placeholder="e.g. Invoice #1042"></div>
+          <div class="f" style="flex:1 1 180px;"><label>Title (shown on the licensee's download)</label><input id="rcTitle" placeholder="e.g. Invoice #1042 — March"></div>
           <div class="f"><label>File (PDF)</label><input id="rcFile" type="file" accept=".pdf"></div>
           <button class="primary" id="rcSend">Send for approval</button>
         </div>
@@ -175,7 +180,7 @@
         document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
         t.classList.add('active'); document.getElementById('panel-'+t.dataset.tab).classList.add('active');
       }));
-      loadUsers(); loadReports(); loadTemplates(); loadApprovals(); loadLicenseeOptions(); loadRecords();
+      loadUsers(); loadReports(); loadTemplates(); loadApprovals(); loadLicenseeOptions(); loadRecords(); loadWaGroups();
       document.getElementById('rcSend').addEventListener('click',sendRecord);
 
       document.getElementById('nuAdd').addEventListener('click',async()=>{
@@ -232,6 +237,30 @@
       }));
     }
 
+    async function loadWaGroups(){
+      const host=document.getElementById('waHost');
+      const {data,error}=await sb.from('profiles').select('id,email,full_name,whatsapp_link').eq('role','licensee').order('email');
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      if(!data.length){ host.innerHTML='<div class="empty">No licensees yet.</div>'; return; }
+      host.innerHTML=data.map(l=>`
+        <div class="row" style="margin-bottom:10px;align-items:center;">
+          <div style="flex:0 0 220px;font-size:14px;"><b>${l.full_name||l.email}</b><br><span style="color:var(--muted);font-size:12px;">${l.email}</span></div>
+          <input style="flex:1 1 260px;" class="waIn" data-uid="${l.id}" placeholder="https://chat.whatsapp.com/…" value="${l.whatsapp_link||''}">
+          <button class="primary waSave" data-uid="${l.id}">Save</button>
+          <span class="msg" id="wam-${l.id}"></span>
+        </div>`).join('');
+      host.querySelectorAll('.waSave').forEach(b=>b.addEventListener('click',async()=>{
+        const uid=b.dataset.uid, val=host.querySelector(`.waIn[data-uid="${uid}"]`).value.trim();
+        const msg=document.getElementById('wam-'+uid); msg.textContent='';
+        if(val && !val.startsWith('https://chat.whatsapp.com/') && !val.startsWith('https://wa.me/')){
+          msg.textContent='Use a chat.whatsapp.com group link or wa.me link.'; msg.className='msg err'; return;
+        }
+        const {error}=await sb.from('profiles').update({whatsapp_link:val||null}).eq('id',uid);
+        if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+        msg.textContent='Saved ✓'; msg.className='msg ok'; setTimeout(()=>msg.textContent='',1800);
+      }));
+    }
+
     let licenseeList=[];
     async function loadLicenseeOptions(){
       const {data}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
@@ -246,7 +275,12 @@
       const title=document.getElementById('rcTitle').value.trim();
       const file=document.getElementById('rcFile').files[0];
       if(!licensee_id||!business){ msg.textContent='Pick a licensee and enter a business name.'; msg.className='msg err'; return; }
+      if(!title){ msg.textContent='Add a title — it labels the licensee\'s download so they know what they\'re opening.'; msg.className='msg err'; return; }
       if(!file){ msg.textContent='Choose a PDF file.'; msg.className='msg err'; return; }
+      if(doc_type==='report'){
+        const {count}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('licensee_id',licensee_id).eq('business_name',business).eq('doc_type','report').eq('status','pending');
+        if((count??0)>=3){ msg.textContent='This business already has 3 pending reports — the licensee needs to action those first.'; msg.className='msg err'; return; }
+      }
       const btn=document.getElementById('rcSend'); btn.disabled=true;
       try{
         const path=licensee_id+'/'+Date.now()+'-'+file.name;
@@ -269,7 +303,7 @@
       host.innerHTML='<table><thead><tr><th>Business</th><th>Type</th><th>Licensee</th><th>Status</th><th>Licensee note</th><th>File</th></tr></thead><tbody>'+
         data.map(d=>`<tr><td>${d.business_name}${d.title?' — '+d.title:''}</td><td>${d.doc_type}</td><td>${lmap[d.licensee_id]||'—'}</td>
           <td><span class="pill ${d.status}">${d.status}</span></td><td>${d.licensee_note?d.licensee_note:'—'}</td>
-          <td>${d.storage_path?`<a class="dl" data-bucket="documents" data-path="${d.storage_path}" href="#">Download</a>`:'—'}</td></tr>`).join('')+'</tbody></table>';
+          <td>${d.storage_path?`<a class="dl" data-bucket="documents" data-path="${d.storage_path}" href="#">⬇ ${d.title||d.doc_type}</a>`:'—'}</td></tr>`).join('')+'</tbody></table>';
       host.querySelectorAll('a.dl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
     }
 

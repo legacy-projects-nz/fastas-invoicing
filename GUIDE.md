@@ -39,6 +39,10 @@ How to open it: sign in on the home page as the admin, then click **"⚙ Admin p
 3. Click **Show** under Certificates, then a name, to download that attendee's certificate. A ✓ means it was emailed.
 4. **Delete** removes a report (and its attendees).
 
+**Set a licensee's WhatsApp group (Users & roles tab)**
+1. In **Licensee WhatsApp groups**, paste the group invite link (`https://chat.whatsapp.com/…`) next to the licensee and **Save**.
+2. Their home page "Join the WhatsApp group" button opens that link. If none is set, the default group is used.
+
 **Approve training (Training approvals tab)**
 1. Open **Training approvals** — it lists every pending sign-up across all licensees (the tab shows a red count).
 2. **Approve & send** generates the report + certificates and emails them; **Reject** (with an optional reason) sets it aside.
@@ -90,10 +94,9 @@ The **Inv/Rep Checker** button appears on the home page for licensees, with a re
 Leave this open on the desktop you leave with the business owner.
 1. They fill in **business & site details** (the report is emailed to the business email they enter).
 2. They add each **attendee**: first name, last name, email, position. **+ Add another attendee** for more.
-3. Pick the training type (fire safety / fire warden / both).
-4. **Submit for approval.** This no longer sends straight away — it creates a **pending** record for FAST NZ to review.
-5. An **admin approves it** in the admin portal's **Training approvals** tab. On approval the system builds the report + a certificate per attendee, emails them out, and the record moves to Training reports. (Reject sets it aside instead.)
-6. The screen resets for the next business via **Add another business**.
+3. **Submit for approval.** This doesn't send straight away — it creates a **pending** record for FAST NZ to review. (This form covers **fire safety training only**; fire warden training runs through its separate online system.)
+4. An **admin approves it** in the admin portal's **Training approvals** tab. On approval the system builds the report + a certificate per attendee, emails them out, and the record moves to Training reports. (Reject sets it aside instead.)
+5. The screen resets for the next business via **Add another business**.
 
 (You can also reach this from the **Training** button on the home page.)
 

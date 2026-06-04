@@ -66,14 +66,6 @@
           <div><label>Business email (for the report) <span class="req">*</span></label><input name="contact_email" type="email" required></div>
           <div><label>Date of training <span class="req">*</span></label><input name="training_date" type="date" required></div>
           <div class="full"><label>Trainer</label><input name="trainer_name" value="FAST NZ — Ben Kofoed"></div>
-          <div class="full">
-            <label>Training delivered <span class="req">*</span></label>
-            <div class="pill-types">
-              <label><input type="radio" name="training_type" value="fire_safety" checked> Fire safety</label>
-              <label><input type="radio" name="training_type" value="fire_warden"> Fire warden</label>
-              <label><input type="radio" name="training_type" value="both"> Both</label>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -152,7 +144,7 @@
         site_address:fd.get('site_address'), contact_person:fd.get('contact_person'),
         contact_phone:fd.get('contact_phone'), contact_email:fd.get('contact_email'),
         training_date:fd.get('training_date'), trainer_name:fd.get('trainer_name'),
-        training_type:fd.get('training_type'), attendees, turnstile_token:turnstileToken
+        training_type:'fire_safety', attendees, turnstile_token:turnstileToken
       };
       submitBtn.disabled=true; submitBtn.textContent='Submitting…';
       try{
