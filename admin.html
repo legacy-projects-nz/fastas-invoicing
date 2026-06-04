@@ -54,6 +54,7 @@
       <div class="tab active" data-tab="users">Users &amp; roles</div>
       <div class="tab" data-tab="approvals">Training approvals <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
       <div class="tab" data-tab="records">Invoices &amp; reports</div>
+      <div class="tab" data-tab="patguard">PatGuard files</div>
       <div class="tab" data-tab="reports">Training reports</div>
       <div class="tab" data-tab="templates">Templates</div>
       <div class="tab" data-tab="pricing">Pricing</div>
@@ -111,6 +112,15 @@
       <div class="card">
         <h2>Sent items &amp; status</h2>
         <div id="recHost"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- PATGUARD FILES -->
+    <div class="panel" id="panel-patguard">
+      <div class="card">
+        <h2>PatGuard backups (.gar)</h2>
+        <p class="hint">Files uploaded by licensees through the PatGuard Uploader. Download to open in PATGuard.</p>
+        <div id="pgHost"><div class="empty">Loading…</div></div>
       </div>
     </div>
 
@@ -181,7 +191,7 @@
         document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
         t.classList.add('active'); document.getElementById('panel-'+t.dataset.tab).classList.add('active');
       }));
-      loadUsers(); loadReports(); loadTemplates(); loadApprovals(); loadLicenseeOptions(); loadRecords(); loadWaGroups();
+      loadUsers(); loadReports(); loadTemplates(); loadApprovals(); loadLicenseeOptions(); loadRecords(); loadWaGroups(); loadPatguard();
       document.getElementById('rcSend').addEventListener('click',sendRecord);
 
       document.getElementById('nuAdd').addEventListener('click',async()=>{
@@ -235,6 +245,24 @@
         const note=prompt('Reason for rejecting '+b.dataset.ref+'? (optional)'); if(note===null) return;
         try{ await callEdge('approve-training',{report_id:b.dataset.id,action:'reject',note:note}); loadApprovals(); loadReports(); }
         catch(e){ alert(e.message); }
+      }));
+    }
+
+    async function loadPatguard(){
+      const host=document.getElementById('pgHost');
+      const {data,error}=await sb.from('patguard_files').select('*').order('created_at',{ascending:false});
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      if(!data.length){ host.innerHTML='<div class="empty">No .gar files uploaded yet.</div>'; return; }
+      const {data:lic}=await sb.from('profiles').select('id,full_name,email');
+      const lmap={}; (lic||[]).forEach(l=>lmap[l.id]=l.full_name||l.email);
+      host.innerHTML='<table><thead><tr><th>Licensee</th><th>File</th><th>Uploaded</th><th></th><th></th></tr></thead><tbody>'+
+        data.map(f=>`<tr><td>${lmap[f.licensee_id]||'—'}</td><td>${f.file_name}</td><td>${new Date(f.created_at).toLocaleString()}</td>
+          <td><a class="dl" data-bucket="patguard" data-path="${f.storage_path}" href="#">⬇ ${f.file_name}</a></td>
+          <td style="text-align:right"><button class="ghost danger pgDel" data-id="${f.id}" data-name="${f.file_name}">Delete</button></td></tr>`).join('')+'</tbody></table>';
+      host.querySelectorAll('a.dl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
+      host.querySelectorAll('button.pgDel').forEach(b=>b.addEventListener('click',async()=>{
+        if(!confirm('Delete '+b.dataset.name+'?')) return;
+        await sb.from('patguard_files').delete().eq('id',b.dataset.id); loadPatguard();
       }));
     }
 

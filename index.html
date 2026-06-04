@@ -48,13 +48,13 @@
 
   .cards{
     display:flex;flex-wrap:wrap;gap:18px;justify-content:center;
-    padding:28px 24px 40px;width:100%;max-width:440px;
+    padding:28px 24px 40px;width:100%;max-width:760px;
   }
   /* each card IS the button: icon centred, title under it, two per row */
   .card{
     position:relative;background:#fff;border:1px solid var(--line);
     border-radius:20px;padding:20px 12px;cursor:pointer;
-    width:calc(50% - 7px);min-height:142px;
+    width:160px;min-height:150px;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
     box-shadow:0 10px 30px rgba(16,24,40,.08);
     user-select:none;-webkit-tap-highlight-color:transparent;
@@ -76,6 +76,8 @@
   .icon svg{width:42px;height:42px;fill:#fff;}
   .card h2{margin:0;font-size:15px;font-weight:800;text-align:center;letter-spacing:-.2px;}
   .icon.crm{background:linear-gradient(135deg,#1f2937,#4b5563);box-shadow:0 8px 18px rgba(31,41,55,.45);}
+  .icon.gar{background:linear-gradient(135deg,#475569,#94a3b8);box-shadow:0 8px 18px rgba(71,85,105,.45);}
+  .icon.cal{background:linear-gradient(135deg,#3f3f46,#71717a);box-shadow:0 8px 18px rgba(63,63,70,.45);}
 
   .btn{
     display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;margin-top:auto;
@@ -108,6 +110,7 @@
     .subtitle{margin-top:6px;font-size:15px;}
     .cards{padding:18px 14px 8px;gap:14px;}
     .card{min-height:136px;padding:14px 8px;gap:13px;width:calc(50% - 7px);}
+    #patguardCard{display:none;} /* desktop-only tool */
     .icon{width:74px;height:74px;border-radius:19px;}
     .icon svg{width:38px;height:38px;}
     .card h2{font-size:14.5px;}
@@ -207,6 +210,20 @@
       <h2>OnePageCRM</h2>
     </a>
 
+    <a class="card t-grey" id="patguardCard" href="upload.html">
+      <div class="icon gar">
+        <svg viewBox="0 0 24 24"><path d="M12 2 5.5 8.5l1.4 1.4L11 5.8V16h2V5.8l4.1 4.1 1.4-1.4L12 2zM5 20h14v-2H5v2z"/></svg>
+      </div>
+      <h2>PatGuard Uploader</h2>
+    </a>
+
+    <a class="card t-grey" id="bookingCard" href="#" target="_blank" rel="noopener">
+      <div class="icon cal">
+        <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5zm4 6H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2z"/></svg>
+      </div>
+      <h2>Bookings</h2>
+    </a>
+
   </section>
 
   <p class="subtitle" id="adminLink" style="margin:0 0 10px;display:none;">
@@ -216,7 +233,25 @@
   <!-- ===================== SESSION BAR (bottom) ===================== -->
   <div class="userbar" id="userbar">
     <span class="pill"><span id="ubEmail"></span> — <span class="role" id="ubRole"></span></span>
+    <button id="profileBtn">👤 Profile</button>
     <button id="signout">Sign out</button>
+  </div>
+
+  <!-- ===================== PROFILE EDITOR ===================== -->
+  <div id="profileModal" style="display:none;position:fixed;inset:0;z-index:150000;background:rgba(16,24,40,.45);align-items:center;justify-content:center;padding:24px;">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 24px;width:100%;max-width:380px;box-shadow:0 16px 44px rgba(16,24,40,.25);">
+      <h3 style="margin:0 0 4px;font-size:19px;">Your profile</h3>
+      <p style="margin:0 0 16px;font-size:13px;color:var(--muted);">Shown on your sign-in info. The booking link is what your Bookings button opens.</p>
+      <label style="display:block;font-size:12px;font-weight:700;color:#344054;margin-bottom:5px;">Name / area</label>
+      <input id="pfName" style="width:100%;padding:11px 12px;font-size:15px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px;outline:none;" placeholder="e.g. Dunedin">
+      <label style="display:block;font-size:12px;font-weight:700;color:#344054;margin-bottom:5px;">Booking calendar link</label>
+      <input id="pfCal" style="width:100%;padding:11px 12px;font-size:15px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;outline:none;" placeholder="https://calendar.google.com/… or Calendly etc.">
+      <div id="pfMsg" style="font-size:13px;min-height:18px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="pfCancel" style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer;font-size:14px;">Cancel</button>
+        <button id="pfSave" style="background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;cursor:pointer;font-size:14px;">Save</button>
+      </div>
+    </div>
   </div>
 
   <footer>© FASTAS Invoicing</footer>
@@ -266,11 +301,16 @@
     async function applySession(session){
       if(!session){ lock(); userbar.style.display='none'; adminLink.style.display='none'; checkerCard.style.display='none'; return; }
       unlock(); userbar.style.display='flex';
-      const {data:prof}=await sb.from('profiles').select('role,full_name,whatsapp_link').eq('id',session.user.id).single();
+      const {data:prof}=await sb.from('profiles').select('role,full_name,whatsapp_link,calendar_link').eq('id',session.user.id).single();
       const role=prof?.role||'licensee';
+      currentProfile=prof||{};
       ubEmail.textContent=prof?.full_name||session.user.email;
       // each licensee has their own WhatsApp group — set by the admin in the portal
       if(prof?.whatsapp_link) document.getElementById('waLink').href=prof.whatsapp_link;
+      // Bookings tile → the user's own calendar link; if none set, open the profile editor
+      const bk=document.getElementById('bookingCard');
+      if(prof?.calendar_link){ bk.href=prof.calendar_link; bk.onclick=null; }
+      else { bk.href='#'; bk.onclick=function(e){ e.preventDefault(); openProfile('Add your booking calendar link to use this button.'); }; }
       ubRole.textContent=role;
       adminLink.style.display = role==='admin' ? 'block' : 'none';
       // Inv/Rep Checker — shown to licensees; badge counts items awaiting their approval
@@ -280,6 +320,30 @@
         if(count&&count>0){ checkBadge.textContent=count; checkBadge.style.display='flex'; } else { checkBadge.style.display='none'; }
       } else { checkerCard.style.display='none'; }
     }
+    // ===== profile editor =====
+    let currentProfile={};
+    const pfModal=document.getElementById('profileModal');
+    const pfMsg=document.getElementById('pfMsg');
+    function openProfile(note){
+      document.getElementById('pfName').value=currentProfile.full_name||'';
+      document.getElementById('pfCal').value=currentProfile.calendar_link||'';
+      pfMsg.textContent=note||''; pfMsg.style.color=note?'#b45309':'';
+      pfModal.style.display='flex';
+    }
+    document.getElementById('profileBtn').addEventListener('click',()=>openProfile());
+    document.getElementById('pfCancel').addEventListener('click',()=>pfModal.style.display='none');
+    pfModal.addEventListener('click',e=>{ if(e.target===pfModal) pfModal.style.display='none'; });
+    document.getElementById('pfSave').addEventListener('click',async()=>{
+      const name=document.getElementById('pfName').value.trim();
+      const cal=document.getElementById('pfCal').value.trim();
+      if(cal && !/^https:\/\//.test(cal)){ pfMsg.textContent='The calendar link must start with https://'; pfMsg.style.color='#d92d20'; return; }
+      const {error}=await sb.rpc('update_my_profile',{p_full_name:name,p_calendar_link:cal});
+      if(error){ pfMsg.textContent=error.message; pfMsg.style.color='#d92d20'; return; }
+      pfModal.style.display='none';
+      const {data:{session:s}}=await sb.auth.getSession();
+      await applySession(s);
+    });
+
     const {data:{session}}=await sb.auth.getSession();
     await applySession(session);
     sb.auth.onAuthStateChange((_e,s)=>applySession(s));

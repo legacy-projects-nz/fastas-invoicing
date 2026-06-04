@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASTAS · PatGuard Uploader</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
+<style>
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--grey:#374151;--red:#dc2626;--ok:#067647;--bg1:#f7f9fc;--bg2:#eef2f8;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#374151,#6b7280);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;}
+  .topbar .who{font-size:13px;color:var(--muted);}
+  .wrap{max-width:680px;margin:0 auto;padding:26px 20px 60px;}
+  h1{font-size:26px;margin:4px 0 6px;}
+  .sub{color:var(--muted);margin:0 0 20px;font-size:15px;}
+  .drop{background:#fff;border:2px dashed #c9d2e3;border-radius:18px;padding:36px 24px;text-align:center;cursor:pointer;transition:border-color .15s ease, background .15s ease;}
+  .drop:hover,.drop.over{border-color:var(--grey);background:#f8fafc;}
+  .drop .big{font-size:42px;}
+  .drop b{display:block;margin:8px 0 4px;font-size:17px;}
+  .drop span{color:var(--muted);font-size:13px;}
+  #file{display:none;}
+  .selected{margin-top:14px;font-size:14px;display:none;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  button.primary{background:linear-gradient(135deg,#374151,#6b7280);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-weight:700;font-size:15px;cursor:pointer;}
+  button.primary:disabled{opacity:.5;cursor:default;}
+  .msg{font-size:14px;margin-top:12px;min-height:18px;} .msg.ok{color:var(--ok);} .msg.err{color:var(--red);}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:24px;}
+  .card h2{margin:0 0 12px;font-size:17px;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
+  tr:last-child td{border-bottom:none;}
+  .empty{color:var(--muted);font-size:14px;padding:8px 0;}
+  /* desktop-only tool: hide the uploader on phones */
+  .phoneNote{display:none;background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px 20px;text-align:center;color:var(--muted);font-size:15px;line-height:1.6;}
+  @media (max-width:700px){
+    #uploaderUI{display:none;}
+    .phoneNote{display:block;}
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><div class="brand-mark">PG</div><b>PatGuard Uploader</b></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Main menu</a></div>
+  </div>
+
+  <div class="wrap">
+    <h1>Upload a PatGuard backup</h1>
+    <p class="sub">Send your PatGuard <b>.gar</b> file to FAST AS. It's stored securely and available to the admin team.</p>
+
+    <div class="phoneNote">💻 The PatGuard Uploader is a <b>desktop tool</b> — open this page on the computer that runs PATGuard to upload your .gar file.</div>
+
+    <div id="uploaderUI">
+      <div class="drop" id="drop">
+        <div class="big">⬆</div>
+        <b>Click to choose your .gar file</b>
+        <span>or drag &amp; drop it here</span>
+      </div>
+      <input type="file" id="file" accept=".gar">
+      <div class="selected" id="selected">
+        <span id="selName"></span>
+        <button class="primary" id="send">Upload</button>
+      </div>
+      <div class="msg" id="msg"></div>
+
+      <div class="card">
+        <h2>Your uploads</h2>
+        <div id="listHost"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
+    const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
+    const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.href='index.html'; }
+    const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',session.user.id).single();
+    document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+(prof?.role||'licensee');
+
+    const drop=document.getElementById('drop');
+    const fileIn=document.getElementById('file');
+    const selected=document.getElementById('selected');
+    const selName=document.getElementById('selName');
+    const msg=document.getElementById('msg');
+    let chosen=null;
+
+    function pick(f){
+      if(!f) return;
+      if(!f.name.toLowerCase().endsWith('.gar')){ msg.textContent='That isn\'t a .gar file.'; msg.className='msg err'; return; }
+      chosen=f; selName.textContent='📦 '+f.name+' ('+(f.size/1024/1024).toFixed(1)+' MB)';
+      selected.style.display='flex'; msg.textContent=''; msg.className='msg';
+    }
+    drop.addEventListener('click',()=>fileIn.click());
+    fileIn.addEventListener('change',()=>pick(fileIn.files[0]));
+    drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over');});
+    drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+    drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');pick(e.dataTransfer.files[0]);});
+
+    document.getElementById('send').addEventListener('click',async()=>{
+      if(!chosen) return;
+      const btn=document.getElementById('send'); btn.disabled=true; msg.textContent='Uploading… (large files can take a minute)'; msg.className='msg';
+      try{
+        const path=session.user.id+'/'+Date.now()+'-'+chosen.name;
+        const {error:upErr}=await sb.storage.from('patguard').upload(path,chosen,{contentType:'application/octet-stream',upsert:true});
+        if(upErr) throw upErr;
+        const {error}=await sb.from('patguard_files').insert({licensee_id:session.user.id,file_name:chosen.name,storage_path:path});
+        if(error) throw error;
+        msg.textContent='Uploaded ✓ — the admin team can now access it.'; msg.className='msg ok';
+        chosen=null; selected.style.display='none'; fileIn.value='';
+        loadList();
+      }catch(e){ msg.textContent='Upload failed: '+e.message; msg.className='msg err'; }
+      btn.disabled=false;
+    });
+
+    async function loadList(){
+      const host=document.getElementById('listHost');
+      const {data,error}=await sb.from('patguard_files').select('*').order('created_at',{ascending:false});
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      if(!data.length){ host.innerHTML='<div class="empty">No uploads yet.</div>'; return; }
+      host.innerHTML='<table><thead><tr><th>File</th><th>Uploaded</th></tr></thead><tbody>'+
+        data.map(f=>`<tr><td>${f.file_name}</td><td>${new Date(f.created_at).toLocaleString()}</td></tr>`).join('')+'</tbody></table>';
+    }
+    loadList();
+  </script>
+</body>
+</html>
