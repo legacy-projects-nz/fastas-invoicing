@@ -37,6 +37,11 @@
   .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);}
   .pill.emailed{background:#ecfdf3;color:var(--ok);} .pill.generated{background:#fff7ed;color:#b45309;} .pill.submitted{background:#f2f4f7;color:var(--muted);}
   .pill.pending{background:#fff7ed;color:#b45309;} .pill.approved{background:#ecfdf3;color:var(--ok);} .pill.rejected{background:#fef2f2;color:var(--red);}
+  .uprow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px dashed #c9d2e3;border-radius:10px;padding:9px 12px;margin-bottom:8px;}
+  .uprow.inv{border-color:#b9ccf5;background:#f8faff;}
+  .uplabel{flex:0 0 76px;font-size:11px;font-weight:800;letter-spacing:.4px;color:var(--muted);}
+  .uprow input[type=text],.uprow input:not([type]){flex:1 1 200px;}
+  .uprow input[type=file]{flex:1 1 220px;font-size:13px;}
   .msg{font-size:13px;margin-top:10px;min-height:18px;} .msg.ok{color:var(--ok);} .msg.err{color:var(--red);}
   a.dl{color:var(--brand);text-decoration:none;font-weight:600;font-size:13px;}
   .empty{color:var(--muted);font-size:14px;padding:14px 0;}
@@ -97,16 +102,22 @@
     <!-- INVOICES & REPORTS (admin uploads for licensee approval) -->
     <div class="panel" id="panel-records">
       <div class="card">
-        <h2>Send an invoice or report to a licensee</h2>
-        <p class="hint">Upload a file for a business. It appears on that licensee's Inv/Rep Checker for them to approve or request changes.</p>
-        <div class="row">
+        <h2>Send an invoice &amp; reports to a licensee</h2>
+        <p class="hint">Upload the business's invoice and up to <b>four reports</b> in one go. Titles label the licensee's downloads (blank = file name). Everything lands on their Inv/Rep Checker for approval.</p>
+        <div class="row" style="margin-bottom:14px;">
           <div class="f"><label>Licensee</label><select id="rcLic"></select></div>
-          <div class="f"><label>Type</label><select id="rcType"><option value="invoice">Invoice</option><option value="report">Report</option></select></div>
-          <div class="f" style="flex:1 1 180px;"><label>Business name</label><input id="rcBiz" placeholder="e.g. Acme Ltd"></div>
-          <div class="f" style="flex:1 1 180px;"><label>Title (shown on the licensee's download)</label><input id="rcTitle" placeholder="e.g. Invoice #1042 — March"></div>
-          <div class="f"><label>File (PDF)</label><input id="rcFile" type="file" accept=".pdf"></div>
-          <button class="primary" id="rcSend">Send for approval</button>
+          <div class="f" style="flex:1 1 220px;"><label>Business name</label><input id="rcBiz" placeholder="e.g. Acme Ltd"></div>
         </div>
+        <div class="uprow inv">
+          <span class="uplabel" style="color:var(--brand);">INVOICE</span>
+          <input id="rcT-inv" placeholder="Title, e.g. Invoice #1042 — March">
+          <input id="rcF-inv" type="file" accept=".pdf">
+        </div>
+        <div class="uprow"><span class="uplabel">REPORT 1</span><input id="rcT-r1" placeholder="Title, e.g. Fire report — March"><input id="rcF-r1" type="file" accept=".pdf"></div>
+        <div class="uprow"><span class="uplabel">REPORT 2</span><input id="rcT-r2" placeholder="Title"><input id="rcF-r2" type="file" accept=".pdf"></div>
+        <div class="uprow"><span class="uplabel">REPORT 3</span><input id="rcT-r3" placeholder="Title"><input id="rcF-r3" type="file" accept=".pdf"></div>
+        <div class="uprow"><span class="uplabel">REPORT 4</span><input id="rcT-r4" placeholder="Title"><input id="rcF-r4" type="file" accept=".pdf"></div>
+        <div style="margin-top:14px;"><button class="primary" id="rcSend">Send for approval</button></div>
         <div class="msg" id="rcMsg"></div>
       </div>
       <div class="card">
@@ -299,28 +310,34 @@
     async function sendRecord(){
       const msg=document.getElementById('rcMsg'); msg.textContent='';
       const licensee_id=document.getElementById('rcLic').value;
-      const doc_type=document.getElementById('rcType').value;
       const business=document.getElementById('rcBiz').value.trim();
-      const title=document.getElementById('rcTitle').value.trim();
-      const file=document.getElementById('rcFile').files[0];
       if(!licensee_id||!business){ msg.textContent='Pick a licensee and enter a business name.'; msg.className='msg err'; return; }
-      if(!title){ msg.textContent='Add a title — it labels the licensee\'s download so they know what they\'re opening.'; msg.className='msg err'; return; }
-      if(!file){ msg.textContent='Choose a PDF file.'; msg.className='msg err'; return; }
-      if(doc_type==='report'){
+      // gather the filled slots: 1 invoice + up to 4 reports
+      const slots=[{type:'invoice',f:'rcF-inv',t:'rcT-inv'},{type:'report',f:'rcF-r1',t:'rcT-r1'},{type:'report',f:'rcF-r2',t:'rcT-r2'},{type:'report',f:'rcF-r3',t:'rcT-r3'},{type:'report',f:'rcF-r4',t:'rcT-r4'}]
+        .map(s=>({type:s.type,file:document.getElementById(s.f).files[0],title:document.getElementById(s.t).value.trim(),fId:s.f,tId:s.t}))
+        .filter(s=>s.file);
+      if(!slots.length){ msg.textContent='Choose at least one file (invoice or report).'; msg.className='msg err'; return; }
+      const newReports=slots.filter(s=>s.type==='report').length;
+      if(newReports){
         const {count}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('licensee_id',licensee_id).eq('business_name',business).eq('doc_type','report').eq('status','pending');
-        if((count??0)>=3){ msg.textContent='This business already has 3 pending reports — the licensee needs to action those first.'; msg.className='msg err'; return; }
+        if((count??0)+newReports>4){ msg.textContent='Max 4 pending reports per business — this business already has '+(count??0)+' awaiting approval.'; msg.className='msg err'; return; }
       }
       const btn=document.getElementById('rcSend'); btn.disabled=true;
+      let sent=0;
       try{
-        const path=licensee_id+'/'+Date.now()+'-'+file.name;
-        const {error:upErr}=await sb.storage.from('documents').upload(path,file,{upsert:true});
-        if(upErr) throw upErr;
-        const {error}=await sb.from('documents').insert({licensee_id,business_name:business,doc_type,title:title||null,storage_path:path,status:'pending',created_by:session.user.id});
-        if(error) throw error;
-        msg.textContent='Sent for approval ✓'; msg.className='msg ok';
-        document.getElementById('rcBiz').value=document.getElementById('rcTitle').value=''; document.getElementById('rcFile').value='';
+        for(const s of slots){
+          const path=licensee_id+'/'+Date.now()+'-'+s.file.name;
+          const {error:upErr}=await sb.storage.from('documents').upload(path,s.file,{upsert:true});
+          if(upErr) throw upErr;
+          const {error}=await sb.from('documents').insert({licensee_id,business_name:business,doc_type:s.type,title:s.title||s.file.name.replace(/\.pdf$/i,''),storage_path:path,status:'pending',created_by:session.user.id});
+          if(error) throw error;
+          sent++;
+          document.getElementById(s.fId).value=''; document.getElementById(s.tId).value='';
+        }
+        document.getElementById('rcBiz').value='';
+        msg.textContent='Sent '+sent+' file'+(sent>1?'s':'')+' for approval ✓'; msg.className='msg ok';
         loadRecords();
-      }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
+      }catch(e){ msg.textContent=(sent?('Sent '+sent+', then failed: '):'')+e.message; msg.className='msg err'; }
       btn.disabled=false;
     }
     async function loadRecords(){

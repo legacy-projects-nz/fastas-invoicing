@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FASTAS Invoicing</title>
+<title>FastAs Admin</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
 <!-- start fetching the voice widget code as early as possible -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
@@ -91,13 +91,11 @@
   .btn.price{background:linear-gradient(135deg,#d97706,#f59e0b);box-shadow:0 6px 18px rgba(217,119,6,.35);}
   .btn.train{background:linear-gradient(135deg,#dc2626,#f43f5e);box-shadow:0 6px 18px rgba(220,38,38,.35);}
 
+  /* Voice widget: hidden until "Invoice Generator" is tapped, then rendered NATIVELY.
+     No scaling/repositioning — transforms on the widget broke the Accept button's
+     hit-testing in some browsers (Edge, desktop Chrome). Native = clickable everywhere. */
   elevenlabs-convai{display:none !important;}
-  elevenlabs-convai.fastas-show{
-    display:block !important;
-    position:fixed !important;left:0 !important;right:0 !important;width:100vw !important;
-    bottom:20px !important;transform:scale(0.72) !important;transform-origin:bottom center !important;
-    z-index:99999 !important;opacity:1 !important;pointer-events:auto !important;
-  }
+  elevenlabs-convai.fastas-show{display:block !important;}
 
   footer{padding:12px 16px 18px;font-size:13px;color:#98a2b3;}
   /* compact layout: all six tiles + header + session bar fit a standard phone screen */
@@ -144,7 +142,7 @@
   <div id="gate">
     <form class="gate-card" id="gateForm" autocomplete="on">
       <div class="brand-mark">FA</div>
-      <h2 id="gateTitle">FASTAS Invoicing</h2>
+      <h2 id="gateTitle">FastAs Admin</h2>
       <p id="gateSub">Sign in to continue.</p>
       <div class="gate-msg" id="gateMsg"></div>
       <input type="email" id="gateEmail" placeholder="Email" autocomplete="email" required>
@@ -159,7 +157,7 @@
       <div class="brand-mark">FA</div>
       <div class="brand-name">FASTAS</div>
     </div>
-    <h1>FASTAS <span>Invoicing</span></h1>
+    <h1>FastAs <span>Admin</span></h1>
   </header>
 
   <section class="cards">
@@ -254,7 +252,7 @@
     </div>
   </div>
 
-  <footer>© FASTAS Invoicing</footer>
+  <footer>© FastAs Admin</footer>
 
   <!-- floating call UI -->
   <elevenlabs-convai agent-id="agent_01jyqjybh6fgxvw9tnv2qs7d9n"></elevenlabs-convai>
@@ -368,15 +366,6 @@
         setTimeout(function(){ location.reload(); },150);
       });
 
-      function injectCenter(){
-        if(host&&host.shadowRoot&&!host.shadowRoot.getElementById('fastas-center')){
-          var st=document.createElement('style');st.id='fastas-center';
-          st.textContent='.overlay{align-items:center !important; justify-content:flex-end !important;}';
-          host.shadowRoot.appendChild(st);return true;
-        } return false;
-      }
-      var t=0,iv=setInterval(function(){ if(injectCenter()||t++>40) clearInterval(iv); },150);
-
       // Watchdog: ✕ Close shows whenever the widget is open. If the
       // "conversation ended" screen appears (detected by its text, not by
       // button labels), auto-reset the page shortly after — so even if the
@@ -399,7 +388,7 @@
       },400);
 
       function startCall(){
-        if(!host) return; host.classList.add('fastas-show'); injectCenter();
+        if(!host) return; host.classList.add('fastas-show');
         var n=0;(function go(){ var r=host.shadowRoot; if(r){ var b=r.querySelector('button,[role="button"]'); if(b){ b.click(); return; } } if(n++<12) setTimeout(go,300); })();
       }
       document.addEventListener('click',function(e){ if(e.target.closest('#startcall')){ e.preventDefault(); startCall(); } });
