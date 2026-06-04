@@ -60,7 +60,7 @@
       <div class="tab" data-tab="approvals">Training approvals <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
       <div class="tab" data-tab="records">Invoices &amp; reports</div>
       <div class="tab" data-tab="patguard">PatGuard files</div>
-      <div class="tab" data-tab="links">Quick links</div>
+      <div class="tab" data-tab="links">Systems</div>
       <div class="tab" data-tab="reports">Training reports</div>
       <div class="tab" data-tab="templates">Templates</div>
       <div class="tab" data-tab="pricing">Pricing</div>
@@ -146,11 +146,10 @@
       </div>
     </div>
 
-    <!-- QUICK LINKS -->
+    <!-- SYSTEMS -->
     <div class="panel" id="panel-links">
       <div class="card">
-        <h2>Quick links</h2>
-        <p class="hint">Jump to the tools around FastAs Admin.</p>
+        <h2>Links</h2>
         <div style="display:flex;flex-direction:column;gap:10px;max-width:460px;">
           <a class="qlink" href="https://go.xero.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
             <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#0ea5e9,#13b5ea);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;">X</span>
@@ -160,15 +159,12 @@
             <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#166534,#22c55e);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg></span>
             Support inbox <span style="font-weight:400;color:var(--muted);font-size:13px;">— support@fastas.nz</span>
           </a>
-          <a class="qlink" href="https://dashboard.render.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
-            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#111827,#374151);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;">▲</span>
-            Render <span style="font-weight:400;color:var(--muted);font-size:13px;">— website hosting</span>
-          </a>
-          <a class="qlink" href="https://supabase.com/dashboard/project/ecgvkifvlrcfrnqbades" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
-            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#15803d,#3ecf8e);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M13 2 3 14h7v8l10-12h-7V2z"/></svg></span>
-            Supabase <span style="font-weight:400;color:var(--muted);font-size:13px;">— database &amp; functions</span>
-          </a>
         </div>
+      </div>
+      <div class="card">
+        <h2>System status</h2>
+        <p class="hint">Live health checks — green means working. <button class="ghost" id="sysRecheck" style="margin-left:6px;">Check again</button></p>
+        <div id="sysHost" style="display:flex;flex-direction:column;gap:10px;max-width:460px;"></div>
       </div>
     </div>
 
@@ -242,6 +238,8 @@
       loadUsers(); loadReports(); loadTemplates(); loadApprovals(); loadLicenseeOptions(); loadRecords(); loadWaGroups(); loadPatguard();
       document.getElementById('rcSend').addEventListener('click',sendRecord);
       document.getElementById('pgUpload').addEventListener('click',uploadGar);
+      document.getElementById('sysRecheck').addEventListener('click',checkSystems);
+      checkSystems();
       // auto-fill each title from the chosen file's name (editable; manual titles aren't overwritten)
       [['rcF-inv','rcT-inv'],['rcF-r1','rcT-r1'],['rcF-r2','rcT-r2'],['rcF-r3','rcT-r3'],['rcF-r4','rcT-r4']].forEach(function(p){
         var fi=document.getElementById(p[0]), ti=document.getElementById(p[1]);
@@ -305,6 +303,44 @@
         try{ await callEdge('approve-training',{report_id:b.dataset.id,action:'reject',note:note}); loadApprovals(); loadReports(); }
         catch(e){ alert(e.message); }
       }));
+    }
+
+    // ===== Systems: live health checks (no links) =====
+    const SYSTEMS=[
+      {key:'supabase', name:'Supabase', desc:'database & functions'},
+      {key:'render',   name:'Render',   desc:'website hosting'},
+      {key:'github',   name:'GitHub',   desc:'code & deploys'},
+      {key:'resend',   name:'Resend',   desc:'email sending'},
+    ];
+    function sysRow(s,state,detail){
+      const colors={ok:['#ecfdf3','#067647','Operational'],bad:['#fef2f2','#dc2626','Problem'],wait:['#f2f4f7','#667085','Checking…']};
+      const c=colors[state];
+      return `<div style="display:flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;">
+        <span style="width:12px;height:12px;border-radius:50%;background:${c[1]};box-shadow:0 0 0 4px ${c[0]};flex:0 0 auto;"></span>
+        <b style="flex:0 0 90px;">${s.name}</b>
+        <span style="color:var(--muted);font-size:13px;flex:1;">${s.desc}</span>
+        <span style="font-size:13px;font-weight:700;color:${c[1]};">${detail||c[2]}</span>
+      </div>`;
+    }
+    async function checkSystems(){
+      const host=document.getElementById('sysHost');
+      const state={}; SYSTEMS.forEach(s=>state[s.key]=['wait','']);
+      const paint=()=>{ host.innerHTML=SYSTEMS.map(s=>sysRow(s,state[s.key][0],state[s.key][1])).join(''); };
+      paint();
+      // Supabase: real query round-trip
+      (async()=>{ const t0=performance.now();
+        try{ const {error}=await sb.from('profiles').select('id',{count:'exact',head:true}); state.supabase=error?['bad',error.message]:['ok','Operational · '+Math.round(performance.now()-t0)+'ms']; }
+        catch(e){ state.supabase=['bad','Unreachable']; } paint(); })();
+      // Render: this very site responding
+      (async()=>{ try{ const r=await fetch(location.origin+'/?ping='+Date.now(),{cache:'no-store'}); state.render=r.ok?['ok','']:['bad','HTTP '+r.status]; }
+        catch(e){ state.render=['bad','Unreachable']; } paint(); })();
+      // GitHub: official status feed
+      (async()=>{ try{ const r=await fetch('https://www.githubstatus.com/api/v2/status.json'); const j=await r.json();
+        state.github = j.status&&j.status.indicator==='none' ? ['ok',''] : ['bad',(j.status&&j.status.description)||'Issues reported']; }
+        catch(e){ state.github=['bad','Status feed unreachable']; } paint(); })();
+      // Resend: API endpoint reachable (opaque ping — up/down only)
+      (async()=>{ try{ await fetch('https://api.resend.com',{mode:'no-cors',cache:'no-store'}); state.resend=['ok','']; }
+        catch(e){ state.resend=['bad','Unreachable']; } paint(); })();
     }
 
     async function loadPatguard(){
