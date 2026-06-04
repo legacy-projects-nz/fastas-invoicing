@@ -105,7 +105,7 @@
     if(!session){ location.href='index.html'; }
     const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',session.user.id).single();
     const role=prof?.role||'licensee';
-    document.getElementById('who').textContent=session.user.email+' · '+role;
+    document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+role;
 
     let items=[], showInactive=false, ownerId=session.user.id;
     const edits={};      // id -> {item_name?, unit_price?, status?}

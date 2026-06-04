@@ -83,8 +83,8 @@
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.href='index.html'; }
-    const {data:prof}=await sb.from('profiles').select('role').eq('id',session.user.id).single();
-    document.getElementById('who').textContent=session.user.email+' · '+(prof?.role||'licensee');
+    const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',session.user.id).single();
+    document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+(prof?.role||'licensee');
 
     let docs=[], filter='pending';
     const host=document.getElementById('host');

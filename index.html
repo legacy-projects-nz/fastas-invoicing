@@ -215,7 +215,7 @@
 
   <!-- ===================== SESSION BAR (bottom) ===================== -->
   <div class="userbar" id="userbar">
-    <span class="pill"><span id="ubEmail"></span> · <span class="role" id="ubRole"></span></span>
+    <span class="pill"><span id="ubEmail"></span> — <span class="role" id="ubRole"></span></span>
     <button id="signout">Sign out</button>
   </div>
 
@@ -265,9 +265,10 @@
     const checkBadge=document.getElementById('checkBadge');
     async function applySession(session){
       if(!session){ lock(); userbar.style.display='none'; adminLink.style.display='none'; checkerCard.style.display='none'; return; }
-      unlock(); userbar.style.display='flex'; ubEmail.textContent=session.user.email;
-      const {data:prof}=await sb.from('profiles').select('role,whatsapp_link').eq('id',session.user.id).single();
+      unlock(); userbar.style.display='flex';
+      const {data:prof}=await sb.from('profiles').select('role,full_name,whatsapp_link').eq('id',session.user.id).single();
       const role=prof?.role||'licensee';
+      ubEmail.textContent=prof?.full_name||session.user.email;
       // each licensee has their own WhatsApp group — set by the admin in the portal
       if(prof?.whatsapp_link) document.getElementById('waLink').href=prof.whatsapp_link;
       ubRole.textContent=role;
