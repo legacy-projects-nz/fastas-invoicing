@@ -47,15 +47,15 @@
   .userbar button:hover{background:#f3f4f6;}
 
   .cards{
-    display:flex;flex-wrap:wrap;gap:14px;justify-content:center;
-    padding:22px 24px 40px;width:100%;max-width:430px;
+    display:flex;flex-wrap:wrap;gap:18px;justify-content:center;
+    padding:28px 24px 40px;width:100%;max-width:440px;
   }
   /* each card IS the button: icon centred, title under it, two per row */
   .card{
     position:relative;background:#fff;border:1px solid var(--line);
     border-radius:20px;padding:20px 12px;cursor:pointer;
     width:calc(50% - 7px);min-height:142px;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
     box-shadow:0 10px 30px rgba(16,24,40,.08);
     user-select:none;-webkit-tap-highlight-color:transparent;
     text-decoration:none;color:var(--ink);text-align:center;
@@ -106,8 +106,8 @@
     .brand-name{font-size:18px;}
     h1{font-size:28px;}
     .subtitle{margin-top:6px;font-size:15px;}
-    .cards{padding:14px 14px 8px;gap:11px;}
-    .card{min-height:132px;padding:14px 8px;gap:10px;width:calc(50% - 6px);}
+    .cards{padding:18px 14px 8px;gap:14px;}
+    .card{min-height:136px;padding:14px 8px;gap:13px;width:calc(50% - 7px);}
     .icon{width:74px;height:74px;border-radius:19px;}
     .icon svg{width:38px;height:38px;}
     .card h2{font-size:14.5px;}
@@ -285,19 +285,24 @@
   </script>
 
 
-  <!-- voice widget controller (unchanged behaviour) -->
+  <!-- voice widget controller -->
   <script>
     (function(){
       var host=document.querySelector('elevenlabs-convai');
+
+      // Big, unmissable Close pill — fixed top-centre of the screen, max z-index,
+      // dark so it stands out on any background. Visible the whole time the
+      // widget is open (terms screen, call, and the "ended" screen).
       var closeBtn=document.createElement('button');
-      closeBtn.id='fastasClose'; closeBtn.setAttribute('aria-label','Close'); closeBtn.textContent='✕';
-      // top-right corner so it can NEVER overlap the widget's centered Accept button or bottom call controls
-      closeBtn.style.cssText='position:fixed;top:16px;right:16px;z-index:100001;width:36px;height:36px;border-radius:50%;border:1px solid #e0e0e0;background:#fff;color:#333;font-size:16px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);display:none;align-items:center;justify-content:center;padding:0;';
+      closeBtn.id='fastasClose'; closeBtn.setAttribute('aria-label','Close');
+      closeBtn.innerHTML='✕&nbsp;&nbsp;Close';
+      closeBtn.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2147483000;height:42px;padding:0 22px;border-radius:999px;border:none;background:#111827;color:#fff;font-size:15px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;font-family:inherit;';
       document.body.appendChild(closeBtn);
       closeBtn.addEventListener('click',function(){
         try{ host.shadowRoot.querySelectorAll('button').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('end')>-1||l.indexOf('hang')>-1) b.click(); }); }catch(e){}
-        location.reload();
+        setTimeout(function(){ location.reload(); },150);
       });
+
       function injectCenter(){
         if(host&&host.shadowRoot&&!host.shadowRoot.getElementById('fastas-center')){
           var st=document.createElement('style');st.id='fastas-center';
@@ -306,16 +311,28 @@
         } return false;
       }
       var t=0,iv=setInterval(function(){ if(injectCenter()||t++>40) clearInterval(iv); },150);
-      // Show the ✕ the whole time the widget is open. It sits in the top-right corner,
-      // so it can never overlap the centred Accept button (the old Edge issue) — and it
-      // stays available on the "you ended the conversation" screen so users can dismiss it.
-      var callWasActive=false;
+
+      // Watchdog: ✕ Close shows whenever the widget is open. If the
+      // "conversation ended" screen appears (detected by its text, not by
+      // button labels), auto-reset the page shortly after — so even if the
+      // user never taps Close, the screen always returns to the menu.
+      var callWasActive=false, resetQueued=false;
+      function queueReset(ms){ if(resetQueued) return; resetQueued=true; setTimeout(function(){ location.reload(); },ms); }
       setInterval(function(){
-        closeBtn.style.display = host.classList.contains('fastas-show') ? 'flex' : 'none';
-        var active=false;
-        try{ host.shadowRoot.querySelectorAll('button,[role="button"]').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('mute')>-1||l.indexOf('hang')>-1||l.indexOf('end call')>-1) active=true; }); }catch(e){}
-        if(active){ callWasActive=true; } else if(callWasActive){ callWasActive=false; setTimeout(function(){ location.reload(); },1500); }
+        var open=host.classList.contains('fastas-show');
+        closeBtn.style.display = open ? 'flex' : 'none';
+        if(!open) return;
+        var active=false, ended=false;
+        try{
+          host.shadowRoot.querySelectorAll('button,[role="button"]').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('mute')>-1||l.indexOf('hang')>-1||l.indexOf('end call')>-1) active=true; });
+          var txt=(host.shadowRoot.textContent||'').toLowerCase();
+          if(txt.indexOf('ended the conversation')>-1||txt.indexOf('conversation ended')>-1||txt.indexOf('call ended')>-1) ended=true;
+        }catch(e){}
+        if(active && !ended){ callWasActive=true; }
+        else if(ended){ queueReset(2000); }
+        else if(callWasActive){ callWasActive=false; queueReset(1500); }
       },400);
+
       function startCall(){
         if(!host) return; host.classList.add('fastas-show'); injectCenter();
         var n=0;(function go(){ var r=host.shadowRoot; if(r){ var b=r.querySelector('button,[role="button"]'); if(b){ b.click(); return; } } if(n++<12) setTimeout(go,300); })();
