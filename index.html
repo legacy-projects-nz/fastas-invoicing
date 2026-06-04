@@ -66,13 +66,13 @@
   .card.t-green{background:linear-gradient(180deg,#ffffff,#f3faf5);border-color:#d6ecdc;}
   .card.t-grey{background:linear-gradient(180deg,#ffffff,#f4f5f7);border-color:#dfe3e8;}
   .cardbadge{position:absolute;top:-8px;right:-8px;min-width:26px;height:26px;padding:0 7px;border-radius:999px;background:var(--red);color:#fff;font-size:13px;font-weight:800;display:none;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(220,38,38,.4);z-index:2;}
-  .icon{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .icon{width:85px;height:85px;border-radius:22px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
   .icon.voice{background:linear-gradient(135deg,#1e40af,#3b82f6);box-shadow:0 8px 18px rgba(37,99,235,.45);}
   .icon.wa{background:linear-gradient(135deg,#14532d,#16a34a);box-shadow:0 8px 18px rgba(22,101,52,.45);}
   .icon.price{background:linear-gradient(135deg,#166534,#22c55e);box-shadow:0 8px 18px rgba(22,101,52,.45);}
   .icon.train{background:linear-gradient(135deg,#1d4ed8,#60a5fa);box-shadow:0 8px 18px rgba(37,99,235,.45);}
   .icon.check{background:linear-gradient(135deg,#334155,#64748b);box-shadow:0 8px 18px rgba(51,65,85,.45);}
-  .icon svg{width:32px;height:32px;fill:#fff;}
+  .icon svg{width:42px;height:42px;fill:#fff;}
   .card h2{margin:0;font-size:15px;font-weight:800;text-align:center;letter-spacing:-.2px;}
   .icon.crm{background:linear-gradient(135deg,#1f2937,#4b5563);box-shadow:0 8px 18px rgba(31,41,55,.45);}
 
@@ -105,8 +105,8 @@
     .subtitle{margin-top:6px;font-size:15px;}
     .cards{padding:14px 16px 8px;gap:10px;}
     .card{min-height:104px;padding:12px 8px;gap:8px;width:calc(50% - 5px);}
-    .icon{width:46px;height:46px;border-radius:13px;}
-    .icon svg{width:24px;height:24px;}
+    .icon{width:61px;height:61px;border-radius:17px;}
+    .icon svg{width:32px;height:32px;}
     .card h2{font-size:13.5px;}
     footer{padding:8px 12px 12px;}
   }
@@ -154,7 +154,6 @@
       <div class="brand-name">FASTAS</div>
     </div>
     <h1>FASTAS <span>Invoicing</span></h1>
-    <p class="subtitle">Your admin, Fast As!</p>
   </header>
 
   <section class="cards">
@@ -304,15 +303,15 @@
         } return false;
       }
       var t=0,iv=setInterval(function(){ if(injectCenter()||t++>40) clearInterval(iv); },150);
-      // Show the ✕ ONLY while a call is genuinely active (mute / hang-up / end controls present).
-      // This guarantees it never sits over the Terms "Accept" button — the Edge issue where the
-      // overlay swallowed the Accept tap. When the call ends, reset to a clean landing page.
+      // Show the ✕ the whole time the widget is open. It sits in the top-right corner,
+      // so it can never overlap the centred Accept button (the old Edge issue) — and it
+      // stays available on the "you ended the conversation" screen so users can dismiss it.
       var callWasActive=false;
       setInterval(function(){
+        closeBtn.style.display = host.classList.contains('fastas-show') ? 'flex' : 'none';
         var active=false;
         try{ host.shadowRoot.querySelectorAll('button,[role="button"]').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('mute')>-1||l.indexOf('hang')>-1||l.indexOf('end call')>-1) active=true; }); }catch(e){}
-        closeBtn.style.display = active ? 'flex' : 'none';
-        if(active){ callWasActive=true; } else if(callWasActive){ callWasActive=false; setTimeout(function(){ location.reload(); },800); }
+        if(active){ callWasActive=true; } else if(callWasActive){ callWasActive=false; setTimeout(function(){ location.reload(); },1500); }
       },400);
       function startCall(){
         if(!host) return; host.classList.add('fastas-show'); injectCenter();
