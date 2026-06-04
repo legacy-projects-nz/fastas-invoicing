@@ -50,16 +50,20 @@
     padding:22px 24px 48px;width:100%;max-width:1180px;
   }
   .card{
+    position:relative;
     flex:1 1 250px;max-width:280px;background:#fff;border:1px solid var(--line);
     border-radius:20px;padding:30px 24px;text-align:center;
     box-shadow:0 10px 30px rgba(16,24,40,.06);
     display:flex;flex-direction:column;align-items:center;
   }
+  .cardbadge{position:absolute;top:14px;right:14px;min-width:26px;height:26px;padding:0 7px;border-radius:999px;background:var(--red);color:#fff;font-size:13px;font-weight:800;display:none;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(220,38,38,.4);}
   .icon{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
   .icon.voice{background:linear-gradient(135deg,#2563eb,#7c3aed);}
   .icon.wa{background:var(--green);}
   .icon.price{background:linear-gradient(135deg,#d97706,#f59e0b);}
   .icon.train{background:linear-gradient(135deg,#dc2626,#f43f5e);}
+  .icon.check{background:linear-gradient(135deg,#0ea5e9,#2563eb);}
+  .btn.check{background:linear-gradient(135deg,#0ea5e9,#2563eb);box-shadow:0 6px 18px rgba(14,165,233,.35);}
   .icon svg{width:32px;height:32px;fill:#fff;}
   .card h2{margin:0 0 8px;font-size:20px;font-weight:700;}
   .card p{margin:0 0 22px;font-size:14px;line-height:1.55;color:var(--muted);}
@@ -193,6 +197,20 @@
       </a>
     </div>
 
+    <!-- 5. Inv/Rep Checker (licensee approvals) -->
+    <div class="card" id="checkerCard" style="display:none;">
+      <span class="cardbadge" id="checkBadge">0</span>
+      <div class="icon check">
+        <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+      </div>
+      <h2>Inv/Rep Checker</h2>
+      <p>Review invoices &amp; reports prepared for your businesses, then approve or request changes.</p>
+      <a class="btn check" href="checker.html">
+        <svg viewBox="0 0 24 24"><path d="M3 5h18v2H3zm0 6h18v2H3zm0 6h12v2H3z"/></svg>
+        Open checker
+      </a>
+    </div>
+
   </section>
 
   <p class="subtitle" id="adminLink" style="margin-top:-24px;margin-bottom:24px;display:none;">
@@ -241,13 +259,21 @@
     const adminLink=document.getElementById('adminLink');
     document.getElementById('signout').addEventListener('click',async()=>{ await sb.auth.signOut(); location.reload(); });
 
+    const checkerCard=document.getElementById('checkerCard');
+    const checkBadge=document.getElementById('checkBadge');
     async function applySession(session){
-      if(!session){ lock(); userbar.style.display='none'; adminLink.style.display='none'; return; }
+      if(!session){ lock(); userbar.style.display='none'; adminLink.style.display='none'; checkerCard.style.display='none'; return; }
       unlock(); userbar.style.display='flex'; ubEmail.textContent=session.user.email;
       const {data:prof}=await sb.from('profiles').select('role').eq('id',session.user.id).single();
       const role=prof?.role||'licensee';
       ubRole.textContent=role;
       adminLink.style.display = role==='admin' ? 'block' : 'none';
+      // Inv/Rep Checker — shown to licensees; badge counts items awaiting their approval
+      if(role==='licensee'){
+        checkerCard.style.display='flex';
+        const {count}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('licensee_id',session.user.id).eq('status','pending');
+        if(count&&count>0){ checkBadge.textContent=count; checkBadge.style.display='flex'; } else { checkBadge.style.display='none'; }
+      } else { checkerCard.style.display='none'; }
     }
     const {data:{session}}=await sb.auth.getSession();
     await applySession(session);
@@ -260,7 +286,8 @@
       var host=document.querySelector('elevenlabs-convai');
       var closeBtn=document.createElement('button');
       closeBtn.id='fastasClose'; closeBtn.setAttribute('aria-label','Close'); closeBtn.textContent='✕';
-      closeBtn.style.cssText='position:fixed;left:calc(50% + 62px);bottom:50px;z-index:100001;width:34px;height:34px;border-radius:50%;border:1px solid #e0e0e0;background:#fff;color:#333;font-size:16px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);display:none;align-items:center;justify-content:center;padding:0;';
+      // top-right corner so it can NEVER overlap the widget's centered Accept button or bottom call controls
+      closeBtn.style.cssText='position:fixed;top:16px;right:16px;z-index:100001;width:36px;height:36px;border-radius:50%;border:1px solid #e0e0e0;background:#fff;color:#333;font-size:16px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);display:none;align-items:center;justify-content:center;padding:0;';
       document.body.appendChild(closeBtn);
       closeBtn.addEventListener('click',function(){
         try{ host.shadowRoot.querySelectorAll('button').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('end')>-1||l.indexOf('hang')>-1) b.click(); }); }catch(e){}
@@ -274,14 +301,16 @@
         } return false;
       }
       var t=0,iv=setInterval(function(){ if(injectCenter()||t++>40) clearInterval(iv); },150);
-      function onTermsScreen(){ try{ var bs=host.shadowRoot.querySelectorAll('button'); for(var i=0;i<bs.length;i++){ var l=(bs[i].textContent||'').toLowerCase(); if(l.indexOf('accept')>-1||l.indexOf('agree')>-1) return true; } }catch(e){} return false; }
-      setInterval(function(){ if(host.classList.contains('fastas-show') && !onTermsScreen()) closeBtn.style.display='flex'; else closeBtn.style.display='none'; },300);
+      // Show the ✕ ONLY while a call is genuinely active (mute / hang-up / end controls present).
+      // This guarantees it never sits over the Terms "Accept" button — the Edge issue where the
+      // overlay swallowed the Accept tap. When the call ends, reset to a clean landing page.
       var callWasActive=false;
       setInterval(function(){
         var active=false;
-        try{ host.shadowRoot.querySelectorAll('button,[role="button"]').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('mute')>-1||l.indexOf('hang')>-1) active=true; }); }catch(e){}
+        try{ host.shadowRoot.querySelectorAll('button,[role="button"]').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('mute')>-1||l.indexOf('hang')>-1||l.indexOf('end call')>-1) active=true; }); }catch(e){}
+        closeBtn.style.display = active ? 'flex' : 'none';
         if(active){ callWasActive=true; } else if(callWasActive){ callWasActive=false; setTimeout(function(){ location.reload(); },800); }
-      },500);
+      },400);
       function startCall(){
         if(!host) return; host.classList.add('fastas-show'); injectCenter();
         var n=0;(function go(){ var r=host.shadowRoot; if(r){ var b=r.querySelector('button,[role="button"]'); if(b){ b.click(); return; } } if(n++<12) setTimeout(go,300); })();

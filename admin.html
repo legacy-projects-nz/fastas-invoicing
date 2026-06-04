@@ -35,6 +35,7 @@
   .pill{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:700;}
   .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);}
   .pill.emailed{background:#ecfdf3;color:var(--ok);} .pill.generated{background:#fff7ed;color:#b45309;} .pill.submitted{background:#f2f4f7;color:var(--muted);}
+  .pill.pending{background:#fff7ed;color:#b45309;} .pill.approved{background:#ecfdf3;color:var(--ok);} .pill.rejected{background:#fef2f2;color:var(--red);}
   .msg{font-size:13px;margin-top:10px;min-height:18px;} .msg.ok{color:var(--ok);} .msg.err{color:var(--red);}
   a.dl{color:var(--brand);text-decoration:none;font-weight:600;font-size:13px;}
   .empty{color:var(--muted);font-size:14px;padding:14px 0;}
@@ -43,15 +44,17 @@
 <body>
   <div class="topbar">
     <div class="brand"><div class="brand-mark">FA</div><b>Admin portal</b></div>
-    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Back to app</a></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Main menu</a></div>
   </div>
 
   <div class="wrap" id="app" style="display:none;">
     <h1>FASTAS Administration</h1>
     <div class="tabs">
       <div class="tab active" data-tab="users">Users &amp; roles</div>
+      <div class="tab" data-tab="approvals">Training approvals <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
+      <div class="tab" data-tab="records">Invoices &amp; reports</div>
       <div class="tab" data-tab="reports">Training reports</div>
-      <div class="tab" data-tab="templates">Report template</div>
+      <div class="tab" data-tab="templates">Templates</div>
       <div class="tab" data-tab="pricing">Pricing</div>
     </div>
 
@@ -75,26 +78,58 @@
       </div>
     </div>
 
+    <!-- TRAINING APPROVALS -->
+    <div class="panel" id="panel-approvals">
+      <div class="card">
+        <h2>Training approvals</h2>
+        <p class="hint">Pending training sign-ups from all licensees. <b>Approve &amp; send</b> generates the report + certificates and emails them; <b>Reject</b> sets it aside.</p>
+        <div id="apprHost"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- INVOICES & REPORTS (admin uploads for licensee approval) -->
+    <div class="panel" id="panel-records">
+      <div class="card">
+        <h2>Send an invoice or report to a licensee</h2>
+        <p class="hint">Upload a file for a business. It appears on that licensee's Inv/Rep Checker for them to approve or request changes.</p>
+        <div class="row">
+          <div class="f"><label>Licensee</label><select id="rcLic"></select></div>
+          <div class="f"><label>Type</label><select id="rcType"><option value="invoice">Invoice</option><option value="report">Report</option></select></div>
+          <div class="f" style="flex:1 1 180px;"><label>Business name</label><input id="rcBiz" placeholder="e.g. Acme Ltd"></div>
+          <div class="f" style="flex:1 1 180px;"><label>Title (optional)</label><input id="rcTitle" placeholder="e.g. Invoice #1042"></div>
+          <div class="f"><label>File (PDF)</label><input id="rcFile" type="file" accept=".pdf"></div>
+          <button class="primary" id="rcSend">Send for approval</button>
+        </div>
+        <div class="msg" id="rcMsg"></div>
+      </div>
+      <div class="card">
+        <h2>Sent items &amp; status</h2>
+        <div id="recHost"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
     <!-- REPORTS -->
     <div class="panel" id="panel-reports">
       <div class="card">
         <h2>Fire safety training reports</h2>
-        <p class="hint">Generated from the training form. Download the business report or any attendee certificate.</p>
+        <p class="hint">Approved/sent training. Download the business report or any attendee certificate.</p>
         <div id="reportsHost"><div class="empty">Loading…</div></div>
       </div>
     </div>
 
-    <!-- TEMPLATES -->
+    <!-- TEMPLATES (live preview of what the system generates) -->
     <div class="panel" id="panel-templates">
       <div class="card">
-        <h2>Training report template</h2>
-        <p class="hint">Upload your master .docx template for reference. (Reports are currently generated as branded PDFs; this stores your template on file.)</p>
-        <div class="row">
-          <div class="f"><label>Template file (.docx)</label><input id="tplFile" type="file" accept=".docx"></div>
-          <button class="primary" id="tplUpload">Upload template</button>
-        </div>
-        <div class="msg" id="tplMsg"></div>
-        <div id="tplHost" style="margin-top:14px;"></div>
+        <h2>Business report template</h2>
+        <p class="hint">This is the exact layout used for every approved training report — FAST NZ header, business &amp; site details, training content, attendee table and trainer declaration (NZS 4503:2005). Opens with sample data.</p>
+        <button class="primary tplView" data-type="report">View report template</button>
+        <span class="msg" id="tplReportMsg"></span>
+      </div>
+      <div class="card">
+        <h2>Training certificate template</h2>
+        <p class="hint">The exact certificate design emailed to each attendee — FIRE &amp; SAFETY TESTING branding, course details, attendee name, training date, trainer and 2-year validity. Opens with sample data.</p>
+        <button class="primary tplView" data-type="certificate">View certificate template</button>
+        <span class="msg" id="tplCertMsg"></span>
       </div>
     </div>
 
@@ -129,6 +164,10 @@
       const res=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+token()},body:JSON.stringify(payload)});
       const out=await res.json().catch(()=>({})); if(!res.ok) throw new Error(out.error||('Error '+res.status)); return out;
     }
+    async function callEdge(name,payload){
+      const res=await fetch(SUPABASE_URL+'/functions/v1/'+name,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+token()},body:JSON.stringify(payload)});
+      const out=await res.json().catch(()=>({})); if(!res.ok) throw new Error(out.error||('Error '+res.status)); return out;
+    }
 
     function init(){
       document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
@@ -136,7 +175,8 @@
         document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
         t.classList.add('active'); document.getElementById('panel-'+t.dataset.tab).classList.add('active');
       }));
-      loadUsers(); loadReports(); loadTemplates();
+      loadUsers(); loadReports(); loadTemplates(); loadApprovals(); loadLicenseeOptions(); loadRecords();
+      document.getElementById('rcSend').addEventListener('click',sendRecord);
 
       document.getElementById('nuAdd').addEventListener('click',async()=>{
         const msg=document.getElementById('nuMsg'); msg.textContent='';
@@ -146,7 +186,7 @@
           loadUsers();
         }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
       });
-      document.getElementById('tplUpload').addEventListener('click',uploadTemplate);
+      document.querySelectorAll('.tplView').forEach(b=>b.addEventListener('click',()=>viewTemplate(b)));
     }
 
     async function loadUsers(){
@@ -167,6 +207,70 @@
         host.querySelectorAll('.roleSel').forEach(s=>s.addEventListener('change',async()=>{ try{ await callFn({action:'set_role',user_id:s.dataset.uid,role:s.value}); loadUsers(); }catch(e){ alert(e.message); } }));
         host.querySelectorAll('.delUser').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Remove '+b.dataset.email+'?')) return; try{ await callFn({action:'delete_user',user_id:b.dataset.uid}); loadUsers(); }catch(e){ alert(e.message); } }));
       }catch(e){ host.innerHTML='<div class="empty">'+e.message+'</div>'; }
+    }
+
+    async function loadApprovals(){
+      const host=document.getElementById('apprHost');
+      const {data,error}=await sb.from('training_reports').select('*').eq('status','pending').order('created_at',{ascending:false});
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      const badge=document.getElementById('apprBadge');
+      if(data.length){ badge.textContent=data.length; badge.style.display='inline-block'; } else badge.style.display='none';
+      if(!data.length){ host.innerHTML='<div class="empty">No pending training to approve.</div>'; return; }
+      host.innerHTML='<table><thead><tr><th>Ref</th><th>Business</th><th>Date</th><th>Type</th><th>Att.</th><th>Contact</th><th></th></tr></thead><tbody>'+
+        data.map(r=>`<tr><td><b>${r.report_ref||'—'}</b></td><td>${r.business_name}</td><td>${r.training_date||'—'}</td><td>${r.training_type.replace('_',' ')}</td><td>${r.total_attendees}</td><td>${r.contact_email||''}</td>
+          <td style="text-align:right;white-space:nowrap"><button class="primary appr" data-id="${r.id}">Approve &amp; send</button> <button class="ghost danger rej" data-id="${r.id}" data-ref="${r.report_ref}">Reject</button></td></tr>`).join('')+'</tbody></table>';
+      host.querySelectorAll('button.appr').forEach(b=>b.addEventListener('click',async()=>{
+        if(!confirm('Approve and send this training report + certificates?')) return;
+        b.disabled=true; b.textContent='Sending…';
+        try{ await callEdge('approve-training',{report_id:b.dataset.id,action:'approve'}); loadApprovals(); loadReports(); }
+        catch(e){ alert(e.message); b.disabled=false; b.textContent='Approve & send'; }
+      }));
+      host.querySelectorAll('button.rej').forEach(b=>b.addEventListener('click',async()=>{
+        const note=prompt('Reason for rejecting '+b.dataset.ref+'? (optional)'); if(note===null) return;
+        try{ await callEdge('approve-training',{report_id:b.dataset.id,action:'reject',note:note}); loadApprovals(); loadReports(); }
+        catch(e){ alert(e.message); }
+      }));
+    }
+
+    let licenseeList=[];
+    async function loadLicenseeOptions(){
+      const {data}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
+      licenseeList=data||[];
+      document.getElementById('rcLic').innerHTML=licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('')||'<option value="">No licensees</option>';
+    }
+    async function sendRecord(){
+      const msg=document.getElementById('rcMsg'); msg.textContent='';
+      const licensee_id=document.getElementById('rcLic').value;
+      const doc_type=document.getElementById('rcType').value;
+      const business=document.getElementById('rcBiz').value.trim();
+      const title=document.getElementById('rcTitle').value.trim();
+      const file=document.getElementById('rcFile').files[0];
+      if(!licensee_id||!business){ msg.textContent='Pick a licensee and enter a business name.'; msg.className='msg err'; return; }
+      if(!file){ msg.textContent='Choose a PDF file.'; msg.className='msg err'; return; }
+      const btn=document.getElementById('rcSend'); btn.disabled=true;
+      try{
+        const path=licensee_id+'/'+Date.now()+'-'+file.name;
+        const {error:upErr}=await sb.storage.from('documents').upload(path,file,{upsert:true});
+        if(upErr) throw upErr;
+        const {error}=await sb.from('documents').insert({licensee_id,business_name:business,doc_type,title:title||null,storage_path:path,status:'pending',created_by:session.user.id});
+        if(error) throw error;
+        msg.textContent='Sent for approval ✓'; msg.className='msg ok';
+        document.getElementById('rcBiz').value=document.getElementById('rcTitle').value=''; document.getElementById('rcFile').value='';
+        loadRecords();
+      }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
+      btn.disabled=false;
+    }
+    async function loadRecords(){
+      const host=document.getElementById('recHost');
+      const {data,error}=await sb.from('documents').select('*').order('created_at',{ascending:false});
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      if(!data.length){ host.innerHTML='<div class="empty">Nothing sent yet.</div>'; return; }
+      const lmap={}; licenseeList.forEach(l=>lmap[l.id]=l.email);
+      host.innerHTML='<table><thead><tr><th>Business</th><th>Type</th><th>Licensee</th><th>Status</th><th>Licensee note</th><th>File</th></tr></thead><tbody>'+
+        data.map(d=>`<tr><td>${d.business_name}${d.title?' — '+d.title:''}</td><td>${d.doc_type}</td><td>${lmap[d.licensee_id]||'—'}</td>
+          <td><span class="pill ${d.status}">${d.status}</span></td><td>${d.licensee_note?d.licensee_note:'—'}</td>
+          <td>${d.storage_path?`<a class="dl" data-bucket="documents" data-path="${d.storage_path}" href="#">Download</a>`:'—'}</td></tr>`).join('')+'</tbody></table>';
+      host.querySelectorAll('a.dl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
     }
 
     async function loadReports(){
@@ -200,24 +304,19 @@
       window.open(data.signedUrl,'_blank');
     }
 
-    async function loadTemplates(){
-      const host=document.getElementById('tplHost');
-      const {data}=await sb.from('report_templates').select('*').order('created_at',{ascending:false});
-      if(!data||!data.length){ host.innerHTML='<div class="empty">No template uploaded yet.</div>'; return; }
-      host.innerHTML='<table><thead><tr><th>Name</th><th>Active</th><th>Uploaded</th><th></th></tr></thead><tbody>'+
-        data.map(t=>`<tr><td>${t.name}</td><td>${t.is_active?'Yes':'No'}</td><td>${new Date(t.created_at).toLocaleDateString()}</td><td style="text-align:right"><a class="dl tpldl" data-path="${t.storage_path}" href="#">Download</a></td></tr>`).join('')+'</tbody></table>';
-      host.querySelectorAll('a.tpldl').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download('templates',a.dataset.path);}));
-    }
-    async function uploadTemplate(){
-      const msg=document.getElementById('tplMsg'); msg.textContent='';
-      const f=document.getElementById('tplFile').files[0];
-      if(!f){ msg.textContent='Choose a .docx file first.'; msg.className='msg err'; return; }
-      const path='training/'+Date.now()+'-'+f.name;
-      const {error}=await sb.storage.from('templates').upload(path,f,{upsert:true});
-      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
-      await sb.from('report_templates').update({is_active:false}).eq('kind','training');
-      await sb.from('report_templates').insert({name:f.name,kind:'training',storage_path:path,is_active:true,uploaded_by:session.user.id});
-      msg.textContent='Template uploaded ✓'; msg.className='msg ok'; document.getElementById('tplFile').value=''; loadTemplates();
+    async function loadTemplates(){ /* templates are generated live; nothing to load */ }
+    async function viewTemplate(btn){
+      const type=btn.dataset.type;
+      const msg=document.getElementById(type==='certificate'?'tplCertMsg':'tplReportMsg');
+      btn.disabled=true; msg.textContent=' Generating…'; msg.className='msg';
+      try{
+        const res=await fetch(SUPABASE_URL+'/functions/v1/template-samples?type='+type,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token()}});
+        if(!res.ok) throw new Error('Error '+res.status);
+        const blob=await res.blob();
+        window.open(URL.createObjectURL(blob),'_blank');
+        msg.textContent='';
+      }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
+      btn.disabled=false;
     }
   </script>
 </body>
