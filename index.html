@@ -46,42 +46,35 @@
   .userbar button:hover{background:#f3f4f6;}
 
   .cards{
-    display:flex;flex-wrap:wrap;gap:16px;justify-content:center;
-    padding:22px 24px 40px;width:100%;max-width:600px;
+    display:flex;flex-wrap:wrap;gap:14px;justify-content:center;
+    padding:22px 24px 40px;width:100%;max-width:430px;
   }
-  /* collapsed: a square tile — icon + title, tap anywhere to expand */
+  /* each card IS the button: icon centred, title under it, two per row */
   .card{
     position:relative;background:#fff;border:1px solid var(--line);
-    border-radius:20px;padding:18px 12px;cursor:pointer;
-    width:165px;min-height:155px;
+    border-radius:20px;padding:20px 12px;cursor:pointer;
+    width:calc(50% - 7px);min-height:142px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
     box-shadow:0 10px 30px rgba(16,24,40,.08);
     user-select:none;-webkit-tap-highlight-color:transparent;
+    text-decoration:none;color:var(--ink);text-align:center;
+    transition:transform .15s ease, box-shadow .15s ease;
   }
-  .card:hover{box-shadow:0 14px 34px rgba(16,24,40,.14);}
-  .chead{display:flex;flex-direction:column;align-items:center;gap:12px;}
-  .cbody{display:none;}
-  /* expanded: full-width card, icon + title on a row, action button below */
-  .card.open{width:100%;min-height:0;padding:16px 18px;}
-  .card.open .chead{flex-direction:row;gap:14px;}
-  .card.open .cbody{display:block;padding:14px 2px 4px 78px;}
-  @media (max-width:480px){
-    .card{width:calc(50% - 8px);}
-    .card.open{width:100%;}
-    .card.open .cbody{padding-left:2px;}
-  }
+  .card:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(16,24,40,.14);}
+  /* hue pairing: each row shares a colour family so related tools read as a group */
+  .card.t-blue{background:linear-gradient(180deg,#ffffff,#f5f8ff);border-color:#dbe5f8;}
+  .card.t-green{background:linear-gradient(180deg,#ffffff,#f3faf5);border-color:#d6ecdc;}
+  .card.t-grey{background:linear-gradient(180deg,#ffffff,#f4f5f7);border-color:#dfe3e8;}
   .cardbadge{position:absolute;top:-8px;right:-8px;min-width:26px;height:26px;padding:0 7px;border-radius:999px;background:var(--red);color:#fff;font-size:13px;font-weight:800;display:none;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(220,38,38,.4);z-index:2;}
   .icon{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
-  .card.open .icon{width:52px;height:52px;border-radius:15px;}
-  .icon.voice{background:linear-gradient(135deg,#1d4ed8,#7c3aed);box-shadow:0 8px 18px rgba(29,78,216,.4);}
-  .icon.wa{background:linear-gradient(135deg,#16a34a,#22c55e);box-shadow:0 8px 18px rgba(22,163,74,.4);}
-  .icon.price{background:linear-gradient(135deg,#b45309,#f59e0b);box-shadow:0 8px 18px rgba(217,119,6,.4);}
-  .icon.train{background:linear-gradient(135deg,#b91c1c,#ef4444);box-shadow:0 8px 18px rgba(220,38,38,.4);}
-  .icon.check{background:linear-gradient(135deg,#0369a1,#0ea5e9);box-shadow:0 8px 18px rgba(2,132,199,.4);}
-  .btn.check{background:linear-gradient(135deg,#0369a1,#0ea5e9);box-shadow:0 6px 18px rgba(14,165,233,.35);}
+  .icon.voice{background:linear-gradient(135deg,#1e40af,#3b82f6);box-shadow:0 8px 18px rgba(37,99,235,.45);}
+  .icon.wa{background:linear-gradient(135deg,#14532d,#16a34a);box-shadow:0 8px 18px rgba(22,101,52,.45);}
+  .icon.price{background:linear-gradient(135deg,#166534,#22c55e);box-shadow:0 8px 18px rgba(22,101,52,.45);}
+  .icon.train{background:linear-gradient(135deg,#1d4ed8,#60a5fa);box-shadow:0 8px 18px rgba(37,99,235,.45);}
+  .icon.check{background:linear-gradient(135deg,#334155,#64748b);box-shadow:0 8px 18px rgba(51,65,85,.45);}
   .icon svg{width:32px;height:32px;fill:#fff;}
-  .card.open .icon svg{width:26px;height:26px;}
   .card h2{margin:0;font-size:15px;font-weight:800;text-align:center;letter-spacing:-.2px;}
-  .card.open h2{font-size:18px;flex:1;text-align:left;}
+  .icon.crm{background:linear-gradient(135deg,#1f2937,#4b5563);box-shadow:0 8px 18px rgba(31,41,55,.45);}
 
   .btn{
     display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;margin-top:auto;
@@ -160,81 +153,51 @@
 
   <section class="cards">
 
-    <!-- 1. Invoice Generator (ElevenLabs voice) -->
-    <div class="card">
-      <div class="chead">
-        <div class="icon voice">
-          <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2z"/></svg>
-        </div>
-        <h2>Invoice Generator</h2>      </div>
-      <div class="cbody">
-        <button type="button" id="startcall" class="btn voice">
-          <svg viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z"/></svg>
-          Start a call
-        </button>
+    <!-- Row 1 (blue — create): Invoice Generator + Certificate Builder -->
+    <div class="card t-blue" id="startcall" role="button" aria-label="Start an invoice call">
+      <div class="icon voice">
+        <svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2z"/></svg>
       </div>
+      <h2>Invoice Generator</h2>
     </div>
 
-    <!-- 2. Inv/Rep Checker (licensee approvals) -->
-    <div class="card" id="checkerCard" style="display:none;">
+    <a class="card t-blue" href="training.html">
+      <div class="icon train">
+        <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.74V22l4-2 4 2v-7.26A7 7 0 0 0 12 2zm0 11a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/></svg>
+      </div>
+      <h2>Certificate Builder</h2>
+    </a>
+
+    <!-- Row 2 (green — money): Invoice Changes + Price Setting -->
+    <a class="card t-green" id="waLink" href="https://chat.whatsapp.com/GXtz9KTTh6F4qXPUsycVc8" target="_blank" rel="noopener">
+      <div class="icon wa">
+        <svg viewBox="0 0 32 32"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.7L.5 31.5l8-2.1c2.2 1.2 4.8 1.9 7.5 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm0 28c-2.4 0-4.7-.6-6.7-1.8l-.5-.3-4.7 1.2 1.3-4.6-.3-.5A12.4 12.4 0 1 1 28.5 16c0 6.9-5.6 12.5-12.5 12.5zm6.9-9.4c-.4-.2-2.2-1.1-2.6-1.2-.3-.1-.6-.2-.8.2-.2.4-.9 1.2-1.1 1.4-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.6-.2-.4 0-.6.2-.8.2-.2.4-.4.5-.7.2-.2.2-.4.4-.7.1-.3 0-.5 0-.7-.1-.2-.8-2-1.1-2.7-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-.9.4-.3.4-1.2 1.2-1.2 2.9 0 1.7 1.2 3.3 1.4 3.6.2.2 2.5 3.8 6 5.3.8.4 1.5.6 2 .8.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.7.3-.9.3-1.6.2-1.7-.1-.2-.3-.3-.7-.5z"/></svg>
+      </div>
+      <h2>Invoice Changes</h2>
+    </a>
+
+    <a class="card t-green" href="pricing.html">
+      <div class="icon price">
+        <svg viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h9.2a2 2 0 0 1 1.41.59l4.8 4.8a2 2 0 0 1 0 2.82l-7.8 7.8a2 2 0 0 1-2.82 0l-6.6-6.6A2 2 0 0 1 3 11.8V6zm4 1.5A1.5 1.5 0 1 0 7 10.5 1.5 1.5 0 0 0 7 7.5z"/></svg>
+      </div>
+      <h2>Price Setting</h2>
+    </a>
+
+    <!-- Row 3 (dark grey — review & external): Inv/Rep Checker + OnePageCRM -->
+    <a class="card t-grey" id="checkerCard" href="checker.html" style="display:none;">
       <span class="cardbadge" id="checkBadge">0</span>
-      <div class="chead">
-        <div class="icon check">
-          <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
-        </div>
-        <h2>Inv/Rep Checker</h2>      </div>
-      <div class="cbody">
-        <a class="btn check" href="checker.html">
-          <svg viewBox="0 0 24 24"><path d="M3 5h18v2H3zm0 6h18v2H3zm0 6h12v2H3z"/></svg>
-          Open checker
-        </a>
+      <div class="icon check">
+        <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
       </div>
-    </div>
+      <h2>Inv/Rep Checker</h2>
+    </a>
 
-    <!-- 3. Invoice Changes (WhatsApp group) -->
-    <div class="card">
-      <div class="chead">
-        <div class="icon wa">
-          <svg viewBox="0 0 32 32"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.7L.5 31.5l8-2.1c2.2 1.2 4.8 1.9 7.5 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm0 28c-2.4 0-4.7-.6-6.7-1.8l-.5-.3-4.7 1.2 1.3-4.6-.3-.5A12.4 12.4 0 1 1 28.5 16c0 6.9-5.6 12.5-12.5 12.5zm6.9-9.4c-.4-.2-2.2-1.1-2.6-1.2-.3-.1-.6-.2-.8.2-.2.4-.9 1.2-1.1 1.4-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.6-.2-.4 0-.6.2-.8.2-.2.4-.4.5-.7.2-.2.2-.4.4-.7.1-.3 0-.5 0-.7-.1-.2-.8-2-1.1-2.7-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-.9.4-.3.4-1.2 1.2-1.2 2.9 0 1.7 1.2 3.3 1.4 3.6.2.2 2.5 3.8 6 5.3.8.4 1.5.6 2 .8.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.7.3-.9.3-1.6.2-1.7-.1-.2-.3-.3-.7-.5z"/></svg>
-        </div>
-        <h2>Invoice Changes</h2>      </div>
-      <div class="cbody">
-        <a class="btn wa" id="waLink" href="https://chat.whatsapp.com/GXtz9KTTh6F4qXPUsycVc8" target="_blank" rel="noopener">
-          <svg viewBox="0 0 32 32"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.7L.5 31.5l8-2.1c2.2 1.2 4.8 1.9 7.5 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm6.9 18.1c-.4-.2-2.2-1.1-2.6-1.2-.3-.1-.6-.2-.8.2-.2.4-.9 1.2-1.1 1.4-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.6-.2-.4 0-.6.2-.8.2-.2.4-.4.5-.7.2-.2.2-.4.4-.7.1-.3 0-.5 0-.7-.1-.2-.8-2-1.1-2.7-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-.9.4-.3.4-1.2 1.2-1.2 2.9 0 1.7 1.2 3.3 1.4 3.6.2.2 2.5 3.8 6 5.3.8.4 1.5.6 2 .8.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.7.3-.9.3-1.6.2-1.7-.1-.1-.3-.2-.7-.4z"/></svg>
-          Join the WhatsApp group
-        </a>
+    <a class="card t-grey" href="https://app.onepagecrm.com" target="_blank" rel="noopener">
+      <div class="icon crm">
+        <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.3 0-8 1.7-8 5v3h16v-3c0-3.3-4.7-5-8-5z"/></svg>
       </div>
-    </div>
-
-    <!-- 4. Training (public kiosk form) -->
-    <div class="card">
-      <div class="chead">
-        <div class="icon train">
-          <svg viewBox="0 0 24 24"><path d="M12 2C9 6 7 8.5 7 12a5 5 0 0 0 10 0c0-1.7-.6-3.2-1.6-4.6-.4 1.2-1.1 1.9-2 2.1.6-2.3-.4-5-3.4-7.5z"/></svg>
-        </div>
-        <h2>Training</h2>      </div>
-      <div class="cbody">
-        <a class="btn train" href="training.html">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-          Open training form
-        </a>
-      </div>
-    </div>
-
-    <!-- 5. Pricing (bottom) -->
-    <div class="card">
-      <div class="chead">
-        <div class="icon price">
-          <svg viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h9.2a2 2 0 0 1 1.41.59l4.8 4.8a2 2 0 0 1 0 2.82l-7.8 7.8a2 2 0 0 1-2.82 0l-6.6-6.6A2 2 0 0 1 3 11.8V6zm4 1.5A1.5 1.5 0 1 0 7 10.5 1.5 1.5 0 0 0 7 7.5z"/></svg>
-        </div>
-        <h2>Pricing</h2>      </div>
-      <div class="cbody">
-        <a class="btn price" href="pricing.html">
-          <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-          Edit pricing
-        </a>
-      </div>
-    </div>
+      <h2>OnePageCRM</h2>
+    </a>
 
   </section>
 
@@ -297,7 +260,7 @@
       adminLink.style.display = role==='admin' ? 'block' : 'none';
       // Inv/Rep Checker — shown to licensees; badge counts items awaiting their approval
       if(role==='licensee'){
-        checkerCard.style.display='block';
+        checkerCard.style.display='flex';
         const {count}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('licensee_id',session.user.id).eq('status','pending');
         if(count&&count>0){ checkBadge.textContent=count; checkBadge.style.display='flex'; } else { checkBadge.style.display='none'; }
       } else { checkerCard.style.display='none'; }
@@ -307,17 +270,6 @@
     sb.auth.onAuthStateChange((_e,s)=>applySession(s));
   </script>
 
-  <!-- accordion tiles: plain script + event delegation so it always works,
-       even while the app script is still loading. Tap anywhere on a tile to
-       expand/collapse; taps on the action button inside don't collapse it. -->
-  <script>
-    document.addEventListener('click',function(e){
-      var card=e.target.closest('.card');
-      if(!card) return;
-      if(e.target.closest('.cbody')) return;   // let the action button do its job
-      card.classList.toggle('open');
-    });
-  </script>
 
   <!-- voice widget controller (unchanged behaviour) -->
   <script>
