@@ -67,7 +67,7 @@
 <body>
   <div class="topbar">
     <div class="brand"><div class="brand-mark">⚡</div><b>Super Admin</b></div>
-    <div style="display:flex;align-items:center;"><span class="who" id="who"></span><a href="admin.html">Admin portal</a><a href="index.html">Main menu</a><a href="#" id="signoutLink" style="color:#fca5a5;">Sign out</a></div>
+    <div style="display:flex;align-items:center;"><span class="who" id="who"></span><a href="admin.html">Admin portal</a><a href="#" id="signoutLink" style="color:#fca5a5;">Sign out</a></div>
   </div>
 
   <div class="wrap" id="app" style="display:none;">
@@ -120,6 +120,11 @@
         <p class="hint">Control what each licensee can see and use. Switching a feature off hides its button on their home page <b>and</b> blocks the page itself. Takes effect next time they load the app.</p>
         <div id="permHost"><div class="empty">Loading…</div></div>
       </div>
+      <div class="card">
+        <h2>WhatsApp channels</h2>
+        <p class="hint">Each licensee's WhatsApp channels — only you can edit these. One channel: their "Invoice Changes" button opens it directly. Several: they get a chooser. Links must be <b>chat.whatsapp.com</b> or <b>wa.me</b>.</p>
+        <div id="waChHost"><div class="empty">Loading…</div></div>
+      </div>
     </div>
 
     <!-- ARCHIVE -->
@@ -164,6 +169,8 @@
     const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
     const FN=SUPABASE_URL+'/functions/v1/admin-users';
+    const TABLES=['profiles','pricing_items','training_reports','training_attendees','documents','patguard_files','report_templates'];
+    const FEATURES=[['voice','Invoice Generator'],['training','Certificate Builder'],['whatsapp','Invoice Changes'],['pricing','Price Setting'],['checker','Inv/Rep Checker'],['crm','OnePageCRM'],['gar','.gar Uploader'],['bookings','Bookings']];
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.href='index.html'; }
@@ -183,8 +190,6 @@
       const out=await res.json().catch(()=>({})); if(!res.ok) throw new Error(out.error||('Error '+res.status)); return out;
     }
 
-    const TABLES=['profiles','pricing_items','training_reports','training_attendees','documents','patguard_files','report_templates'];
-
     async function loadStats(){
       const host=document.getElementById('stats'); host.innerHTML='';
       const labels={profiles:'Accounts',pricing_items:'Price items',training_reports:'Training reports',training_attendees:'Attendees',documents:'Inv/Rep docs',patguard_files:'.gar files',report_templates:'Templates'};
@@ -201,7 +206,6 @@
       attn.insertAdjacentHTML('beforeend',`<div class="stat" style="background:#fef2f2;"><b>${drej??0}</b><span>Docs rejected (changes needed)</span></div>`);
     }
 
-    const FEATURES=[['voice','Invoice Generator'],['training','Certificate Builder'],['whatsapp','Invoice Changes'],['pricing','Price Setting'],['checker','Inv/Rep Checker'],['crm','OnePageCRM'],['gar','.gar Uploader'],['bookings','Bookings']];
     async function loadPerms(){
       const host=document.getElementById('permHost');
       const {data,error}=await sb.from('profiles').select('id,email,full_name,features').eq('role','licensee').order('email');
@@ -231,6 +235,53 @@
       }));
     }
 
+    async function loadChannels(){
+      const host=document.getElementById('waChHost');
+      const chRow=(name,link)=>`<div class="chRow" style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;align-items:center;">
+        <input class="chName" placeholder="Channel name (e.g. Invoice changes)" value="${(name||'').replace(/"/g,'&quot;')}" style="flex:0 0 210px;">
+        <input class="chLink" placeholder="https://chat.whatsapp.com/…" value="${(link||'').replace(/"/g,'&quot;')}" style="flex:1 1 240px;">
+        <button class="ghost chDel" title="Remove">✕</button></div>`;
+      const {data,error}=await sb.from('profiles').select('id,email,full_name,whatsapp_channels').eq('role','licensee').order('email');
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      if(!data.length){ host.innerHTML='<div class="empty">No licensees yet.</div>'; return; }
+      host.innerHTML=data.map(l=>{
+        const chs=Array.isArray(l.whatsapp_channels)?l.whatsapp_channels:[];
+        return `<div class="licbox" data-lic="${l.id}" style="border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <b>${l.full_name||l.email}</b><span style="color:var(--muted);font-size:12px;">${l.email}</span>
+          </div>
+          <div class="chRows">${chs.map(c=>chRow(c.name,c.link)).join('')||chRow('','')}</div>
+          <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button class="ghost chAdd">+ Add channel</button>
+            <button class="primary chSave" data-lic="${l.id}">Save channels</button>
+            <span class="msg" id="wc-${l.id}" style="margin-top:0;"></span>
+          </div>
+        </div>`;
+      }).join('');
+      const bindDel=()=>host.querySelectorAll('.chDel').forEach(x=>x.onclick=()=>x.closest('.chRow').remove());
+      bindDel();
+      host.querySelectorAll('.chAdd').forEach(b=>b.addEventListener('click',()=>{
+        b.closest('.licbox').querySelector('.chRows').insertAdjacentHTML('beforeend',chRow('',''));
+        bindDel();
+      }));
+      host.querySelectorAll('.chSave').forEach(b=>b.addEventListener('click',async()=>{
+        const box=b.closest('.licbox'), lic=b.dataset.lic, msg=document.getElementById('wc-'+lic);
+        msg.textContent='';
+        const channels=[...box.querySelectorAll('.chRow')]
+          .map(r=>({name:r.querySelector('.chName').value.trim(),link:r.querySelector('.chLink').value.trim()}))
+          .filter(c=>c.link);
+        for(const c of channels){
+          if(!/^https:\/\/(chat\.whatsapp\.com|wa\.me)\//.test(c.link)){ msg.textContent='Links must start with https://chat.whatsapp.com/ or https://wa.me/'; msg.className='msg err'; return; }
+          if(!c.name) c.name='WhatsApp';
+        }
+        b.disabled=true;
+        const {error}=await sb.from('profiles').update({whatsapp_channels:channels,whatsapp_link:channels[0]?channels[0].link:null}).eq('id',lic);
+        if(error){ msg.textContent=error.message; msg.className='msg err'; }
+        else { msg.textContent='Saved ✓'; msg.className='msg ok'; setTimeout(()=>msg.textContent='',1800); }
+        b.disabled=false;
+      }));
+    }
+
     async function loadAccounts(){
       const {users}=await callFn({action:'list_users'});
       document.getElementById('pwUser').innerHTML=users.map(u=>`<option value="${u.id}">${u.full_name||u.email} (${u.email}) — ${u.role}</option>`).join('');
@@ -253,7 +304,7 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'overview',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadStats(); loadAccounts(); loadPerms();
+      loadStats(); loadAccounts(); loadPerms(); loadChannels();
       document.getElementById('refreshStats').addEventListener('click',loadStats);
 
       document.getElementById('pwSet').addEventListener('click',async()=>{

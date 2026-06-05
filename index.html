@@ -308,7 +308,7 @@
     async function applySession(session){
       if(!session){ lock(); userbar.style.display='none'; checkerCard.style.display='none'; adminCard.style.display='none'; return; }
       unlock(); userbar.style.display='flex';
-      const {data:prof}=await sb.from('profiles').select('role,full_name,whatsapp_link,calendar_link,features').eq('id',session.user.id).single();
+      const {data:prof}=await sb.from('profiles').select('role,full_name,whatsapp_link,calendar_link,features,whatsapp_channels').eq('id',session.user.id).single();
       const role=prof?.role||'licensee';
       // super-admin-controlled feature permissions (licensees only; missing key = enabled)
       const feat=(role==='licensee'&&prof?.features)?prof.features:{};
@@ -317,8 +317,11 @@
       featShow('priceCard','pricing'); featShow('crmCard','crm'); featShow('patguardCard','gar');
       currentProfile=prof||{};
       ubEmail.textContent=prof?.full_name||session.user.email;
-      // each licensee has their own WhatsApp group — set by the admin in the portal
-      if(prof?.whatsapp_link) document.getElementById('waLink').href=prof.whatsapp_link;
+      // WhatsApp channels (managed by the super admin): one opens directly, several show a chooser
+      const wa=document.getElementById('waLink');
+      const chans=(role==='licensee'&&Array.isArray(prof?.whatsapp_channels))?prof.whatsapp_channels.filter(c=>c&&c.link):[];
+      if(chans.length>1){ wa.href='#'; wa.onclick=function(e){ e.preventDefault(); openWaChooser(chans); }; }
+      else { const link=(chans[0]&&chans[0].link)||prof?.whatsapp_link; if(link) wa.href=link; wa.onclick=null; }
       // Bookings tile → licensees only; opens their own calendar link (or the profile editor if unset)
       const bk=document.getElementById('bookingCard');
       bk.style.display = (role==='licensee' && feat.bookings!==false) ? 'flex' : 'none';
@@ -331,12 +334,24 @@
         const {count}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('licensee_id',session.user.id).eq('status','pending');
         if(count&&count>0){ checkBadge.textContent=count; checkBadge.style.display='flex'; } else { checkBadge.style.display='none'; }
       } else {
-        // Admin Portal tile — admins only; badge counts training sign-ups awaiting approval
-        checkerCard.style.display='none'; adminCard.style.display='flex';
-        const {count}=await sb.from('training_reports').select('id',{count:'exact',head:true}).eq('status','pending');
-        if(count&&count>0){ adminBadge.textContent=count; adminBadge.style.display='flex'; } else { adminBadge.style.display='none'; }
+        // Admins and the super admin never see the tiles — their landing
+        // experience IS the paged portal. Straight in.
+        location.href = role==='superadmin' ? 'super.html' : 'admin.html';
+        return;
       }
     }
+    // chooser shown when a licensee has several WhatsApp channels
+    function openWaChooser(chans){
+      let m=document.getElementById('waChooser'); if(m) m.remove();
+      m=document.createElement('div'); m.id='waChooser';
+      m.style.cssText='position:fixed;inset:0;z-index:160000;background:rgba(16,24,40,.45);display:flex;align-items:center;justify-content:center;padding:24px;';
+      m.innerHTML='<div style="background:#fff;border-radius:18px;padding:22px;max-width:340px;width:100%;box-shadow:0 16px 44px rgba(16,24,40,.25);"><h3 style="margin:0 0 12px;font-size:17px;">Choose a WhatsApp channel</h3>'+
+        chans.map(c=>'<a href="'+c.link+'" target="_blank" rel="noopener" style="display:block;padding:12px 14px;border:1px solid #e6e9ef;border-radius:12px;margin-bottom:8px;text-decoration:none;color:#101828;font-weight:600;">💬 '+(c.name||'WhatsApp')+'</a>').join('')+
+        '<div style="text-align:right;margin-top:4px;"><button id="waChooserClose" style="background:#fff;border:1px solid #e6e9ef;border-radius:10px;padding:9px 16px;cursor:pointer;">Close</button></div></div>';
+      document.body.appendChild(m);
+      m.addEventListener('click',e=>{ if(e.target===m||e.target.id==='waChooserClose') m.remove(); });
+    }
+
     // ===== profile editor =====
     let currentProfile={};
     const pfModal=document.getElementById('profileModal');
