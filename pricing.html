@@ -57,7 +57,7 @@
 <body>
   <div class="topbar">
     <div class="brand"><div class="brand-mark">FA</div><b>Pricing &amp; items</b></div>
-    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Main menu</a></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Main menu</a><a href="#" id="signoutLink" style="color:#d92d20;">Sign out</a></div>
   </div>
 
   <div class="wrap">
@@ -103,8 +103,15 @@
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.href='index.html'; }
-    const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',session.user.id).single();
+    document.getElementById('signoutLink').addEventListener('click',async(e)=>{
+      e.preventDefault();
+      try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
+      try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
+      location.href='index.html';
+    });
+    const {data:prof}=await sb.from('profiles').select('role,full_name,features').eq('id',session.user.id).single();
     let role=prof?.role||'licensee';
+    if(role==='licensee'&&prof?.features?.pricing===false){ location.href='index.html'; }
     if(role==='superadmin') role='admin'; // superadmin gets full admin powers here
     document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+role;
 

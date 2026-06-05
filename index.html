@@ -170,7 +170,7 @@
       <h2>Invoice Generator</h2>
     </div>
 
-    <a class="card t-blue" href="training.html">
+    <a class="card t-blue" id="certCard" href="training.html">
       <div class="icon train">
         <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.74V22l4-2 4 2v-7.26A7 7 0 0 0 12 2zm0 11a4 4 0 1 1 4-4 4 4 0 0 1-4 4z"/></svg>
       </div>
@@ -185,7 +185,7 @@
       <h2>Invoice Changes</h2>
     </a>
 
-    <a class="card t-green" href="pricing.html">
+    <a class="card t-green" id="priceCard" href="pricing.html">
       <div class="icon price">
         <svg viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h9.2a2 2 0 0 1 1.41.59l4.8 4.8a2 2 0 0 1 0 2.82l-7.8 7.8a2 2 0 0 1-2.82 0l-6.6-6.6A2 2 0 0 1 3 11.8V6zm4 1.5A1.5 1.5 0 1 0 7 10.5 1.5 1.5 0 0 0 7 7.5z"/></svg>
       </div>
@@ -209,7 +209,7 @@
       <h2>Admin Portal</h2>
     </a>
 
-    <a class="card t-grey" href="https://app.onepagecrm.com" target="_blank" rel="noopener">
+    <a class="card t-grey" id="crmCard" href="https://app.onepagecrm.com" target="_blank" rel="noopener">
       <div class="icon crm">
         <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.3 0-8 1.7-8 5v3h16v-3c0-3.3-4.7-5-8-5z"/></svg>
       </div>
@@ -295,7 +295,11 @@
     const userbar=document.getElementById('userbar');
     const ubEmail=document.getElementById('ubEmail');
     const ubRole=document.getElementById('ubRole');
-    document.getElementById('signout').addEventListener('click',async()=>{ await sb.auth.signOut(); location.reload(); });
+    document.getElementById('signout').addEventListener('click',async()=>{
+      try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
+      try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
+      location.reload();
+    });
 
     const checkerCard=document.getElementById('checkerCard');
     const checkBadge=document.getElementById('checkBadge');
@@ -304,21 +308,26 @@
     async function applySession(session){
       if(!session){ lock(); userbar.style.display='none'; checkerCard.style.display='none'; adminCard.style.display='none'; return; }
       unlock(); userbar.style.display='flex';
-      const {data:prof}=await sb.from('profiles').select('role,full_name,whatsapp_link,calendar_link').eq('id',session.user.id).single();
+      const {data:prof}=await sb.from('profiles').select('role,full_name,whatsapp_link,calendar_link,features').eq('id',session.user.id).single();
       const role=prof?.role||'licensee';
+      // super-admin-controlled feature permissions (licensees only; missing key = enabled)
+      const feat=(role==='licensee'&&prof?.features)?prof.features:{};
+      const featShow=(id,key)=>{ const el=document.getElementById(id); if(el) el.style.display=(feat[key]===false)?'none':'flex'; };
+      featShow('startcall','voice'); featShow('certCard','training'); featShow('waLink','whatsapp');
+      featShow('priceCard','pricing'); featShow('crmCard','crm'); featShow('patguardCard','gar');
       currentProfile=prof||{};
       ubEmail.textContent=prof?.full_name||session.user.email;
       // each licensee has their own WhatsApp group — set by the admin in the portal
       if(prof?.whatsapp_link) document.getElementById('waLink').href=prof.whatsapp_link;
       // Bookings tile → licensees only; opens their own calendar link (or the profile editor if unset)
       const bk=document.getElementById('bookingCard');
-      bk.style.display = role==='licensee' ? 'flex' : 'none';
+      bk.style.display = (role==='licensee' && feat.bookings!==false) ? 'flex' : 'none';
       if(prof?.calendar_link){ bk.href=prof.calendar_link; bk.onclick=null; }
       else { bk.href='#'; bk.onclick=function(e){ e.preventDefault(); openProfile('Add your booking calendar link to use this button.'); }; }
       ubRole.textContent=role;
       // Inv/Rep Checker — licensees only; badge counts items awaiting their approval
       if(role==='licensee'){
-        checkerCard.style.display='flex'; adminCard.style.display='none';
+        checkerCard.style.display=(feat.checker===false)?'none':'flex'; adminCard.style.display='none';
         const {count}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('licensee_id',session.user.id).eq('status','pending');
         if(count&&count>0){ checkBadge.textContent=count; checkBadge.style.display='flex'; } else { checkBadge.style.display='none'; }
       } else {
@@ -371,9 +380,22 @@
       closeBtn.innerHTML='✕&nbsp;&nbsp;Close';
       closeBtn.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2147483000;height:42px;padding:0 22px;border-radius:999px;border:none;background:#111827;color:#fff;font-size:15px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;font-family:inherit;';
       document.body.appendChild(closeBtn);
+
+      // Reset the widget IN PLACE (no page reload — reloading flashed the login
+      // gate and looked like a sign-out). Replacing the element gives a clean
+      // widget ready for the next call; the page and session are untouched.
+      function resetWidget(){
+        try{
+          var fresh=document.createElement('elevenlabs-convai');
+          fresh.setAttribute('agent-id',host.getAttribute('agent-id'));
+          host.parentNode.replaceChild(fresh,host);
+          host=fresh;
+        }catch(e){ try{ host.classList.remove('fastas-show'); }catch(_){} }
+        callWasActive=false; resetQueued=false;
+      }
       closeBtn.addEventListener('click',function(){
         try{ host.shadowRoot.querySelectorAll('button').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('end')>-1||l.indexOf('hang')>-1) b.click(); }); }catch(e){}
-        setTimeout(function(){ location.reload(); },150);
+        setTimeout(resetWidget,150);
       });
 
       // Watchdog: ✕ Close shows whenever the widget is open. If the
@@ -381,7 +403,7 @@
       // button labels), auto-reset the page shortly after — so even if the
       // user never taps Close, the screen always returns to the menu.
       var callWasActive=false, resetQueued=false;
-      function queueReset(ms){ if(resetQueued) return; resetQueued=true; setTimeout(function(){ location.reload(); },ms); }
+      function queueReset(ms){ if(resetQueued) return; resetQueued=true; setTimeout(resetWidget,ms); }
       setInterval(function(){
         var open=host.classList.contains('fastas-show');
         closeBtn.style.display = open ? 'flex' : 'none';
