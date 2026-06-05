@@ -16,18 +16,18 @@
   .who{font-size:13px;color:var(--muted);}
   .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 70px;}
   h1{font-size:26px;margin:4px 0 18px;}
-  /* page-menu layout: sticky sidebar menu + content area */
-  .layout{display:flex;gap:22px;align-items:flex-start;}
-  .tabs{flex:0 0 210px;display:flex;flex-direction:column;gap:4px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;position:sticky;top:84px;}
-  .tab{padding:11px 14px;border-radius:10px;border-left:3px solid transparent;background:transparent;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);text-align:left;user-select:none;}
-  .tab:hover{background:#f3f6fb;color:var(--ink);}
-  .tab.active{background:#eef2ff;color:var(--brand);border-left:3px solid var(--brand);}
+  /* page menu: plain text navigation — no buttons */
+  .layout{display:flex;gap:28px;align-items:flex-start;}
+  .tabs{flex:0 0 185px;display:flex;flex-direction:column;gap:2px;position:sticky;top:90px;}
+  .tab{padding:9px 12px;border-left:3px solid transparent;cursor:pointer;font-weight:600;font-size:14.5px;color:var(--muted);user-select:none;}
+  .tab:hover{color:var(--ink);}
+  .tab.active{color:var(--brand);border-left-color:var(--brand);}
   .content{flex:1;min-width:0;}
   @media (max-width:760px){
     .layout{flex-direction:column;}
-    .tabs{position:static;flex:initial;width:100%;flex-direction:row;flex-wrap:wrap;gap:6px;}
-    .tab{flex:1 1 auto;text-align:center;border-left:none;border-bottom:3px solid transparent;}
-    .tab.active{border-left:none;border-bottom:3px solid var(--brand);}
+    .tabs{position:static;flex:initial;width:100%;flex-direction:row;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--line);padding-bottom:6px;}
+    .tab{border-left:none;border-bottom:3px solid transparent;padding:8px 10px;}
+    .tab.active{border-bottom-color:var(--brand);}
   }
   .panel{display:none;} .panel.active{display:block;}
   .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(16,24,40,.05);}

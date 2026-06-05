@@ -16,18 +16,18 @@
   .topbar .who{font-size:13px;color:#9ca3af;}
   .wrap{max-width:1120px;margin:0 auto;padding:24px 20px 70px;}
   h1{font-size:26px;margin:4px 0 14px;}
-  /* page-menu layout: sticky sidebar menu + content area */
-  .layout{display:flex;gap:22px;align-items:flex-start;}
-  .tabs{flex:0 0 210px;display:flex;flex-direction:column;gap:4px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;position:sticky;top:84px;}
-  .tab{padding:11px 14px;border-radius:10px;border-left:3px solid transparent;background:transparent;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);text-align:left;user-select:none;}
-  .tab:hover{background:#f3f6fb;color:var(--ink);}
-  .tab.active{background:#f3e8ff;color:#7c3aed;border-left:3px solid #7c3aed;}
+  /* page menu: plain text navigation — no buttons */
+  .layout{display:flex;gap:28px;align-items:flex-start;}
+  .tabs{flex:0 0 185px;display:flex;flex-direction:column;gap:2px;position:sticky;top:90px;}
+  .tab{padding:9px 12px;border-left:3px solid transparent;cursor:pointer;font-weight:600;font-size:14.5px;color:var(--muted);user-select:none;}
+  .tab:hover{color:var(--ink);}
+  .tab.active{color:#7c3aed;border-left-color:#7c3aed;}
   .content{flex:1;min-width:0;}
   @media (max-width:760px){
     .layout{flex-direction:column;}
-    .tabs{position:static;flex:initial;width:100%;flex-direction:row;flex-wrap:wrap;gap:6px;}
-    .tab{flex:1 1 auto;text-align:center;border-left:none;border-bottom:3px solid transparent;}
-    .tab.active{border-left:none;border-bottom:3px solid #7c3aed;}
+    .tabs{position:static;flex:initial;width:100%;flex-direction:row;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--line);padding-bottom:6px;}
+    .tab{border-left:none;border-bottom:3px solid transparent;padding:8px 10px;}
+    .tab.active{border-bottom-color:#7c3aed;}
   }
   .panel{display:none;} .panel.active{display:block;}
   .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 8px 24px rgba(16,24,40,.05);}
@@ -75,7 +75,7 @@
     <div class="layout">
     <nav class="tabs">
       <div class="tab active" data-tab="overview">📊 Overview</div>
-      <div class="tab" data-tab="security">🔐 Access &amp; security</div>
+      <div class="tab" data-tab="security">👤 Accounts</div>
       <div class="tab" data-tab="permissions">🧩 Permissions</div>
       <div class="tab" data-tab="archive">🗄 Archive</div>
       <div class="tab" data-tab="danger">⚠ Danger zone</div>
@@ -111,17 +111,6 @@
         </div>
         <div class="msg" id="pwMsg"></div>
       </div>
-      <div class="card">
-        <h2>Security checklist</h2>
-        <p class="hint">The platform settings that protect the system. The app enforces what it can; the rest live in the Supabase dashboard.</p>
-        <div class="check"><span class="dot" style="background:#16a34a;"></span><div><b>Row-level security — enforced</b><span>Every table isolates licensees to their own data; verified in testing.</span></div></div>
-        <div class="check"><span class="dot" style="background:#16a34a;"></span><div><b>Role hierarchy — enforced</b><span>Only you can create admins, change roles, delete users, or reset passwords. The super admin account can't be deleted or demoted.</span></div></div>
-        <div class="check"><span class="dot" style="background:#16a34a;"></span><div><b>Private storage</b><span>All files (PDFs, .gar) are in private buckets, served via short-lived signed links.</span></div></div>
-        <div class="check"><span class="dot" style="background:#d97706;"></span><div><b>Open sign-up — check it's OFF</b><span>Supabase → Authentication → Sign In / Providers → Email. Accounts should only come from the admin portal.</span></div></div>
-        <div class="check"><span class="dot" style="background:#d97706;"></span><div><b>Password policy</b><span>Same page: set minimum length + leaked-password protection (Pro plan).</span></div></div>
-        <div class="check"><span class="dot" style="background:#d97706;"></span><div><b>CORS lock (optional)</b><span>Edge Function secret ALLOWED_ORIGINS = your site URL. Open (*) until set.</span></div></div>
-        <div class="check"><span class="dot" style="background:#d97706;"></span><div><b>Training form spam shield (optional)</b><span>Cloudflare Turnstile: site key in training.html, TURNSTILE_SECRET as a function secret.</span></div></div>
-      </div>
     </div>
 
     <!-- PERMISSIONS -->
@@ -140,10 +129,6 @@
         <p class="hint">Download a complete JSON snapshot of every table — users, pricing, training, documents, PatGuard records. Do this before any reset. (PDF/.gar files in storage aren't inside the JSON; they stay in storage until deleted.)</p>
         <button class="primary" id="archiveBtn">⬇ Download full archive (JSON)</button>
         <div class="msg" id="archMsg"></div>
-      </div>
-      <div class="card">
-        <h2>Good practice</h2>
-        <p class="hint" style="margin:0;">Take an archive monthly and before every reset or big change. Store it outside this system (e.g. OneDrive). The archive is plain JSON — it can be re-imported manually if ever needed.</p>
       </div>
     </div>
 
