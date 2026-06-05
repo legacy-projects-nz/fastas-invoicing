@@ -310,8 +310,9 @@
       ubEmail.textContent=prof?.full_name||session.user.email;
       // each licensee has their own WhatsApp group — set by the admin in the portal
       if(prof?.whatsapp_link) document.getElementById('waLink').href=prof.whatsapp_link;
-      // Bookings tile → the user's own calendar link; if none set, open the profile editor
+      // Bookings tile → licensees only; opens their own calendar link (or the profile editor if unset)
       const bk=document.getElementById('bookingCard');
+      bk.style.display = role==='licensee' ? 'flex' : 'none';
       if(prof?.calendar_link){ bk.href=prof.calendar_link; bk.onclick=null; }
       else { bk.href='#'; bk.onclick=function(e){ e.preventDefault(); openProfile('Add your booking calendar link to use this button.'); }; }
       ubRole.textContent=role;

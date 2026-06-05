@@ -34,9 +34,19 @@
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
   .row .f{display:flex;flex-direction:column;gap:5px;} .row .f label{font-size:12px;font-weight:600;color:#344054;}
   .pill{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:700;}
-  .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);}
+  .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);} .pill.superadmin{background:#f3e8ff;color:#7c3aed;}
   .pill.emailed{background:#ecfdf3;color:var(--ok);} .pill.generated{background:#fff7ed;color:#b45309;} .pill.submitted{background:#f2f4f7;color:var(--muted);}
   .pill.pending{background:#fff7ed;color:#b45309;} .pill.approved{background:#ecfdf3;color:var(--ok);} .pill.rejected{background:#fef2f2;color:var(--red);}
+  .pipe{display:flex;align-items:center;flex-wrap:wrap;}
+  .pstep{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap;}
+  .pdot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;background:#cbd5e1;}
+  .pstep.done{color:#067647;} .pstep.done .pdot{background:#16a34a;}
+  .pstep.active{color:#b45309;} .pstep.active .pdot{background:#d97706;}
+  .pstep.alert{color:var(--red);} .pstep.alert .pdot{background:#dc2626;}
+  .pbar{width:26px;height:2px;background:#e2e8f0;margin:0 7px;flex:0 0 auto;}
+  .pbar.done{background:#16a34a;}
+  .piperow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
+  .piperow:last-child{border-bottom:none;}
   .uprow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px dashed #c9d2e3;border-radius:10px;padding:9px 12px;margin-bottom:8px;}
   .uprow.inv{border-color:#b9ccf5;background:#f8faff;}
   .uplabel{flex:0 0 76px;font-size:11px;font-weight:800;letter-spacing:.4px;color:var(--muted);}
@@ -50,24 +60,21 @@
 <body>
   <div class="topbar">
     <div class="brand"><div class="brand-mark">FA</div><b>Admin portal</b></div>
-    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Main menu</a></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a id="superLink" href="super.html" style="display:none;color:#7c3aed;">⚡ Super admin</a><a href="index.html">← Main menu</a></div>
   </div>
 
   <div class="wrap" id="app" style="display:none;">
-    <h1>FASTAS Administration</h1>
+    <h1>FastAs Administration</h1>
     <div class="tabs">
-      <div class="tab active" data-tab="users">Users &amp; roles</div>
-      <div class="tab" data-tab="approvals">Training approvals <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
-      <div class="tab" data-tab="records">Invoices &amp; reports</div>
-      <div class="tab" data-tab="patguard">PatGuard files</div>
-      <div class="tab" data-tab="links">Systems</div>
-      <div class="tab" data-tab="reports">Training reports</div>
-      <div class="tab" data-tab="templates">Templates</div>
-      <div class="tab" data-tab="pricing">Pricing</div>
+      <div class="tab active" data-tab="pipeline">📊 Pipeline <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
+      <div class="tab" data-tab="build">🛠 Build</div>
+      <div class="tab" data-tab="links">🔗 Links</div>
+      <div class="tab" data-tab="admin">👥 Admin</div>
+      <div class="tab" data-tab="settings">⚙ Settings</div>
     </div>
 
-    <!-- USERS -->
-    <div class="panel active" id="panel-users">
+    <!-- ADMIN — people & access -->
+    <div class="panel" id="panel-admin">
       <div class="card">
         <h2>Add a user</h2>
         <p class="hint">Creates a ready-to-use account (no email confirmation needed). Share the password with them.</p>
@@ -91,17 +98,31 @@
       </div>
     </div>
 
-    <!-- TRAINING APPROVALS -->
-    <div class="panel" id="panel-approvals">
+    <!-- PIPELINE — track & approve -->
+    <div class="panel active" id="panel-pipeline">
       <div class="card">
         <h2>Training approvals</h2>
         <p class="hint">Pending training sign-ups from all licensees. <b>Approve &amp; send</b> generates the report + certificates and emails them; <b>Reject</b> sets it aside.</p>
         <div id="apprHost"><div class="empty">Loading…</div></div>
       </div>
+      <div class="card">
+        <h2>Business pipeline</h2>
+        <p class="hint">Where each business is up to: Sent → In review → Approved (or Changes needed).</p>
+        <div id="pipeHost"><div class="empty">Loading…</div></div>
+      </div>
+      <div class="card">
+        <h2>Sent items &amp; status</h2>
+        <div id="recHost"><div class="empty">Loading…</div></div>
+      </div>
+      <div class="card">
+        <h2>Fire safety training reports</h2>
+        <p class="hint">Approved/sent training. Download the business report or any attendee certificate.</p>
+        <div id="reportsHost"><div class="empty">Loading…</div></div>
+      </div>
     </div>
 
-    <!-- INVOICES & REPORTS (admin uploads for licensee approval) -->
-    <div class="panel" id="panel-records">
+    <!-- BUILD — create & send -->
+    <div class="panel" id="panel-build">
       <div class="card">
         <h2>Send an invoice &amp; reports to a licensee</h2>
         <p class="hint">Upload the business's invoice and up to <b>four reports</b> in one go. Titles label the licensee's downloads (blank = file name). Everything lands on their Inv/Rep Checker for approval.</p>
@@ -121,14 +142,6 @@
         <div style="margin-top:14px;"><button class="primary" id="rcSend">Send for approval</button></div>
         <div class="msg" id="rcMsg"></div>
       </div>
-      <div class="card">
-        <h2>Sent items &amp; status</h2>
-        <div id="recHost"><div class="empty">Loading…</div></div>
-      </div>
-    </div>
-
-    <!-- PATGUARD FILES -->
-    <div class="panel" id="panel-patguard">
       <div class="card">
         <h2>Upload a .gar file</h2>
         <p class="hint">Add a PatGuard backup on behalf of a licensee — it's stored against them, same as if they'd used the .gar Uploader.</p>
@@ -159,26 +172,24 @@
             <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#166534,#22c55e);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg></span>
             Support inbox <span style="font-weight:400;color:var(--muted);font-size:13px;">— support@fastas.nz</span>
           </a>
+          <a class="qlink" href="https://app.onepagecrm.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
+            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#9a3412,#fb923c);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.3 0-8 1.7-8 5v3h16v-3c0-3.3-4.7-5-8-5z"/></svg></span>
+            OnePageCRM <span style="font-weight:400;color:var(--muted);font-size:13px;">— contacts &amp; actions</span>
+          </a>
+          <a class="qlink" href="https://app-au.patguardcloud.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
+            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#475569,#94a3b8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;">PG</span>
+            PatGuard Cloud <span style="font-weight:400;color:var(--muted);font-size:13px;">— Australian portal</span>
+          </a>
+          <a class="qlink" href="pricing.html" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
+            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#166534,#22c55e);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M3 6a2 2 0 0 1 2-2h9.2a2 2 0 0 1 1.41.59l4.8 4.8a2 2 0 0 1 0 2.82l-7.8 7.8a2 2 0 0 1-2.82 0l-6.6-6.6A2 2 0 0 1 3 11.8V6zm4 1.5A1.5 1.5 0 1 0 7 10.5 1.5 1.5 0 0 0 7 7.5z"/></svg></span>
+            Price Setting <span style="font-weight:400;color:var(--muted);font-size:13px;">— edit any licensee's prices</span>
+          </a>
         </div>
       </div>
-      <div class="card">
-        <h2>System status</h2>
-        <p class="hint">Live health checks — green means working. <button class="ghost" id="sysRecheck" style="margin-left:6px;">Check again</button></p>
-        <div id="sysHost" style="display:flex;flex-direction:column;gap:10px;max-width:460px;"></div>
-      </div>
     </div>
 
-    <!-- REPORTS -->
-    <div class="panel" id="panel-reports">
-      <div class="card">
-        <h2>Fire safety training reports</h2>
-        <p class="hint">Approved/sent training. Download the business report or any attendee certificate.</p>
-        <div id="reportsHost"><div class="empty">Loading…</div></div>
-      </div>
-    </div>
-
-    <!-- TEMPLATES (live preview of what the system generates) -->
-    <div class="panel" id="panel-templates">
+    <!-- SETTINGS — templates & system health -->
+    <div class="panel" id="panel-settings">
       <div class="card">
         <h2>Business report template</h2>
         <p class="hint">This is the exact layout used for every approved training report — FAST NZ header, business &amp; site details, training content, attendee table and trainer declaration (NZS 4503:2005). Opens with sample data.</p>
@@ -191,14 +202,10 @@
         <button class="primary tplView" data-type="certificate">View certificate template</button>
         <span class="msg" id="tplCertMsg"></span>
       </div>
-    </div>
-
-    <!-- PRICING -->
-    <div class="panel" id="panel-pricing">
       <div class="card">
-        <h2>Pricing</h2>
-        <p class="hint">Item prices feed the invoice flow. Both admins and licensees can edit them.</p>
-        <a class="primary" style="display:inline-block;text-decoration:none;" href="pricing.html">Open pricing editor →</a>
+        <h2>System status</h2>
+        <p class="hint">Live health checks — green means working. <button class="ghost" id="sysRecheck" style="margin-left:6px;">Check again</button></p>
+        <div id="sysHost" style="display:flex;flex-direction:column;gap:10px;max-width:460px;"></div>
       </div>
     </div>
   </div>
@@ -215,9 +222,14 @@
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.href='index.html'; }
     const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',session.user.id).single();
-    document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+(prof?.role||'licensee');
-    if(prof?.role!=='admin'){ document.getElementById('denied').style.display='block'; }
-    else { document.getElementById('app').style.display='block'; init(); }
+    const myRole=prof?.role||'licensee';
+    document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+myRole;
+    if(myRole!=='admin'&&myRole!=='superadmin'){ document.getElementById('denied').style.display='block'; }
+    else {
+      document.getElementById('app').style.display='block';
+      if(myRole==='superadmin') document.getElementById('superLink').style.display='inline';
+      init();
+    }
 
     function token(){ return session.access_token; }
     async function callFn(payload){
@@ -240,6 +252,8 @@
       document.getElementById('pgUpload').addEventListener('click',uploadGar);
       document.getElementById('sysRecheck').addEventListener('click',checkSystems);
       checkSystems();
+      // only the super admin can create admin accounts
+      if(myRole!=='superadmin'){ const o=document.querySelector('#nuRole option[value="admin"]'); if(o) o.remove(); }
       // auto-fill each title from the chosen file's name (editable; manual titles aren't overwritten)
       [['rcF-inv','rcT-inv'],['rcF-r1','rcT-r1'],['rcF-r2','rcT-r2'],['rcF-r3','rcT-r3'],['rcF-r4','rcT-r4']].forEach(function(p){
         var fi=document.getElementById(p[0]), ti=document.getElementById(p[1]);
@@ -269,12 +283,13 @@
         if(!users.length){ host.innerHTML='<div class="empty">No users.</div>'; return; }
         let h='<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
         for(const u of users){
+          const controls=(myRole==='superadmin'&&u.role!=='superadmin')
+            ?`<select data-uid="${u.id}" class="roleSel"><option value="licensee"${u.role==='licensee'?' selected':''}>Licensee</option><option value="admin"${u.role==='admin'?' selected':''}>Admin</option></select>
+              <button class="ghost danger delUser" data-uid="${u.id}" data-email="${u.email}">Remove</button>`
+            :'<span style="color:var(--muted);font-size:12px;">'+(u.role==='superadmin'?'—':'super admin only')+'</span>';
           h+=`<tr><td>${u.full_name||'—'}</td><td>${u.email}</td>
             <td><span class="pill ${u.role}">${u.role}</span></td>
-            <td style="text-align:right">
-              <select data-uid="${u.id}" class="roleSel"><option value="licensee"${u.role==='licensee'?' selected':''}>Licensee</option><option value="admin"${u.role==='admin'?' selected':''}>Admin</option></select>
-              ${u.id===session.user.id?'':`<button class="ghost danger delUser" data-uid="${u.id}" data-email="${u.email}">Remove</button>`}
-            </td></tr>`;
+            <td style="text-align:right">${controls}</td></tr>`;
         }
         host.innerHTML=h+'</tbody></table>';
         host.querySelectorAll('.roleSel').forEach(s=>s.addEventListener('change',async()=>{ try{ await callFn({action:'set_role',user_id:s.dataset.uid,role:s.value}); loadUsers(); }catch(e){ alert(e.message); } }));
@@ -445,12 +460,33 @@
       }catch(e){ msg.textContent=(sent?('Sent '+sent+', then failed: '):'')+e.message; msg.className='msg err'; }
       btn.disabled=false;
     }
+    function pipeHTML(pending,rejected){
+      const reviewDone=pending===0, ok=reviewDone&&rejected===0, alert=reviewDone&&rejected>0;
+      const step=(label,cls,icon)=>`<span class="pstep ${cls}"><span class="pdot">${icon}</span>${label}</span>`;
+      return `<div class="pipe">
+        ${step('Sent','done','✓')}<span class="pbar done"></span>
+        ${reviewDone?step('Reviewed','done','✓'):step('In review · '+pending,'active',pending)}
+        <span class="pbar ${reviewDone?'done':''}"></span>
+        ${alert?step('Changes needed · '+rejected,'alert','!'):(ok?step('Approved','done','✓'):step('Approval','','…'))}
+      </div>`;
+    }
     async function loadRecords(){
       const host=document.getElementById('recHost');
+      const pipeHost=document.getElementById('pipeHost');
       const {data,error}=await sb.from('documents').select('*').order('created_at',{ascending:false});
-      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
-      if(!data.length){ host.innerHTML='<div class="empty">Nothing sent yet.</div>'; return; }
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; pipeHost.innerHTML=''; return; }
+      if(!data.length){ host.innerHTML='<div class="empty">Nothing sent yet.</div>'; pipeHost.innerHTML='<div class="empty">No businesses in the pipeline yet.</div>'; return; }
       const lmap={}; licenseeList.forEach(l=>lmap[l.id]=l.email);
+      const lname={}; licenseeList.forEach(l=>lname[l.id]=l.full_name||l.email);
+      // pipeline summary per licensee + business
+      const groups={};
+      data.forEach(d=>{ const k=d.licensee_id+'|'+d.business_name; (groups[k]=groups[k]||[]).push(d); });
+      pipeHost.innerHTML=Object.entries(groups).map(([k,items])=>{
+        const [lid,biz]=k.split('|');
+        const pending=items.filter(d=>d.status==='pending').length;
+        const rejected=items.filter(d=>d.status==='rejected').length;
+        return `<div class="piperow"><div><b>${biz}</b> <span style="color:var(--muted);font-size:12px;">· ${lname[lid]||'—'} · ${items.length} item${items.length>1?'s':''}</span></div>${pipeHTML(pending,rejected)}</div>`;
+      }).join('');
       host.innerHTML='<table><thead><tr><th>Business</th><th>Type</th><th>Licensee</th><th>Status</th><th>Licensee note</th><th>File</th></tr></thead><tbody>'+
         data.map(d=>`<tr><td>${d.business_name}${d.title?' — '+d.title:''}</td><td>${d.doc_type}</td><td>${lmap[d.licensee_id]||'—'}</td>
           <td><span class="pill ${d.status}">${d.status}</span></td><td>${d.licensee_note?d.licensee_note:'—'}</td>

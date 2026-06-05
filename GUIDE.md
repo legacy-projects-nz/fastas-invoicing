@@ -1,10 +1,13 @@
 # FASTAS — step-by-step guide for each area
 
-Logins:
+Logins (FastAs Admin app — https://fastas-invoicing.onrender.com):
 - **Admin** — jeremy@lpnz.co.nz / `Jb92018201!`
-- **Admin (support)** — support@fastas.nz / `FastasSupport#2026`
-- **FASTNZ - Dunedin licensee** — sales@fastnz.nz / `Sa92018201!` (owns all 39 existing prices)
-(All sign in at the same page; admins additionally see the "⚙ Admin portal →" link.)
+- **Admin (support)** — support@fastas.nz / `Fa92018201!`
+- **Dunedin licensee** — sales@fastnz.nz / `Sa92018201!` (owns all 39 existing prices)
+(All sign in at the same page; admins see the Admin Portal tile, licensees the Inv/Rep Checker tile.)
+
+PatGuard Cloud (Australian portal — https://app-au.patguardcloud.com):
+- **Admin password** — `Fa92018201!`
 
 ---
 

@@ -24,7 +24,16 @@
   .tab.active .n{background:#fff;color:var(--ink);}
 
   .biz{background:#fff;border:1px solid var(--line);border-radius:16px;margin-bottom:18px;box-shadow:0 6px 18px rgba(16,24,40,.04);overflow:hidden;}
-  .bizhead{padding:14px 18px;background:#f8fafc;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+  .bizhead{padding:14px 18px;background:#f8fafc;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  /* progress pipeline: Sent → In review → Approved (or Changes needed) */
+  .pipe{display:flex;align-items:center;flex-wrap:wrap;}
+  .pstep{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap;}
+  .pdot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;background:#cbd5e1;}
+  .pstep.done{color:#067647;} .pstep.done .pdot{background:#16a34a;}
+  .pstep.active{color:#b45309;} .pstep.active .pdot{background:#d97706;}
+  .pstep.alert{color:var(--red);} .pstep.alert .pdot{background:#dc2626;}
+  .pbar{width:26px;height:2px;background:#e2e8f0;margin:0 7px;flex:0 0 auto;}
+  .pbar.done{background:#16a34a;}
   .bizhead h3{margin:0;font-size:17px;}
   .bizhead .meta{color:var(--muted);font-size:13px;}
   .sec{padding:14px 18px;}
@@ -91,6 +100,21 @@
 
     function labelOf(d){ return d.title || ((d.doc_type==='invoice'?'Invoice':'Report')+' — '+d.business_name); }
 
+    // pipeline for a business, computed from ALL its docs (not just the current filter)
+    function pipelineFor(biz){
+      const all=docs.filter(d=>d.business_name===biz);
+      const pending=all.filter(d=>d.status==='pending').length;
+      const rejected=all.filter(d=>d.status==='rejected').length;
+      const reviewDone=pending===0, ok=reviewDone&&rejected===0, alert=reviewDone&&rejected>0;
+      const step=(label,cls,icon)=>`<span class="pstep ${cls}"><span class="pdot">${icon}</span>${label}</span>`;
+      return `<div class="pipe">
+        ${step('Sent','done','✓')}<span class="pbar done"></span>
+        ${reviewDone?step('Reviewed','done','✓'):step('In review · '+pending,'active',pending)}
+        <span class="pbar ${reviewDone?'done':''}"></span>
+        ${alert?step('Changes needed · '+rejected,'alert','!'):(ok?step('Approved','done','✓'):step('Approval','','…'))}
+      </div>`;
+    }
+
     async function load(){
       const {data,error}=await sb.from('documents').select('*').order('created_at',{ascending:false});
       if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
@@ -134,7 +158,7 @@
         const reports=allReports.slice(0,4);
         const extra=allReports.length-reports.length;
         return `<div class="biz">
-          <div class="bizhead"><h3>${biz}</h3><span class="meta">${items.length} item${items.length>1?'s':''}</span></div>
+          <div class="bizhead"><h3>${biz}</h3>${pipelineFor(biz)}</div>
           <div class="sec">
             <div class="sechead invoice">Invoice <span class="cnt">${invoices.length}</span></div>
             ${invoices.length?invoices.map(docRow).join(''):'<div class="none">No invoice in this view.</div>'}
