@@ -6,7 +6,7 @@
 <title>FASTAS · Rebook Calendar</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
 <style>
-  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--green:#16a34a;--slate:#475569;--red:#475569;--bg1:#f7f9fc;--bg2:#eef2f8;}
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--green:#4f46e5;--slate:#475569;--red:#475569;--bg1:#f7f9fc;--bg2:#eef2f8;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
@@ -39,7 +39,7 @@
   .bk{font-size:12px;color:var(--ink);background:#f1f5f9;border-radius:7px;padding:5px 8px;margin-top:8px;font-weight:600;}
   .req{margin-top:8px;border-radius:8px;padding:7px 9px;font-size:12px;font-weight:600;}
   .req.responded{background:#eff6ff;border:1px solid #dbe7ff;color:#1d4ed8;}
-  .req.call_requested{background:#ecfdf3;border:1px solid #bbf7d0;color:#067647;}
+  .req.call_requested{background:#eef2ff;border:1px solid #c7d2fe;color:#4338ca;}
   .req.sent{background:#f1f5f9;border:1px solid var(--line);color:var(--muted);}
   .reqbtns{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
   .reqbtns a,.reqbtns button{flex:1;text-align:center;text-decoration:none;border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:#fff;}
@@ -85,13 +85,14 @@
       <select id="licFilter" style="display:none;"></select>
       <select id="bizPick"><option value="">+ Schedule a business…</option></select>
       <button class="ghost" id="availBtn" style="display:none;">🗓 My availability</button>
+      <a class="ghost" id="myCalBtn" style="display:none;text-decoration:none;" target="_blank" rel="noopener">📅 My calendar</a>
       <span class="spacer"></span>
       <button class="ghost" id="allOn">🔔 Reminders: all on</button>
       <button class="ghost" id="allOff">Reminders: all off</button>
     </div>
     <div class="legend">
       <span><i class="dotc" style="background:#2563eb"></i> Test &amp; Tag</span>
-      <span><i class="dotc" style="background:#16a34a"></i> Extinguisher Cert</span>
+      <span><i class="dotc" style="background:#4f46e5"></i> Extinguisher Cert</span>
       <span><i class="dotc" style="background:#475569"></i> Fire Training</span>
       <span>🔔 = email reminder on</span>
     </div>
@@ -150,13 +151,14 @@
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
       try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
       location.href='index.html'; });
-    const {data:prof}=await sb.from('profiles').select('role,full_name,features,avail_weekly,avail_overrides').eq('id',session.user.id).single();
+    const {data:prof}=await sb.from('profiles').select('role,full_name,features,avail_weekly,avail_overrides,calendar_link').eq('id',session.user.id).single();
     const role=prof?.role||'licensee';
     const isAdmin=role==='admin'||role==='superadmin';
     if(role==='licensee' && prof?.features?.calendar===false){ location.replace('index.html'); throw new Error('no access'); }
     document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+role;
+    const myCalLink=prof?.calendar_link||'';
 
-    const SVC=[['tt','Test & Tag','#2563eb'],['ec','Extinguisher Cert','#16a34a'],['ft','Fire Training','#475569']];
+    const SVC=[['tt','Test & Tag','#2563eb'],['ec','Extinguisher Cert','#4f46e5'],['ft','Fire Training','#475569']];
     const DAYS=[['mon','Monday'],['tue','Tuesday'],['wed','Wednesday'],['thu','Thursday'],['fri','Friday'],['sat','Saturday'],['sun','Sunday']];
     const CAD=[3,6,12];
     let biz=[], sched=[], reqs=[], licName={};
@@ -184,12 +186,14 @@
     function mkeyStr(s){ const [y,m]=s.split('-').map(Number); return y*12+(m-1); }
     function fmtDT(iso){ return new Date(iso).toLocaleString('en-NZ',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }
     function fmtDay(ds){ return new Date(ds+'T00:00:00').toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short'}); }
+    function gcalUrl(name,iso){ const st=new Date(iso); const en=new Date(st.getTime()+3600000); const f=d=>d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z'; return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('FAST AS — '+name)+'&dates='+f(st)+'/'+f(en); }
     function activeReq(bid){ return reqs.find(r=>r.business_id===bid && ['sent','responded','call_requested'].includes(r.status)); }
 
     function render(){
       const fb=filtered();
       bizPick.innerHTML='<option value="">+ Schedule a business…</option>'+fb.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
       document.getElementById('availBtn').style.display = (role==='licensee') ? 'inline-block' : 'none';
+      const mc=document.getElementById('myCalBtn'); if(mc){ if(role==='licensee' && myCalLink){ mc.href=myCalLink; mc.style.display='inline-block'; } else mc.style.display='none'; }
       const today=new Date(); const curKey=mkey(new Date(today.getFullYear(),today.getMonth(),1));
       const buckets={};
       const entry=(k,b)=>{ (buckets[k]=buckets[k]||{}); return buckets[k][b.id]=buckets[k][b.id]||{b,svcs:[],booking:null}; };
@@ -218,7 +222,7 @@
     function tile(e,k){
       const b=e.b;
       const badges=e.svcs.map(s=>{ const c=SVC.find(x=>x[0]===s.svc)||['','?','#475569']; return `<span class="svc" style="background:${c[2]}1a;color:${c[2]};border-color:${c[2]}55;">${c[1]}${s.overdue?' · overdue':''}</span>`; }).join('');
-      const bk=e.booking?`<div class="bk">📅 ${fmtDT(e.booking)}</div>`:'';
+      const bk=e.booking?`<div class="bk">📅 ${fmtDT(e.booking)} <a href="${gcalUrl(b.name,e.booking)}" target="_blank" rel="noopener" style="color:var(--brand);font-weight:700;margin-left:6px;text-decoration:none;">+ add</a></div>`:'';
       const bell=b.remind_email?'<span class="bell" title="Email reminder on">🔔</span>':'';
       const lic=isAdmin?`<div class="lic">${licName[b.licensee_id]||''}</div>`:'';
       let reqHtml='';
