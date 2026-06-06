@@ -148,7 +148,6 @@
   .icon.cat-builder{background:linear-gradient(135deg,#1e40af,#3b82f6);box-shadow:0 8px 18px rgba(37,99,235,.45);}
   .icon.cat-settings{background:linear-gradient(135deg,#475569,#94a3b8);box-shadow:0 8px 18px rgba(71,85,105,.45);}
   .icon.cat-links{background:linear-gradient(135deg,#4338ca,#6366f1);box-shadow:0 8px 18px rgba(67,56,202,.45);}
-  .icon.cat-profile{background:linear-gradient(135deg,#475569,#94a3b8);box-shadow:0 8px 18px rgba(71,85,105,.45);}
   .cats .wide{width:100%!important;max-width:none;flex-direction:row;min-height:96px;gap:22px;order:0;}
   .catbtn{order:3;}
   .catcard.wide{background:linear-gradient(135deg,#2563eb,#1d4ed8) !important;border:none !important;color:#fff;box-shadow:0 12px 30px rgba(37,99,235,.4);}
@@ -188,8 +187,7 @@
     <div class="card t-blue catcard wide" data-cat="sales" role="button"><div class="icon cat-sales"><svg viewBox="0 0 24 24"><path d="M3 3h2v18H3V3zm16 8h2v10h-2V11zm-5-6h2v16h-2V5zM9 9h2v12H9V9z"/></svg></div><h2>Sales</h2></div>
     <div class="card t-blue catcard" data-cat="builder" role="button"><div class="icon cat-builder"><svg viewBox="0 0 24 24"><path d="M21.7 18.3l-7.1-7.1a5.5 5.5 0 0 0-6.9-6.9l3.2 3.2-2.6 2.6-3.2-3.2a5.5 5.5 0 0 0 6.9 6.9l7.1 7.1a1 1 0 0 0 1.4 0l1.2-1.2a1 1 0 0 0 0-1.4z"/></svg></div><h2>Builder</h2></div>
     <div class="card t-grey catcard" data-cat="settings" role="button"><div class="icon cat-settings"><svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.56-1.63.94l-2.39-.96a.5.5 0 0 0-.61.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.5.38 1.04.7 1.63.94l.36 2.54c.04.24.25.42.5.42h3.84c.25 0 .46-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.63-.94l2.39.96c.22.09.48 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></div><h2>Settings</h2></div>
-    <div class="card t-grey catbtn" id="profileCatBtn" role="button"><div class="icon cat-profile"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.3 0-8 1.7-8 5v3h16v-3c0-3.3-4.7-5-8-5z"/></svg></div><h2>Profile</h2></div>
-  </section>
+      </section>
 
   <div class="backbar" id="backbar"><a id="backCats">← Categories</a></div>
   <h2 class="cattitle" id="catTitle"></h2>
@@ -475,8 +473,6 @@
     function showLanding(){ const cards=document.querySelector('.cards'); if(cards) cards.style.display='none'; document.getElementById('catLanding').style.display='flex'; document.getElementById('backbar').style.display='none'; document.getElementById('catTitle').style.display='none'; window.scrollTo({top:0}); }
     document.querySelectorAll('.catcard').forEach(c=>c.addEventListener('click',()=>showCat(c.dataset.cat)));
     document.getElementById('backCats').addEventListener('click',showLanding);
-    const profileCatBtn=document.getElementById('profileCatBtn');
-    if(profileCatBtn) profileCatBtn.addEventListener('click',()=>openProfile());
     const profileCardEl=document.getElementById('profileCard');
     if(profileCardEl) profileCardEl.addEventListener('click',(e)=>{ e.preventDefault(); openProfile(); });
 
