@@ -59,8 +59,8 @@
   .piperow:last-child{border-bottom:none;}
   /* ===== Kanban board (OnePageCRM vibe) ===== */
   .board{display:flex;gap:0;overflow-x:auto;padding-bottom:8px;}
-  .col{flex:1 0 200px;min-width:200px;display:flex;flex-direction:column;}
-  .colhead{position:relative;color:#fff;padding:10px 14px 10px 22px;font-weight:700;font-size:13px;margin-right:9px;}
+  .col{flex:1 0 172px;min-width:172px;display:flex;flex-direction:column;}
+  .colhead{position:relative;color:#fff;padding:8px 12px 8px 20px;font-weight:700;font-size:12px;margin-right:9px;}
   .colhead .ct{opacity:.85;font-weight:600;margin-left:4px;}
   /* arrow shape between columns */
   .colhead:after{content:'';position:absolute;top:0;right:-16px;width:0;height:0;border-top:18px solid transparent;border-bottom:18px solid transparent;border-left:16px solid inherit;z-index:2;}
@@ -69,17 +69,20 @@
   .col:first-child .colhead:before{display:none;}
   .colbody{background:#f4f6fa;border:1px solid var(--line);border-top:none;margin-right:9px;padding:8px;min-height:60px;flex:1;border-radius:0 0 8px 8px;}
   .col:last-child .colhead{margin-right:0;} .col:last-child .colhead:after{display:none;} .col:last-child .colbody{margin-right:0;}
-  .kcard{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 11px;margin-bottom:8px;box-shadow:0 2px 6px rgba(16,24,40,.05);}
+  .kcard{background:#fff;border:1px solid #e2e7f0;border-radius:8px;padding:8px 9px;margin-bottom:7px;box-shadow:0 2px 4px rgba(16,24,40,.08),0 6px 14px rgba(16,24,40,.07);transition:transform .12s ease,box-shadow .12s ease;}
+  .kcard:hover{transform:translateY(-1px);box-shadow:0 4px 8px rgba(16,24,40,.12),0 10px 22px rgba(16,24,40,.1);}
   .kcard:last-child{margin-bottom:0;}
-  .kcard .kt{font-weight:700;font-size:13.5px;color:var(--ink);}
-  .kcard .ks{color:var(--muted);font-size:12px;margin-top:2px;}
-  .kcard .kactions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
-  .kbtn{font-size:12px;font-weight:700;border:none;border-radius:7px;padding:6px 10px;cursor:pointer;}
+  .kcard.ghost{opacity:.62;border-style:dashed;box-shadow:none;background:#fbfcfe;}
+  .kcard .kt{font-weight:700;font-size:12.5px;color:var(--ink);line-height:1.25;}
+  .kcard .ks{color:var(--muted);font-size:11px;margin-top:1px;}
+  .kcard .kactions{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;}
+  .kbtn{font-size:11px;font-weight:700;border:none;border-radius:6px;padding:5px 8px;cursor:pointer;}
   .kbtn.go{background:#16a34a;color:#fff;} .kbtn.warn{background:#fff;border:1px solid #f4c4c4;color:var(--red);} .kbtn.alt{background:#eef2ff;color:var(--brand);}
   .kbtn.line{background:#fff;border:1px solid var(--line);color:var(--ink);}
-  .kcard a.kdl{font-size:12px;color:var(--brand);text-decoration:none;font-weight:600;display:inline-block;margin-top:6px;margin-right:8px;}
-  .knote{background:#fff7ed;border:1px solid #fed7aa;border-radius:7px;padding:6px 8px;font-size:12px;color:#b45309;margin-top:7px;}
-  .kempty{color:#9aa4b2;font-size:12px;text-align:center;padding:14px 4px;}
+  .kcard a.kdl{font-size:11px;color:var(--brand);text-decoration:none;font-weight:600;display:inline-block;margin-top:4px;margin-right:7px;}
+  .knote{background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:5px 7px;font-size:11px;color:#b45309;margin-top:6px;}
+  .kempty{color:#9aa4b2;font-size:11px;text-align:center;padding:12px 4px;}
+  .kflag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.3px;padding:2px 6px;border-radius:5px;background:#ecfdf3;color:#067647;margin-top:4px;}
   /* stage colours */
   .s-recv{background:#64748b;} .s-recv:after{border-left-color:#64748b;}
   .s-sent{background:#2563eb;} .s-sent:after{border-left-color:#2563eb;}
@@ -106,7 +109,7 @@
     <h1>FastAs Administration</h1>
     <div class="layout">
     <nav class="tabs">
-      <div class="tab active" data-tab="pipeline">📊 Pipeline <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
+      <div class="tab active" data-tab="pipeline">📊 Pipelines <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
       <div class="tab" data-tab="build">🛠 Build</div>
       <div class="tab" data-tab="links">🔗 Links</div>
       <div class="tab" data-tab="admin">👥 Admin</div>
@@ -149,6 +152,21 @@
         <p class="hint"><b>Requested</b> = kiosk sign-up. <b>Approve &amp; send</b> builds the report + certificates and emails them → <b>Issued</b>. Mark <b>Complete</b> to archive.</p>
         <div class="board" id="trainBoard"><div class="empty">Loading…</div></div>
       </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <h2 style="margin:0;">Onboarding pipeline</h2>
+          <a href="https://app.onepagecrm.com" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#fff7ed;border:1px solid #fed7aa;color:#b45309;border-radius:10px;padding:8px 13px;text-decoration:none;font-weight:700;font-size:13px;">⤴ Update OnePageCRM</a>
+        </div>
+        <p class="hint">Track new clients toward onboarding. <b>Remember to mirror each move in OnePageCRM</b> (button above).</p>
+        <div class="row" style="margin:6px 0 14px;">
+          <div class="f" style="flex:1 1 180px;"><label>Business / client</label><input id="onbName" placeholder="e.g. Harbour Cafe"></div>
+          <div class="f"><label>Contact</label><input id="onbContact" placeholder="name / phone / email"></div>
+          <button class="primary" id="onbAdd">+ Add to pipeline</button>
+        </div>
+        <div class="msg" id="onbMsg"></div>
+        <div class="board" id="onbBoard"><div class="empty">Loading…</div></div>
+      </div>
     </div>
 
     <!-- BUILD — create & send -->
@@ -158,7 +176,7 @@
         <p class="hint">Upload the business's invoice and up to <b>four reports</b> in one go. Titles label the licensee's downloads (blank = file name). Everything lands on their Inv/Rep Checker for approval.</p>
         <div class="row" style="margin-bottom:14px;">
           <div class="f"><label>Licensee</label><select id="rcLic"></select></div>
-          <div class="f" style="flex:1 1 220px;"><label>Business name</label><input id="rcBiz" placeholder="e.g. Acme Ltd"></div>
+          <div class="f" style="flex:1 1 220px;"><label>Business name</label><input id="rcBiz" list="bizList" placeholder="pick or type a business"><datalist id="bizList"></datalist></div>
         </div>
         <div class="uprow inv">
           <span class="uplabel" style="color:var(--brand);">INVOICE</span>
@@ -177,6 +195,8 @@
         <p class="hint">Add a PatGuard backup on behalf of a licensee — it's stored against them, same as if they'd used the .gar Uploader.</p>
         <div class="row">
           <div class="f"><label>Licensee</label><select id="pgLic"></select></div>
+          <div class="f" style="flex:1 1 200px;"><label>Business</label><select id="pgBiz"></select></div>
+          <div class="f" style="flex:1 1 180px;display:none;" id="pgNewWrap"><label>New business name</label><input id="pgBizNew" placeholder="e.g. Harbour Cafe"></div>
           <div class="f"><label>.gar file</label><input id="pgFile" type="file" accept=".gar"></div>
           <button class="primary" id="pgUpload">Upload</button>
         </div>
@@ -299,10 +319,14 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'pipeline',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard();
+      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadOnbBoard();
       document.getElementById('rcSend').addEventListener('click',sendRecord);
       document.getElementById('pgUpload').addEventListener('click',uploadGar);
-      document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); });
+      document.getElementById('onbAdd').addEventListener('click',addOnb);
+      document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); loadOnbBoard(); });
+      document.getElementById('rcLic').addEventListener('change',e=>{ loadBizList(e.target.value); loadGarBizList(e.target.value); });
+      document.getElementById('pgLic').addEventListener('change',e=>loadGarBizList(e.target.value));
+      document.getElementById('pgBiz').addEventListener('change',onPgBizChange);
       document.getElementById('sysRecheck').addEventListener('click',checkSystems);
       checkSystems();
       // only the super admin can create admin accounts
@@ -361,47 +385,99 @@
 
     async function loadInvBoard(){
       const board=document.getElementById('invBoard');
-      const [d1,d2,d3]=await Promise.all([
+      const [d1,d2,d3,d4,d5]=await Promise.all([
         sb.from('documents').select('*').order('created_at',{ascending:false}),
         sb.from('patguard_files').select('*').eq('processed',false).order('created_at',{ascending:false}),
-        sb.from('archived_jobs').select('*').order('archived_at',{ascending:false})
+        sb.from('archived_jobs').select('*').order('archived_at',{ascending:false}),
+        sb.from('generated_invoices').select('*').order('created_at',{ascending:false}),
+        sb.from('businesses').select('id,name')
       ]);
-      const docs=d1.data||[], gars=d2.data||[], arch=d3.data||[];
+      const docs=d1.data||[], gars=d2.data||[], arch=d3.data||[], gen=d4.data||[], biz=d5.data||[];
       const nm=await nameMap();
+      const bizName={}; biz.forEach(b=>bizName[b.id]=b.name);
       const archSet=new Set(arch.map(a=>a.licensee_id+'|'+a.business_name));
       const groups={};
-      docs.forEach(d=>{ const k=d.licensee_id+'|'+d.business_name; (groups[k]=groups[k]||{lid:d.licensee_id,biz:d.business_name,items:[]}).items.push(d); });
+      const grp=(lid,name)=>{ const k=lid+'|'+name; return groups[k]=groups[k]||{lid,biz:name,items:[],gars:[],gen:[]}; };
+      docs.forEach(d=>grp(d.licensee_id,d.business_name).items.push(d));
+      gars.forEach(x=>grp(x.licensee_id, bizName[x.business_id]||x.file_name).gars.push(x));
+      gen.forEach(x=>grp(x.licensee_id,x.business_name).gen.push(x));
       const cols={received:[],sent:[],check:[],approved:[],complete:[]};
-      gars.forEach(g=>cols.received.push(garCard(g,nm)));
       Object.entries(groups).forEach(([k,g])=>{
+        if(archSet.has(k)){ cols.complete.push(bizCard(g,'complete',nm)); return; }
+        if(g.items.length===0){ cols.received.push(bizCard(g,'received',nm)); return; }
         const pending=g.items.filter(d=>d.status==='pending').length;
         const rejected=g.items.filter(d=>d.status==='rejected').length;
-        if(archSet.has(k)) cols.complete.push(jobCard(g,'complete',nm));
-        else if(pending>0) cols.sent.push(jobCard(g,'sent',nm));
-        else if(rejected>0) cols.check.push(jobCard(g,'check',nm));
-        else cols.approved.push(jobCard(g,'approved',nm));
+        if(pending>0) cols.sent.push(bizCard(g,'sent',nm));
+        else if(rejected>0) cols.check.push(bizCard(g,'check',nm));
+        else cols.approved.push(bizCard(g,'approved',nm));
       });
       board.innerHTML=kcol('Received','s-recv',cols.received)+kcol('Sent','s-sent',cols.sent)+kcol('Check','s-check',cols.check)+kcol('Approved','s-appr',cols.approved)+kcol('Complete','s-done',cols.complete.slice(0,5));
       bindInv(board);
     }
-    function garCard(g,nm){
-      return `<div class="kcard"><div class="kt">${g.file_name}</div><div class="ks">${nm[g.licensee_id]||'—'} · ${new Date(g.created_at).toLocaleDateString()}</div>
-        <div class="kactions"><button class="kbtn alt jbuild" data-lic="${g.licensee_id}">Build →</button><button class="kbtn line ghandle" data-id="${g.id}">Mark handled</button></div></div>`;
+    function genFlag(g){
+      if(!g.gen.length) return '';
+      const x=g.gen[0];
+      const dl=x.file_path ? (/^https?:\/\//.test(x.file_path)
+        ? `<a class="kdl" href="${x.file_path}" target="_blank" rel="noopener">⬇ Invoice file</a>`
+        : `<a class="kdl" data-bucket="invoices" data-path="${x.file_path}" href="#">⬇ Invoice file</a>`) : '';
+      return `<div><span class="kflag">Invoice generated ✓</span>${x.total?' $'+x.total:''}</div>${dl?'<div>'+dl+'</div>':''}`;
     }
-    function jobCard(g,stage,nm){
-      const dls=g.items.map(d=>`<a class="kdl" data-bucket="documents" data-path="${d.storage_path}" href="#">⬇ ${d.title||d.doc_type}</a>`).join('');
+    function bizCard(g,stage,nm){
+      const hasGar=g.gars.length>0, hasGen=g.gen.length>0;
+      const ghost=stage==='received' && !hasGar && hasGen;
+      const docDls=g.items.map(d=>`<a class="kdl" data-bucket="documents" data-path="${d.storage_path}" href="#">⬇ ${d.title||d.doc_type}</a>`).join('');
+      const garDls=g.gars.map(x=>`<a class="kdl" data-bucket="patguard" data-path="${x.storage_path}" href="#">⬇ .gar</a>`).join('');
       const notes=g.items.filter(d=>d.status==='rejected'&&d.licensee_note).map(d=>`<div class="knote"><b>${d.title||d.doc_type}:</b> ${d.licensee_note}</div>`).join('');
       let act='';
-      if(stage==='check') act=`<button class="kbtn go jresend" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">↻ Resend to licensee</button>`;
+      if(stage==='received'){
+        act=`<button class="kbtn alt jbuild" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">Build →</button>`+
+            g.gars.map(x=>`<button class="kbtn line ghandle" data-id="${x.id}">Handled</button>`).join('');
+      } else if(stage==='check') act=`<button class="kbtn go jresend" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">↻ Resend</button>`;
       else if(stage==='approved') act=`<button class="kbtn go jcomplete" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">✓ Complete</button>`;
-      return `<div class="kcard"><div class="kt">${g.biz}</div><div class="ks">${nm[g.lid]||'—'} · ${g.items.length} file${g.items.length>1?'s':''}</div>${dls?'<div style="margin-top:6px">'+dls+'</div>':''}${notes}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
+      const sub = stage==='received' ? (hasGar?'.gar received':(ghost?'awaiting .gar upload':'')) : (g.items.length+' file'+(g.items.length>1?'s':''));
+      const body=genFlag(g)+(garDls?'<div style="margin-top:4px">'+garDls+'</div>':'')+(docDls?'<div style="margin-top:4px">'+docDls+'</div>':'')+notes;
+      return `<div class="kcard${ghost?' ghost':''}"><div class="kt">${g.biz}</div><div class="ks">${nm[g.lid]||'—'}${sub?' · '+sub:''}</div>${body}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
     }
     function bindInv(board){
-      board.querySelectorAll('a.kdl').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
-      board.querySelectorAll('.jbuild').forEach(b=>b.addEventListener('click',()=>{ location.hash='#build'; setTimeout(()=>{ const s=document.getElementById('rcLic'); if(s) s.value=b.dataset.lic; const bz=document.getElementById('rcBiz'); if(bz) bz.focus(); },60); }));
+      board.querySelectorAll('a.kdl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
+      board.querySelectorAll('.jbuild').forEach(b=>b.addEventListener('click',()=>{ const lic=b.dataset.lic, bz=decodeURIComponent(b.dataset.biz||''); location.hash='#build'; setTimeout(()=>{ const s=document.getElementById('rcLic'); if(s){ s.value=lic; s.dispatchEvent(new Event('change')); } const i=document.getElementById('rcBiz'); if(i){ i.value=bz; i.focus(); } },90); }));
       board.querySelectorAll('.ghandle').forEach(b=>b.addEventListener('click',async()=>{ await sb.from('patguard_files').update({processed:true}).eq('id',b.dataset.id); loadInvBoard(); }));
-      board.querySelectorAll('.jresend').forEach(b=>b.addEventListener('click',async()=>{ const biz=decodeURIComponent(b.dataset.biz); if(!confirm('Resend '+biz+' to the licensee? Rejected items return to pending.')) return; await sb.from('documents').update({status:'pending',licensee_note:null,decided_at:null}).eq('licensee_id',b.dataset.lic).eq('business_name',biz).eq('status','rejected'); loadInvBoard(); }));
-      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const biz=decodeURIComponent(b.dataset.biz); await sb.from('archived_jobs').insert({licensee_id:b.dataset.lic,business_name:biz,archived_by:session.user.id}); loadInvBoard(); }));
+      board.querySelectorAll('.jresend').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); if(!confirm('Resend '+bz+' to the licensee? Rejected items return to pending.')) return; await sb.from('documents').update({status:'pending',licensee_note:null,decided_at:null}).eq('licensee_id',b.dataset.lic).eq('business_name',bz).eq('status','rejected'); loadInvBoard(); }));
+      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); await sb.from('archived_jobs').insert({licensee_id:b.dataset.lic,business_name:bz,archived_by:session.user.id}); loadInvBoard(); }));
+    }
+
+    // ===== Onboarding board =====
+    const ONB=[['lead','Lead','s-recv'],['contacted','Contacted','s-sent'],['quoted','Quoted','s-check'],['onboarded','Onboarded','s-appr']];
+    async function loadOnbBoard(){
+      const board=document.getElementById('onbBoard');
+      const {data}=await sb.from('onboarding').select('*').order('created_at',{ascending:false});
+      const by={lead:[],contacted:[],quoted:[],onboarded:[]};
+      (data||[]).forEach(o=>{ (by[o.stage]=by[o.stage]||[]).push(onbCard(o)); });
+      board.innerHTML=ONB.map(s=>kcol(s[1],s[2],by[s[0]]||[])).join('');
+      board.querySelectorAll('.omove').forEach(b=>b.addEventListener('click',async()=>{ await sb.from('onboarding').update({stage:b.dataset.stage,updated_at:new Date().toISOString()}).eq('id',b.dataset.id); loadOnbBoard(); }));
+      board.querySelectorAll('.odel').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Remove from onboarding?')) return; await sb.from('onboarding').delete().eq('id',b.dataset.id); loadOnbBoard(); }));
+    }
+    function onbCard(o){
+      const i=ONB.findIndex(s=>s[0]===o.stage);
+      const back=i>0?`<button class="kbtn line omove" data-id="${o.id}" data-stage="${ONB[i-1][0]}">←</button>`:'';
+      const fwd=i<ONB.length-1?`<button class="kbtn go omove" data-id="${o.id}" data-stage="${ONB[i+1][0]}">→</button>`:'';
+      return `<div class="kcard"><div class="kt">${o.name}</div>${o.contact?`<div class="ks">${o.contact}</div>`:''}${o.note?`<div class="knote">${o.note}</div>`:''}<div class="kactions">${back}${fwd}<button class="kbtn warn odel" data-id="${o.id}">✕</button></div></div>`;
+    }
+    async function addOnb(){
+      const msg=document.getElementById('onbMsg'); msg.textContent='';
+      const name=document.getElementById('onbName').value.trim();
+      if(!name){ msg.textContent='Enter a business / client name.'; msg.className='msg err'; return; }
+      const contact=document.getElementById('onbContact').value.trim();
+      const {error}=await sb.from('onboarding').insert({name,contact:contact||null,stage:'lead'});
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      document.getElementById('onbName').value=''; document.getElementById('onbContact').value='';
+      loadOnbBoard();
+    }
+    async function loadBizList(licId){
+      const dl=document.getElementById('bizList'); if(!dl) return;
+      if(!licId){ dl.innerHTML=''; return; }
+      const {data}=await sb.from('businesses').select('name').eq('licensee_id',licId).order('name');
+      dl.innerHTML=(data||[]).map(b=>`<option value="${b.name.replace(/"/g,'&quot;')}">`).join('');
     }
 
     async function loadTrainBoard(){
@@ -501,23 +577,46 @@
       const opts=licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('')||'<option value="">No licensees</option>';
       document.getElementById('rcLic').innerHTML=opts;
       document.getElementById('pgLic').innerHTML=opts;
+      const first=licenseeList[0]?licenseeList[0].id:'';
+      loadBizList(first); loadGarBizList(first);
+    }
+    async function loadGarBizList(licId){
+      const sel=document.getElementById('pgBiz'); if(!sel) return;
+      if(!licId){ sel.innerHTML='<option value="">— pick a licensee —</option>'; return; }
+      const {data}=await sb.from('businesses').select('id,name').eq('licensee_id',licId).order('name');
+      sel.innerHTML=(data||[]).map(b=>`<option value="${b.id}">${b.name}</option>`).join('')+'<option value="__new">+ New business…</option>';
+      onPgBizChange();
+    }
+    function onPgBizChange(){
+      const isNew=document.getElementById('pgBiz').value==='__new';
+      document.getElementById('pgNewWrap').style.display=isNew?'flex':'none';
     }
     async function uploadGar(){
       const msg=document.getElementById('pgMsg'); msg.textContent='';
       const licensee_id=document.getElementById('pgLic').value;
       const file=document.getElementById('pgFile').files[0];
+      let bizSel=document.getElementById('pgBiz').value;
       if(!licensee_id){ msg.textContent='Pick a licensee.'; msg.className='msg err'; return; }
+      if(!bizSel){ msg.textContent='Pick or add a business.'; msg.className='msg err'; return; }
       if(!file){ msg.textContent='Choose a .gar file.'; msg.className='msg err'; return; }
       if(!file.name.toLowerCase().endsWith('.gar')){ msg.textContent='That isn\'t a .gar file.'; msg.className='msg err'; return; }
       const btn=document.getElementById('pgUpload'); btn.disabled=true; msg.textContent='Uploading…'; msg.className='msg';
       try{
+        let business_id=bizSel;
+        if(bizSel==='__new'){
+          const name=document.getElementById('pgBizNew').value.trim();
+          if(!name){ msg.textContent='Enter the new business name.'; msg.className='msg err'; btn.disabled=false; return; }
+          const {data:nb,error:be}=await sb.from('businesses').insert({licensee_id,name}).select().single();
+          if(be) throw be; business_id=nb.id;
+        }
         const path=licensee_id+'/'+Date.now()+'-'+file.name;
         const {error:upErr}=await sb.storage.from('patguard').upload(path,file,{contentType:'application/octet-stream',upsert:true});
         if(upErr) throw upErr;
-        const {error}=await sb.from('patguard_files').insert({licensee_id,file_name:file.name,storage_path:path});
+        const {error}=await sb.from('patguard_files').insert({licensee_id,business_id,file_name:file.name,storage_path:path});
         if(error) throw error;
-        msg.textContent='Uploaded ✓ — it now shows in the pipeline “Received” column.'; msg.className='msg ok'; document.getElementById('pgFile').value='';
-        loadPatguard(); loadInvBoard();
+        msg.textContent='Uploaded ✓ — it now shows in the pipeline “Received” column.'; msg.className='msg ok';
+        document.getElementById('pgFile').value=''; document.getElementById('pgBizNew').value='';
+        loadPatguard(); loadInvBoard(); loadGarBizList(licensee_id);
       }catch(e){ msg.textContent='Upload failed: '+e.message; msg.className='msg err'; }
       btn.disabled=false;
     }

@@ -50,6 +50,13 @@
     <div class="phoneNote">💻 The PatGuard Uploader is a <b>desktop tool</b> — open this page on the computer that runs PATGuard to upload your .gar file.</div>
 
     <div id="uploaderUI">
+      <div class="card" style="margin-top:0;margin-bottom:18px;">
+        <label style="display:block;font-size:13px;font-weight:700;margin-bottom:6px;">Which business is this .gar for?</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <select id="upBiz" style="flex:1 1 220px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;"></select>
+          <input id="upBizNew" placeholder="New business name" style="flex:1 1 200px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;display:none;">
+        </div>
+      </div>
       <div class="drop" id="drop">
         <div class="big">⬆</div>
         <b>Click to choose your .gar file</b>
@@ -106,18 +113,37 @@
     drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
     drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');pick(e.dataTransfer.files[0]);});
 
+    // business selection
+    const upBiz=document.getElementById('upBiz'), upBizNew=document.getElementById('upBizNew');
+    async function loadBiz(){
+      const {data}=await sb.from('businesses').select('id,name').eq('licensee_id',session.user.id).order('name');
+      upBiz.innerHTML=(data||[]).map(b=>`<option value="${b.id}">${b.name}</option>`).join('')+'<option value="__new">+ Add a new business…</option>';
+      toggleNew();
+    }
+    function toggleNew(){ upBizNew.style.display = upBiz.value==='__new' ? 'block' : 'none'; }
+    upBiz.addEventListener('change',toggleNew);
+    loadBiz();
+
     document.getElementById('send').addEventListener('click',async()=>{
       if(!chosen) return;
+      if(!upBiz.value){ msg.textContent='Pick or add the business this .gar is for.'; msg.className='msg err'; return; }
       const btn=document.getElementById('send'); btn.disabled=true; msg.textContent='Uploading… (large files can take a minute)'; msg.className='msg';
       try{
+        let business_id=upBiz.value;
+        if(business_id==='__new'){
+          const name=upBizNew.value.trim();
+          if(!name){ msg.textContent='Enter the new business name.'; msg.className='msg err'; btn.disabled=false; return; }
+          const {data:nb,error:be}=await sb.from('businesses').insert({licensee_id:session.user.id,name}).select().single();
+          if(be) throw be; business_id=nb.id;
+        }
         const path=session.user.id+'/'+Date.now()+'-'+chosen.name;
         const {error:upErr}=await sb.storage.from('patguard').upload(path,chosen,{contentType:'application/octet-stream',upsert:true});
         if(upErr) throw upErr;
-        const {error}=await sb.from('patguard_files').insert({licensee_id:session.user.id,file_name:chosen.name,storage_path:path});
+        const {error}=await sb.from('patguard_files').insert({licensee_id:session.user.id,business_id,file_name:chosen.name,storage_path:path});
         if(error) throw error;
         msg.textContent='Uploaded ✓ — the admin team can now access it.'; msg.className='msg ok';
-        chosen=null; selected.style.display='none'; fileIn.value='';
-        loadList();
+        chosen=null; selected.style.display='none'; fileIn.value=''; upBizNew.value='';
+        loadBiz(); loadList();
       }catch(e){ msg.textContent='Upload failed: '+e.message; msg.className='msg err'; }
       btn.disabled=false;
     });
