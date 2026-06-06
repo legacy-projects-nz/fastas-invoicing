@@ -69,24 +69,26 @@
   .col:first-child .colhead:before{display:none;}
   .colbody{background:#f4f6fa;border:1px solid var(--line);border-top:none;margin-right:9px;padding:8px;min-height:60px;flex:1;border-radius:0 0 8px 8px;}
   .col:last-child .colhead{margin-right:0;} .col:last-child .colhead:after{display:none;} .col:last-child .colbody{margin-right:0;}
-  .kcard{background:#fff;border:1px solid #e2e7f0;border-radius:8px;padding:8px 9px;margin-bottom:7px;box-shadow:0 2px 4px rgba(16,24,40,.08),0 6px 14px rgba(16,24,40,.07);transition:transform .12s ease,box-shadow .12s ease;}
-  .kcard:hover{transform:translateY(-1px);box-shadow:0 4px 8px rgba(16,24,40,.12),0 10px 22px rgba(16,24,40,.1);}
+  .kcard{background:#fff;border:1px solid #e6e9ef;border-radius:7px;padding:7px 8px;margin-bottom:6px;box-shadow:0 1px 2px rgba(16,24,40,.07),0 3px 8px rgba(16,24,40,.05);}
   .kcard:last-child{margin-bottom:0;}
-  .kcard.ghost{opacity:.62;border-style:dashed;box-shadow:none;background:#fbfcfe;}
-  .kcard .kt{font-weight:700;font-size:12.5px;color:var(--ink);line-height:1.25;}
-  .kcard .ks{color:var(--muted);font-size:11px;margin-top:1px;}
-  .kcard .kactions{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;}
-  .kbtn{font-size:11px;font-weight:700;border:none;border-radius:6px;padding:5px 8px;cursor:pointer;}
-  .kbtn.go{background:#16a34a;color:#fff;} .kbtn.warn{background:#fff;border:1px solid #f4c4c4;color:var(--red);} .kbtn.alt{background:#eef2ff;color:var(--brand);}
-  .kbtn.line{background:#fff;border:1px solid var(--line);color:var(--ink);}
-  .kcard a.kdl{font-size:11px;color:var(--brand);text-decoration:none;font-weight:600;display:inline-block;margin-top:4px;margin-right:7px;}
-  .knote{background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:5px 7px;font-size:11px;color:#b45309;margin-top:6px;}
-  .kempty{color:#9aa4b2;font-size:11px;text-align:center;padding:12px 4px;}
-  .kflag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.3px;padding:2px 6px;border-radius:5px;background:#ecfdf3;color:#067647;margin-top:4px;}
+  .kcard.ghost{opacity:.6;border-style:dashed;box-shadow:none;background:#fbfcfe;}
+  .ktop{display:flex;align-items:center;gap:6px;justify-content:space-between;}
+  .kcard .kt{font-weight:700;font-size:12px;color:var(--ink);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .kcard .ks{color:var(--muted);font-size:10.5px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .kwa{flex:0 0 auto;text-decoration:none;font-size:13px;line-height:1;}
+  .kstat{font-size:10px;color:#94a3b8;font-style:italic;margin-top:3px;}
+  .kcard .kactions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+  .kbtn{font-size:11px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:6px;padding:4px 8px;cursor:pointer;}
+  .kbtn:hover{background:#f3f6fb;}
+  .kbtn.go{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .kcard a.kdl{font-size:11px;color:var(--muted);text-decoration:none;font-weight:600;display:block;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .kcard a.kdl:hover{color:var(--brand);}
+  .knote{background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;padding:4px 7px;font-size:10.5px;color:#6b21a8;margin-top:5px;}
+  .kempty{color:#9aa4b2;font-size:11px;text-align:center;padding:10px 4px;}
   /* stage colours */
   .s-recv{background:#64748b;} .s-recv:after{border-left-color:#64748b;}
   .s-sent{background:#2563eb;} .s-sent:after{border-left-color:#2563eb;}
-  .s-check{background:#d97706;} .s-check:after{border-left-color:#d97706;}
+  .s-check{background:#7c3aed;} .s-check:after{border-left-color:#7c3aed;}
   .s-appr{background:#16a34a;} .s-appr:after{border-left-color:#16a34a;}
   .s-done{background:#334155;} .s-done:after{border-left-color:#334155;}
   .uprow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px dashed #c9d2e3;border-radius:10px;padding:9px 12px;margin-bottom:8px;}
@@ -109,11 +111,12 @@
     <h1>FastAs Administration</h1>
     <div class="layout">
     <nav class="tabs">
-      <div class="tab active" data-tab="pipeline">📊 Pipelines <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
-      <div class="tab" data-tab="build">🛠 Build</div>
-      <div class="tab" data-tab="links">🔗 Links</div>
-      <div class="tab" data-tab="admin">👥 Admin</div>
-      <div class="tab" data-tab="settings">⚙ Settings</div>
+      <div class="tab active" data-tab="pipeline">Pipelines <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
+      <div class="tab" data-tab="build">Build</div>
+      <div class="tab" data-tab="businesses">Businesses</div>
+      <div class="tab" data-tab="links">Links</div>
+      <div class="tab" data-tab="admin">Admin</div>
+      <div class="tab" data-tab="settings">Settings</div>
     </nav>
     <div class="content">
 
@@ -242,6 +245,49 @@
       </div>
     </div>
 
+    <!-- BUSINESSES — client list per licensee -->
+    <div class="panel" id="panel-businesses">
+      <div class="card">
+        <h2>Businesses</h2>
+        <p class="hint">The client businesses each licensee invoices &amp; reports for. Pick a licensee, then add one or bulk-upload a CSV.</p>
+        <div class="f" style="max-width:360px;"><label>Licensee</label><select id="bzLic"></select></div>
+      </div>
+      <div class="card">
+        <h2>Add a business</h2>
+        <div class="row">
+          <div class="f" style="flex:1 1 180px;"><label>Business name *</label><input id="bzName" placeholder="e.g. Tech Iron Group"></div>
+          <div class="f" style="flex:1 1 180px;"><label>Email</label><input id="bzEmail" type="email"></div>
+          <div class="f"><label>First name</label><input id="bzFirst"></div>
+          <div class="f"><label>Last name</label><input id="bzLast"></div>
+          <div class="f"><label>Phone</label><input id="bzPhone"></div>
+          <button class="primary" id="bzAdd">Add</button>
+        </div>
+        <div class="msg" id="bzMsg"></div>
+      </div>
+      <div class="card">
+        <h2>Bulk upload (CSV)</h2>
+        <p class="hint">Columns in order: <b>business name, email address, first name, last name, phone number</b> (a header row is fine). <a href="#" id="bzTemplate">Download template</a></p>
+        <div class="row">
+          <div class="f"><label>CSV file</label><input id="bzCsv" type="file" accept=".csv"></div>
+          <button class="primary" id="bzUpload">Upload CSV</button>
+        </div>
+        <div class="msg" id="bzCsvMsg"></div>
+      </div>
+      <div class="card">
+        <h2>Import from OnePageCRM</h2>
+        <p class="hint">Upload a OnePageCRM <b>Contacts export</b> (.csv). Only the relevant fields are imported: <b>Organization → business</b>, contact name, work email, and mobile/phone. Existing businesses (same name) are updated, not duplicated.</p>
+        <div class="row">
+          <div class="f"><label>OnePageCRM CSV</label><input id="opCsv" type="file" accept=".csv"></div>
+          <button class="primary" id="opUpload">Import contacts</button>
+        </div>
+        <div class="msg" id="opMsg"></div>
+      </div>
+      <div class="card">
+        <h2>Business list</h2>
+        <div id="bzListHost"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
     <!-- SETTINGS — templates & system health -->
     <div class="panel" id="panel-settings">
       <div class="card">
@@ -327,6 +373,11 @@
       document.getElementById('rcLic').addEventListener('change',e=>{ loadBizList(e.target.value); loadGarBizList(e.target.value); });
       document.getElementById('pgLic').addEventListener('change',e=>loadGarBizList(e.target.value));
       document.getElementById('pgBiz').addEventListener('change',onPgBizChange);
+      document.getElementById('bzLic').addEventListener('change',e=>loadBzList(e.target.value));
+      document.getElementById('bzAdd').addEventListener('click',addBusiness);
+      document.getElementById('bzUpload').addEventListener('click',uploadBzCsv);
+      document.getElementById('bzTemplate').addEventListener('click',e=>{e.preventDefault();downloadBzTemplate();});
+      document.getElementById('opUpload').addEventListener('click',importOnePage);
       document.getElementById('sysRecheck').addEventListener('click',checkSystems);
       checkSystems();
       // only the super admin can create admin accounts
@@ -393,7 +444,9 @@
         sb.from('businesses').select('id,name')
       ]);
       const docs=d1.data||[], gars=d2.data||[], arch=d3.data||[], gen=d4.data||[], biz=d5.data||[];
-      const nm=await nameMap();
+      const {data:profs}=await sb.from('profiles').select('id,full_name,email,whatsapp_channels,whatsapp_link');
+      const nm={}, wa={};
+      (profs||[]).forEach(p=>{ nm[p.id]=p.full_name||p.email; const c=(Array.isArray(p.whatsapp_channels)&&p.whatsapp_channels[0])?p.whatsapp_channels[0].link:p.whatsapp_link; if(c) wa[p.id]=c; });
       const bizName={}; biz.forEach(b=>bizName[b.id]=b.name);
       const archSet=new Set(arch.map(a=>a.licensee_id+'|'+a.business_name));
       const groups={};
@@ -403,47 +456,138 @@
       gen.forEach(x=>grp(x.licensee_id,x.business_name).gen.push(x));
       const cols={received:[],sent:[],check:[],approved:[],complete:[]};
       Object.entries(groups).forEach(([k,g])=>{
-        if(archSet.has(k)){ cols.complete.push(bizCard(g,'complete',nm)); return; }
-        if(g.items.length===0){ cols.received.push(bizCard(g,'received',nm)); return; }
+        if(archSet.has(k)){ cols.complete.push(bizCard(g,'complete',nm,wa)); return; }
+        if(g.items.length===0){ cols.received.push(bizCard(g,'received',nm,wa)); return; }
         const pending=g.items.filter(d=>d.status==='pending').length;
         const rejected=g.items.filter(d=>d.status==='rejected').length;
-        if(pending>0) cols.sent.push(bizCard(g,'sent',nm));
-        else if(rejected>0) cols.check.push(bizCard(g,'check',nm));
-        else cols.approved.push(bizCard(g,'approved',nm));
+        if(pending>0) cols.sent.push(bizCard(g,'sent',nm,wa));
+        else if(rejected>0) cols.check.push(bizCard(g,'check',nm,wa));
+        else cols.approved.push(bizCard(g,'approved',nm,wa));
       });
       board.innerHTML=kcol('Received','s-recv',cols.received)+kcol('Sent','s-sent',cols.sent)+kcol('Check','s-check',cols.check)+kcol('Approved','s-appr',cols.approved)+kcol('Complete','s-done',cols.complete.slice(0,5));
       bindInv(board);
     }
-    function genFlag(g){
-      if(!g.gen.length) return '';
-      const x=g.gen[0];
-      const dl=x.file_path ? (/^https?:\/\//.test(x.file_path)
-        ? `<a class="kdl" href="${x.file_path}" target="_blank" rel="noopener">⬇ Invoice file</a>`
-        : `<a class="kdl" data-bucket="invoices" data-path="${x.file_path}" href="#">⬇ Invoice file</a>`) : '';
-      return `<div><span class="kflag">Invoice generated ✓</span>${x.total?' $'+x.total:''}</div>${dl?'<div>'+dl+'</div>':''}`;
+    function fileExt(label,bucket,path,external){
+      const safe=label.length>20?label.slice(0,19)+'…':label;
+      const attr=external?`href="${path}" target="_blank" rel="noopener"`:`data-bucket="${bucket}" data-path="${path}" href="#"`;
+      return `<a class="kdl" ${attr} title="${label}">${safe} ⬇</a>`;
     }
-    function bizCard(g,stage,nm){
+    function bizCard(g,stage,nm,wa){
       const hasGar=g.gars.length>0, hasGen=g.gen.length>0;
       const ghost=stage==='received' && !hasGar && hasGen;
-      const docDls=g.items.map(d=>`<a class="kdl" data-bucket="documents" data-path="${d.storage_path}" href="#">⬇ ${d.title||d.doc_type}</a>`).join('');
-      const garDls=g.gars.map(x=>`<a class="kdl" data-bucket="patguard" data-path="${x.storage_path}" href="#">⬇ .gar</a>`).join('');
-      const notes=g.items.filter(d=>d.status==='rejected'&&d.licensee_note).map(d=>`<div class="knote"><b>${d.title||d.doc_type}:</b> ${d.licensee_note}</div>`).join('');
+      let files='';
+      if(hasGen && g.gen[0].file_path){ const fp=g.gen[0].file_path; files+=fileExt('Invoice', 'invoices', fp, /^https?:\/\//.test(fp)); }
+      g.gars.forEach(()=>{}); g.gars.forEach(x=>files+=fileExt('.gar','patguard',x.storage_path,false));
+      g.items.forEach(d=>files+=fileExt(d.title||d.doc_type,'documents',d.storage_path,false));
+      const notes=g.items.filter(d=>d.status==='rejected'&&d.licensee_note).map(d=>`<div class="knote">${d.licensee_note}</div>`).join('');
       let act='';
-      if(stage==='received'){
-        act=`<button class="kbtn alt jbuild" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">Build →</button>`+
-            g.gars.map(x=>`<button class="kbtn line ghandle" data-id="${x.id}">Handled</button>`).join('');
-      } else if(stage==='check') act=`<button class="kbtn go jresend" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">↻ Resend</button>`;
+      if(stage==='received') act=`<button class="kbtn go jbuild" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">Build →</button>`;
+      else if(stage==='check') act=`<button class="kbtn jresend" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">↻ Resend</button>`;
       else if(stage==='approved') act=`<button class="kbtn go jcomplete" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">✓ Complete</button>`;
-      const sub = stage==='received' ? (hasGar?'.gar received':(ghost?'awaiting .gar upload':'')) : (g.items.length+' file'+(g.items.length>1?'s':''));
-      const body=genFlag(g)+(garDls?'<div style="margin-top:4px">'+garDls+'</div>':'')+(docDls?'<div style="margin-top:4px">'+docDls+'</div>':'')+notes;
-      return `<div class="kcard${ghost?' ghost':''}"><div class="kt">${g.biz}</div><div class="ks">${nm[g.lid]||'—'}${sub?' · '+sub:''}</div>${body}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
+      let stat='';
+      if(stage==='received') stat = (hasGar&&!hasGen) ? 'waiting on invoice' : (ghost ? 'waiting on .gar' : 'ready to build');
+      const waLink=wa[g.lid]?`<a class="kwa" href="${wa[g.lid]}" target="_blank" rel="noopener" title="WhatsApp channel">💬</a>`:'';
+      return `<div class="kcard${ghost?' ghost':''}"><div class="ktop"><span class="kt" title="${g.biz}">${g.biz}</span>${waLink}</div><div class="ks">${nm[g.lid]||'—'}</div>${stat?`<div class="kstat">${stat}</div>`:''}${files}${notes}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
     }
     function bindInv(board){
       board.querySelectorAll('a.kdl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
       board.querySelectorAll('.jbuild').forEach(b=>b.addEventListener('click',()=>{ const lic=b.dataset.lic, bz=decodeURIComponent(b.dataset.biz||''); location.hash='#build'; setTimeout(()=>{ const s=document.getElementById('rcLic'); if(s){ s.value=lic; s.dispatchEvent(new Event('change')); } const i=document.getElementById('rcBiz'); if(i){ i.value=bz; i.focus(); } },90); }));
-      board.querySelectorAll('.ghandle').forEach(b=>b.addEventListener('click',async()=>{ await sb.from('patguard_files').update({processed:true}).eq('id',b.dataset.id); loadInvBoard(); }));
       board.querySelectorAll('.jresend').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); if(!confirm('Resend '+bz+' to the licensee? Rejected items return to pending.')) return; await sb.from('documents').update({status:'pending',licensee_note:null,decided_at:null}).eq('licensee_id',b.dataset.lic).eq('business_name',bz).eq('status','rejected'); loadInvBoard(); }));
       board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); await sb.from('archived_jobs').insert({licensee_id:b.dataset.lic,business_name:bz,archived_by:session.user.id}); loadInvBoard(); }));
+    }
+
+    // ===== Businesses page =====
+    function bzLicId(){ return document.getElementById('bzLic').value; }
+    async function loadBzList(lic){
+      const host=document.getElementById('bzListHost');
+      if(!lic){ host.innerHTML='<div class="empty">Pick a licensee.</div>'; return; }
+      const {data,error}=await sb.from('businesses').select('*').eq('licensee_id',lic).order('name');
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      if(!data.length){ host.innerHTML='<div class="empty">No businesses yet.</div>'; return; }
+      host.innerHTML='<table><thead><tr><th>Business</th><th>Contact</th><th>Email</th><th>Phone</th><th></th></tr></thead><tbody>'+
+        data.map(b=>`<tr><td><b>${b.name}</b></td><td>${[b.first_name,b.last_name].filter(Boolean).join(' ')||'—'}</td><td>${b.contact_email||'—'}</td><td>${b.phone||'—'}</td>
+          <td style="text-align:right"><button class="ghost danger bzDel" data-id="${b.id}" data-name="${b.name}">Delete</button></td></tr>`).join('')+'</tbody></table>';
+      host.querySelectorAll('.bzDel').forEach(x=>x.addEventListener('click',async()=>{ if(!confirm('Delete '+x.dataset.name+'?')) return; await sb.from('businesses').delete().eq('id',x.dataset.id); loadBzList(bzLicId()); }));
+    }
+    async function addBusiness(){
+      const msg=document.getElementById('bzMsg'); msg.textContent='';
+      const lic=bzLicId(); const name=document.getElementById('bzName').value.trim();
+      if(!lic){ msg.textContent='Pick a licensee.'; msg.className='msg err'; return; }
+      if(!name){ msg.textContent='Business name is required.'; msg.className='msg err'; return; }
+      const {error}=await sb.from('businesses').insert({licensee_id:lic,name,contact_email:document.getElementById('bzEmail').value.trim()||null,first_name:document.getElementById('bzFirst').value.trim()||null,last_name:document.getElementById('bzLast').value.trim()||null,phone:document.getElementById('bzPhone').value.trim()||null});
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      ['bzName','bzEmail','bzFirst','bzLast','bzPhone'].forEach(id=>document.getElementById(id).value='');
+      msg.textContent='Added ✓'; msg.className='msg ok'; loadBzList(lic);
+    }
+    function downloadBzTemplate(){
+      const csv='business name,email address,first name,last name,phone number\nTech Iron Group,office@techiron.co.nz,Amar,Singh,021234567\n';
+      const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='businesses-template.csv'; a.click();
+    }
+    function parseCSV(text){
+      const lines=text.split(/\r?\n/).filter(l=>l.trim());
+      if(!lines.length) return [];
+      const first=lines[0].toLowerCase();
+      const start=(first.includes('business')&&first.includes('name'))?1:0;
+      return lines.slice(start).map(l=>{
+        const c=l.split(',').map(s=>s.trim());
+        return { name:c[0], contact_email:c[1]||null, first_name:c[2]||null, last_name:c[3]||null, phone:c[4]||null };
+      }).filter(r=>r.name);
+    }
+    async function uploadBzCsv(){
+      const msg=document.getElementById('bzCsvMsg'); msg.textContent='';
+      const lic=bzLicId(); const f=document.getElementById('bzCsv').files[0];
+      if(!lic){ msg.textContent='Pick a licensee.'; msg.className='msg err'; return; }
+      if(!f){ msg.textContent='Choose a CSV file.'; msg.className='msg err'; return; }
+      msg.textContent='Reading…'; msg.className='msg';
+      const text=await f.text(); const rows=parseCSV(text).map(r=>({...r,licensee_id:lic}));
+      if(!rows.length){ msg.textContent='No business rows found.'; msg.className='msg err'; return; }
+      const {error}=await sb.from('businesses').upsert(rows,{onConflict:'licensee_id,name'});
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      msg.textContent='Imported '+rows.length+' business'+(rows.length>1?'es':'')+' ✓'; msg.className='msg ok';
+      document.getElementById('bzCsv').value=''; loadBzList(lic);
+    }
+
+    // robust CSV parser (handles quoted fields, embedded commas/newlines, "" escapes)
+    function parseCsvRows(text){
+      text=text.replace(/^﻿/,'');
+      const rows=[]; let row=[], cur='', q=false;
+      for(let i=0;i<text.length;i++){
+        const ch=text[i];
+        if(q){ if(ch==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=ch; }
+        else { if(ch==='"') q=true; else if(ch===','){ row.push(cur); cur=''; } else if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; } else if(ch!=='\r') cur+=ch; }
+      }
+      if(cur.length||row.length){ row.push(cur); rows.push(row); }
+      return rows;
+    }
+    async function importOnePage(){
+      const msg=document.getElementById('opMsg'); msg.textContent='';
+      const lic=bzLicId(); const f=document.getElementById('opCsv').files[0];
+      if(!lic){ msg.textContent='Pick a licensee.'; msg.className='msg err'; return; }
+      if(!f){ msg.textContent='Choose a OnePageCRM CSV.'; msg.className='msg err'; return; }
+      msg.textContent='Reading…'; msg.className='msg';
+      const rows=parseCsvRows(await f.text());
+      if(rows.length<2){ msg.textContent='No rows found.'; msg.className='msg err'; return; }
+      const header=rows[0].map(h=>h.trim());
+      const ix=n=>header.indexOf(n);
+      const cOrg=ix('Organization'),cF=ix('First name'),cL=ix('Last name'),cE1=ix('Email 1 Work'),cE2=ix('Email 2 Work'),cP1=ix('Phone 1 Mobile'),cP2=ix('Phone 2 Work'),cOP=ix('Organization phone');
+      if(cOrg<0&&cF<0){ msg.textContent='This doesn\'t look like a OnePageCRM contacts export.'; msg.className='msg err'; return; }
+      const get=(r,i)=>(i>=0&&r[i]?String(r[i]).trim():'');
+      const map={};
+      for(const r of rows.slice(1)){
+        if(!r.length) continue;
+        const fn=get(r,cF), ln=get(r,cL);
+        const name=get(r,cOrg) || [fn,ln].filter(Boolean).join(' ');
+        if(!name) continue;
+        map[name]={ licensee_id:lic, name, first_name:fn||null, last_name:ln||null,
+          contact_email:(get(r,cE1)||get(r,cE2))||null,
+          phone:((get(r,cP1)||get(r,cP2)||get(r,cOP)).replace(/^'/,'').trim())||null };
+      }
+      const list=Object.values(map);
+      if(!list.length){ msg.textContent='No contacts with a business/name found.'; msg.className='msg err'; return; }
+      const {error}=await sb.from('businesses').upsert(list,{onConflict:'licensee_id,name'});
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      msg.textContent='Imported '+list.length+' business'+(list.length>1?'es':'')+' from OnePageCRM ✓'; msg.className='msg ok';
+      document.getElementById('opCsv').value=''; loadBzList(lic);
     }
 
     // ===== Onboarding board =====
@@ -577,8 +721,9 @@
       const opts=licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('')||'<option value="">No licensees</option>';
       document.getElementById('rcLic').innerHTML=opts;
       document.getElementById('pgLic').innerHTML=opts;
+      document.getElementById('bzLic').innerHTML=opts;
       const first=licenseeList[0]?licenseeList[0].id:'';
-      loadBizList(first); loadGarBizList(first);
+      loadBizList(first); loadGarBizList(first); loadBzList(first);
     }
     async function loadGarBizList(licId){
       const sel=document.getElementById('pgBiz'); if(!sel) return;

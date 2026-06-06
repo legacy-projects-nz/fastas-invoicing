@@ -52,9 +52,16 @@
     <div id="uploaderUI">
       <div class="card" style="margin-top:0;margin-bottom:18px;">
         <label style="display:block;font-size:13px;font-weight:700;margin-bottom:6px;">Which business is this .gar for?</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-          <select id="upBiz" style="flex:1 1 220px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;"></select>
-          <input id="upBizNew" placeholder="New business name" style="flex:1 1 200px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;display:none;">
+        <select id="upBiz" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;"></select>
+        <div id="upNewWrap" style="display:none;margin-top:12px;">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;">New business details</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <input id="upBizNew" placeholder="Business name *" style="grid-column:1/-1;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+            <input id="upEmail" type="email" placeholder="Email" style="padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+            <input id="upPhone" placeholder="Phone" style="padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+            <input id="upFirst" placeholder="First name" style="padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+            <input id="upLast" placeholder="Last name" style="padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+          </div>
         </div>
       </div>
       <div class="drop" id="drop">
@@ -120,7 +127,7 @@
       upBiz.innerHTML=(data||[]).map(b=>`<option value="${b.id}">${b.name}</option>`).join('')+'<option value="__new">+ Add a new business…</option>';
       toggleNew();
     }
-    function toggleNew(){ upBizNew.style.display = upBiz.value==='__new' ? 'block' : 'none'; }
+    function toggleNew(){ document.getElementById('upNewWrap').style.display = upBiz.value==='__new' ? 'block' : 'none'; }
     upBiz.addEventListener('change',toggleNew);
     loadBiz();
 
@@ -133,7 +140,13 @@
         if(business_id==='__new'){
           const name=upBizNew.value.trim();
           if(!name){ msg.textContent='Enter the new business name.'; msg.className='msg err'; btn.disabled=false; return; }
-          const {data:nb,error:be}=await sb.from('businesses').insert({licensee_id:session.user.id,name}).select().single();
+          const {data:nb,error:be}=await sb.from('businesses').insert({
+            licensee_id:session.user.id, name,
+            contact_email:document.getElementById('upEmail').value.trim()||null,
+            phone:document.getElementById('upPhone').value.trim()||null,
+            first_name:document.getElementById('upFirst').value.trim()||null,
+            last_name:document.getElementById('upLast').value.trim()||null
+          }).select().single();
           if(be) throw be; business_id=nb.id;
         }
         const path=session.user.id+'/'+Date.now()+'-'+chosen.name;

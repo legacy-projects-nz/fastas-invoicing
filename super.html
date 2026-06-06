@@ -74,11 +74,11 @@
     <h1>Super Admin</h1>
     <div class="layout">
     <nav class="tabs">
-      <div class="tab active" data-tab="overview">📊 Overview</div>
-      <div class="tab" data-tab="security">👤 Accounts</div>
-      <div class="tab" data-tab="permissions">🧩 Permissions</div>
-      <div class="tab" data-tab="archive">🗄 Archive</div>
-      <div class="tab" data-tab="danger">⚠ Danger zone</div>
+      <div class="tab active" data-tab="overview">Overview</div>
+      <div class="tab" data-tab="security">Accounts</div>
+      <div class="tab" data-tab="permissions">Permissions</div>
+      <div class="tab" data-tab="archive">Archive</div>
+      <div class="tab" data-tab="danger">Danger zone</div>
     </nav>
     <div class="content">
 
@@ -116,14 +116,19 @@
     <!-- PERMISSIONS -->
     <div class="panel" id="panel-permissions">
       <div class="card">
-        <h2>Licensee permissions</h2>
-        <p class="hint">Control what each licensee can see and use. Switching a feature off hides its button on their home page <b>and</b> blocks the page itself. Takes effect next time they load the app.</p>
-        <div id="permHost"><div class="empty">Loading…</div></div>
+        <h2>Licensee settings</h2>
+        <p class="hint">Pick a licensee to control their features and WhatsApp channels. Changes apply next time they load the app.</p>
+        <div class="f" style="max-width:360px;"><label>Licensee</label><select id="permLic"></select></div>
+      </div>
+      <div class="card">
+        <h2>Features</h2>
+        <p class="hint">Switch a feature off to hide its button on the home page <b>and</b> block the page for this licensee.</p>
+        <div id="permHost"><div class="empty">Select a licensee above.</div></div>
       </div>
       <div class="card">
         <h2>WhatsApp channels</h2>
-        <p class="hint">Each licensee's WhatsApp channels — only you can edit these. One channel: their "Invoice Changes" button opens it directly. Several: they get a chooser. Links must be <b>chat.whatsapp.com</b> or <b>wa.me</b>.</p>
-        <div id="waChHost"><div class="empty">Loading…</div></div>
+        <p class="hint">Name + link per channel, one per row. One channel = their "Invoice Changes" button opens it directly; several = a chooser. Links must be <b>chat.whatsapp.com</b> or <b>wa.me</b>.</p>
+        <div id="waChHost"><div class="empty">Select a licensee above.</div></div>
       </div>
     </div>
 
@@ -206,80 +211,48 @@
       attn.insertAdjacentHTML('beforeend',`<div class="stat" style="background:#fef2f2;"><b>${drej??0}</b><span>Docs rejected (changes needed)</span></div>`);
     }
 
-    async function loadPerms(){
-      const host=document.getElementById('permHost');
-      const {data,error}=await sb.from('profiles').select('id,email,full_name,features').eq('role','licensee').order('email');
-      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
-      if(!data.length){ host.innerHTML='<div class="empty">No licensees yet.</div>'; return; }
-      host.innerHTML=data.map(l=>{
-        const f=l.features||{};
-        return `<div style="border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-            <b>${l.full_name||l.email}</b><span style="color:var(--muted);font-size:12px;">${l.email}</span>
-          </div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;">
-            ${FEATURES.map(p=>`<label style="display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer;"><input type="checkbox" data-lic="${l.id}" data-key="${p[0]}" ${f[p[0]]===false?'':'checked'}> ${p[1]}</label>`).join('')}
-          </div>
-          <div style="margin-top:10px;display:flex;align-items:center;gap:10px;"><button class="primary permSave" data-lic="${l.id}">Save permissions</button><span class="msg" id="pm-${l.id}" style="margin-top:0;"></span></div>
-        </div>`;
-      }).join('');
-      host.querySelectorAll('.permSave').forEach(b=>b.addEventListener('click',async()=>{
-        const lic=b.dataset.lic, msg=document.getElementById('pm-'+lic);
-        const features={};
-        host.querySelectorAll(`input[data-lic="${lic}"]`).forEach(cb=>{ features[cb.dataset.key]=cb.checked; });
-        b.disabled=true; msg.textContent='Saving…'; msg.className='msg';
-        const {error}=await sb.from('profiles').update({features}).eq('id',lic);
-        if(error){ msg.textContent=error.message; msg.className='msg err'; }
-        else { msg.textContent='Saved ✓'; msg.className='msg ok'; setTimeout(()=>msg.textContent='',1800); }
-        b.disabled=false;
-      }));
+    let permLicensees=[];
+    async function loadPermLic(){
+      const {data}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
+      permLicensees=data||[];
+      const sel=document.getElementById('permLic');
+      sel.innerHTML=permLicensees.map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('')||'<option value="">No licensees</option>';
+      sel.onchange=()=>renderPermFor(sel.value);
+      if(permLicensees.length) renderPermFor(permLicensees[0].id);
     }
-
-    async function loadChannels(){
-      const host=document.getElementById('waChHost');
-      const chRow=(name,link)=>`<div class="chRow" style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;align-items:center;">
-        <input class="chName" placeholder="Channel name (e.g. Invoice changes)" value="${(name||'').replace(/"/g,'&quot;')}" style="flex:0 0 210px;">
+    async function renderPermFor(lic){
+      if(!lic) return;
+      const {data:p}=await sb.from('profiles').select('features,whatsapp_channels').eq('id',lic).single();
+      const f=p?.features||{};
+      // features
+      const ph=document.getElementById('permHost');
+      ph.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:8px;">${FEATURES.map(x=>`<label style="display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer;"><input type="checkbox" data-key="${x[0]}" ${f[x[0]]===false?'':'checked'}> ${x[1]}</label>`).join('')}</div>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center;"><button class="primary" id="permSave">Save features</button><span class="msg" id="permMsg" style="margin-top:0;"></span></div>`;
+      document.getElementById('permSave').onclick=async()=>{
+        const features={}; ph.querySelectorAll('input[data-key]').forEach(cb=>features[cb.dataset.key]=cb.checked);
+        const msg=document.getElementById('permMsg'); msg.textContent='';
+        const {error}=await sb.from('profiles').update({features}).eq('id',lic);
+        if(error){ msg.textContent=error.message; msg.className='msg err'; } else { msg.textContent='Saved ✓'; msg.className='msg ok'; setTimeout(()=>msg.textContent='',1800); }
+      };
+      // whatsapp channels
+      const wh=document.getElementById('waChHost');
+      const chs=Array.isArray(p?.whatsapp_channels)?p.whatsapp_channels:[];
+      const chRow=(name,link)=>`<div class="chRow" style="display:flex;gap:8px;margin-bottom:7px;flex-wrap:wrap;align-items:center;">
+        <input class="chName" placeholder="Channel name" value="${(name||'').replace(/"/g,'&quot;')}" style="flex:0 0 200px;">
         <input class="chLink" placeholder="https://chat.whatsapp.com/…" value="${(link||'').replace(/"/g,'&quot;')}" style="flex:1 1 240px;">
         <button class="ghost chDel" title="Remove">✕</button></div>`;
-      const {data,error}=await sb.from('profiles').select('id,email,full_name,whatsapp_channels').eq('role','licensee').order('email');
-      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
-      if(!data.length){ host.innerHTML='<div class="empty">No licensees yet.</div>'; return; }
-      host.innerHTML=data.map(l=>{
-        const chs=Array.isArray(l.whatsapp_channels)?l.whatsapp_channels:[];
-        return `<div class="licbox" data-lic="${l.id}" style="border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-            <b>${l.full_name||l.email}</b><span style="color:var(--muted);font-size:12px;">${l.email}</span>
-          </div>
-          <div class="chRows">${chs.map(c=>chRow(c.name,c.link)).join('')||chRow('','')}</div>
-          <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <button class="ghost chAdd">+ Add channel</button>
-            <button class="primary chSave" data-lic="${l.id}">Save channels</button>
-            <span class="msg" id="wc-${l.id}" style="margin-top:0;"></span>
-          </div>
-        </div>`;
-      }).join('');
-      const bindDel=()=>host.querySelectorAll('.chDel').forEach(x=>x.onclick=()=>x.closest('.chRow').remove());
+      wh.innerHTML=`<div class="chRows">${chs.map(c=>chRow(c.name,c.link)).join('')||chRow('','')}</div>
+        <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;"><button class="ghost" id="chAdd">+ Add channel</button><button class="primary" id="chSave">Save channels</button><span class="msg" id="chMsg" style="margin-top:0;"></span></div>`;
+      const bindDel=()=>wh.querySelectorAll('.chDel').forEach(x=>x.onclick=()=>x.closest('.chRow').remove());
       bindDel();
-      host.querySelectorAll('.chAdd').forEach(b=>b.addEventListener('click',()=>{
-        b.closest('.licbox').querySelector('.chRows').insertAdjacentHTML('beforeend',chRow('',''));
-        bindDel();
-      }));
-      host.querySelectorAll('.chSave').forEach(b=>b.addEventListener('click',async()=>{
-        const box=b.closest('.licbox'), lic=b.dataset.lic, msg=document.getElementById('wc-'+lic);
-        msg.textContent='';
-        const channels=[...box.querySelectorAll('.chRow')]
-          .map(r=>({name:r.querySelector('.chName').value.trim(),link:r.querySelector('.chLink').value.trim()}))
-          .filter(c=>c.link);
-        for(const c of channels){
-          if(!/^https:\/\/(chat\.whatsapp\.com|wa\.me)\//.test(c.link)){ msg.textContent='Links must start with https://chat.whatsapp.com/ or https://wa.me/'; msg.className='msg err'; return; }
-          if(!c.name) c.name='WhatsApp';
-        }
-        b.disabled=true;
+      document.getElementById('chAdd').onclick=()=>{ wh.querySelector('.chRows').insertAdjacentHTML('beforeend',chRow('','')); bindDel(); };
+      document.getElementById('chSave').onclick=async()=>{
+        const msg=document.getElementById('chMsg'); msg.textContent='';
+        const channels=[...wh.querySelectorAll('.chRow')].map(r=>({name:r.querySelector('.chName').value.trim(),link:r.querySelector('.chLink').value.trim()})).filter(c=>c.link);
+        for(const c of channels){ if(!/^https:\/\/(chat\.whatsapp\.com|wa\.me)\//.test(c.link)){ msg.textContent='Links must start with https://chat.whatsapp.com/ or https://wa.me/'; msg.className='msg err'; return; } if(!c.name) c.name='WhatsApp'; }
         const {error}=await sb.from('profiles').update({whatsapp_channels:channels,whatsapp_link:channels[0]?channels[0].link:null}).eq('id',lic);
-        if(error){ msg.textContent=error.message; msg.className='msg err'; }
-        else { msg.textContent='Saved ✓'; msg.className='msg ok'; setTimeout(()=>msg.textContent='',1800); }
-        b.disabled=false;
-      }));
+        if(error){ msg.textContent=error.message; msg.className='msg err'; } else { msg.textContent='Saved ✓'; msg.className='msg ok'; setTimeout(()=>msg.textContent='',1800); }
+      };
     }
 
     async function loadAccounts(){
@@ -304,7 +277,7 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'overview',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadStats(); loadAccounts(); loadPerms(); loadChannels();
+      loadStats(); loadAccounts(); loadPermLic();
       document.getElementById('refreshStats').addEventListener('click',loadStats);
 
       document.getElementById('pwSet').addEventListener('click',async()=>{
