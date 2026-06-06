@@ -101,12 +101,14 @@
   .msg{font-size:13px;margin-top:10px;min-height:18px;} .msg.ok{color:var(--ok);} .msg.err{color:var(--red);}
   a.dl{color:var(--brand);text-decoration:none;font-weight:600;font-size:13px;}
   .empty{color:var(--muted);font-size:14px;padding:14px 0;}
+  .rkcard{background:#eff6ff;border-color:#dbe7ff !important;}
+  .rbadge{font-size:8px;font-weight:800;background:#2563eb;color:#fff;border-radius:4px;padding:1px 4px;margin-right:4px;}
 </style>
 </head>
 <body>
   <div class="topbar">
     <div class="brand"><div class="brand-mark">FA</div><b>Admin Portal</b></div>
-    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a id="superLink" href="super.html" style="display:none;color:#1d4ed8;">⚡ Super admin</a><a href="#" id="signoutLink" style="color:#475569;">Sign out</a></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="calendar.html" style="color:#1d4ed8;">🗓 Calendar</a><a id="superLink" href="super.html" style="display:none;color:#1d4ed8;">⚡ Super admin</a><a href="#" id="signoutLink" style="color:#475569;">Sign out</a></div>
   </div>
 
   <div class="wrap" id="app" style="display:none;">
@@ -549,7 +551,7 @@
       board.querySelectorAll('a.kdl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
       board.querySelectorAll('.jbuild').forEach(b=>b.addEventListener('click',()=>{ const lic=b.dataset.lic, bz=decodeURIComponent(b.dataset.biz||''); location.hash='#build'; setTimeout(()=>{ const s=document.getElementById('rcLic'); if(s){ s.value=lic; s.dispatchEvent(new Event('change')); } const i=document.getElementById('rcBiz'); if(i){ i.value=bz; i.focus(); } },90); }));
       board.querySelectorAll('.jresend').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); if(!confirm('Resend '+bz+' to the licensee? Rejected items return to pending.')) return; await sb.from('documents').update({status:'pending',licensee_note:null,decided_at:null}).eq('licensee_id',b.dataset.lic).eq('business_name',bz).eq('status','rejected'); loadInvBoard(); }));
-      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); const lic=b.dataset.lic; await sb.from('archived_jobs').insert({licensee_id:lic,business_name:bz,archived_by:session.user.id}); await maybeCreatePayment(lic,bz); loadInvBoard(); loadPaymentsBoard(); }));
+      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); const lic=b.dataset.lic; await sb.from('archived_jobs').insert({licensee_id:lic,business_name:bz,archived_by:session.user.id}); await maybeCreatePayment(lic,bz); await rollRebook(lic,bz); loadInvBoard(); loadPaymentsBoard(); }));
     }
 
     // ===== Reminders (compliance due dates) =====
@@ -685,16 +687,28 @@
       const {data}=await sb.from('bookings').select('*').order('created_at',{ascending:false});
       const nm={}; licenseeList.forEach(l=>nm[l.id]=l.full_name||l.email);
       const rows=(data||[]).filter(b=>!flt||b.licensee_id===flt);
+      const {data:rq}=await sb.from('booking_requests').select('*, businesses(name)').in('status',['sent','responded','call_requested']).order('updated_at',{ascending:false});
+      const reqs=(rq||[]).filter(r=>!flt||r.licensee_id===flt);
+      const RS={sent:'to_rebook',responded:'pending_booking',call_requested:'pending_booking'};
       board.innerHTML=BKSTAGES.map(s=>{
         const fas=s[1].includes('(FAS)')||s[0]==='check_send';
         const items=rows.filter(b=>b.stage===s[0]);
+        const sreq=reqs.filter(r=>RS[r.status]===s[0]);
+        const rcards=sreq.map(r=>{ const info=r.status==='responded'?('📅 '+(r.proposed_date||'')+' '+(r.proposed_ampm==='pm'?'PM':'AM')):(r.status==='call_requested'?'📞 Call requested':'✉ Invite sent'); const appr=r.status==='responded'?`<button class="kbtn go rkappr" data-id="${r.id}" data-biz="${r.business_id}" data-date="${r.proposed_date||''}" data-ampm="${r.proposed_ampm||''}">Approve</button>`:''; return `<div class="kcard rkcard"><div class="kt"><span class="rbadge">REBOOK</span>${(r.businesses&&r.businesses.name)||'Business'}</div><div class="ks">${nm[r.licensee_id]||''}</div><div class="ks">${info}</div>${appr}</div>`; });
         const cards=items.map(b=>`<div class="kcard bkcard" draggable="true" data-id="${b.id}"><div class="kt">${b.title}</div><div class="ks">${nm[b.licensee_id]||''}</div><div class="ks">${b.amount?'$'+Number(b.amount).toLocaleString():'$0'}${b.due_date?' · '+b.due_date:''}</div></div>`);
-        return `<div class="col"><div class="colhead ${fas?'s-sent':'s-recv'}">${s[1]}<span class="ct">${items.length}</span></div><div class="colbody bkdrop" data-stage="${s[0]}">${cards.join('')||'<div class="kempty">—</div>'}</div></div>`;
+        return `<div class="col"><div class="colhead ${fas?'s-sent':'s-recv'}">${s[1]}<span class="ct">${items.length+sreq.length}</span></div><div class="colbody bkdrop" data-stage="${s[0]}">${cards.concat(rcards).join('')||'<div class="kempty">—</div>'}</div></div>`;
       }).join('');
       board.querySelectorAll('.bkcard').forEach(el=>{
         el.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain',el.dataset.id); el.style.opacity='.4'; });
         el.addEventListener('dragend',()=>el.style.opacity='1');
       });
+      board.querySelectorAll('.rkappr').forEach(b=>b.addEventListener('click',async()=>{
+        const date=b.dataset.date,ampm=b.dataset.ampm; let iso=null;
+        if(date){ iso=new Date(date+'T'+(ampm==='pm'?'13:00:00':'09:00:00')).toISOString(); }
+        await sb.from('booking_requests').update({status:'approved',approved_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',b.dataset.id);
+        if(iso) await sb.from('businesses').update({booking_at:iso}).eq('id',b.dataset.biz);
+        loadBookingsBoard();
+      }));
       board.querySelectorAll('.bkdrop').forEach(col=>{
         col.addEventListener('dragover',e=>e.preventDefault());
         col.addEventListener('drop',async e=>{ e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); if(!id) return; await sb.from('bookings').update({stage:col.dataset.stage,updated_at:new Date().toISOString()}).eq('id',id); loadBookingsBoard(); });
@@ -717,7 +731,7 @@
           const when=p.status==='paid'?('Paid'+(p.paid_at?' · '+p.paid_at.slice(0,10):'')):('Sent'+(p.sent_at?' · '+p.sent_at.slice(0,10):''));
           return `<div class="kcard paycard" draggable="true" data-id="${p.id}"><div class="ktop"><span class="kt" title="${p.business_name}">${p.business_name}</span><button class="paydel" data-id="${p.id}" title="Remove" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:13px;line-height:1;">✕</button></div><div class="ks">${nm[p.licensee_id]||'—'}</div><div class="ks"><b>${amt}</b></div><div class="kstat">${when}</div></div>`;
         });
-        return `<div class="col"><div class="colhead ${c[2]}">${c[1]}<span class="ct">${items.length}</span></div><div class="colbody paydrop" data-status="${c[0]}">${cards.join('')||'<div class="kempty">—</div>'}</div></div>`;
+        return `<div class="col"><div class="colhead ${c[2]}">${c[1]}<span class="ct">${items.length+sreq.length}</span></div><div class="colbody paydrop" data-status="${c[0]}">${cards.concat(rcards).join('')||'<div class="kempty">—</div>'}</div></div>`;
       }).join('');
       const badge=document.getElementById('payBadge'); const waiting=rows.filter(p=>p.status==='sent').length;
       if(badge){ if(waiting){ badge.textContent=waiting; badge.style.display='inline-block'; } else badge.style.display='none'; }
@@ -731,6 +745,25 @@
           await sb.from('payments').update({status:st,paid_at: st==='paid'?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq('id',id); loadPaymentsBoard(); });
       });
       board.querySelectorAll('.paydel').forEach(b=>b.addEventListener('click',async(e)=>{ e.stopPropagation(); if(!confirm('Remove this payment record?')) return; await sb.from('payments').delete().eq('id',b.dataset.id); loadPaymentsBoard(); }));
+    }
+    async function rollRebook(lic,bizName){
+      // When a job is completed, roll forward each service that's currently due, by its own cadence, and clear the appointment.
+      try{
+        const {data:bz}=await sb.from('businesses').select('id').eq('licensee_id',lic).eq('name',bizName).limit(1);
+        if(!bz||!bz[0]) return;
+        const id=bz[0].id;
+        const {data:scs}=await sb.from('rebook_schedules').select('*').eq('business_id',id);
+        const today=new Date(); const grace=new Date(today); grace.setDate(grace.getDate()+31);
+        for(const s of (scs||[])){
+          const due=s.next_due?new Date(s.next_due+'T00:00:00'):null;
+          if(due===null || due<=grace){
+            const base=(due && due>today)?due:today;
+            const nd=new Date(base); nd.setMonth(nd.getMonth()+s.cadence_months);
+            await sb.from('rebook_schedules').update({next_due:nd.toISOString().slice(0,10),updated_at:new Date().toISOString()}).eq('id',s.id);
+          }
+        }
+        await sb.from('businesses').update({booking_at:null}).eq('id',id);
+      }catch(_){}
     }
     async function loadPayFlags(){
       const host=document.getElementById('payFlags'); if(!host) return;

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASTAS · Rebook Calendar</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
+<style>
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--green:#16a34a;--slate:#475569;--red:#475569;--bg1:#f7f9fc;--bg2:#eef2f8;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;margin-left:14px;}
+  .topbar .who{font-size:13px;color:var(--muted);}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 16px 70px;}
+  h1{font-size:22px;margin:4px 0 4px;}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 16px;}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:16px;}
+  .controls select,.controls input{padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;}
+  .controls .spacer{flex:1;}
+  button.primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:14px;}
+  button.ghost{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:14px;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .dotc{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .mo{margin-bottom:14px;}
+  .moh{font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:2px solid var(--line);margin-bottom:8px;}
+  .moh .now{font-size:10.5px;font-weight:800;background:#eff6ff;color:var(--brand);border-radius:999px;padding:2px 8px;}
+  .moh .moc{margin-left:auto;font-size:12px;color:var(--muted);font-weight:600;}
+  .mob{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;}
+  .emptym{color:#9aa4b2;font-size:12.5px;padding:4px 2px;}
+  .tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 13px;box-shadow:0 3px 10px rgba(16,24,40,.04);}
+  .tile .tt{font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px;}
+  .tile .lic{font-size:11.5px;color:var(--muted);margin-top:1px;}
+  .badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
+  .svc{font-size:10.5px;font-weight:700;border:1px solid;border-radius:6px;padding:2px 7px;}
+  .bk{font-size:12px;color:var(--ink);background:#f1f5f9;border-radius:7px;padding:5px 8px;margin-top:8px;font-weight:600;}
+  .req{margin-top:8px;border-radius:8px;padding:7px 9px;font-size:12px;font-weight:600;}
+  .req.responded{background:#eff6ff;border:1px solid #dbe7ff;color:#1d4ed8;}
+  .req.call_requested{background:#ecfdf3;border:1px solid #bbf7d0;color:#067647;}
+  .req.sent{background:#f1f5f9;border:1px solid var(--line);color:var(--muted);}
+  .reqbtns{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
+  .reqbtns a,.reqbtns button{flex:1;text-align:center;text-decoration:none;border-radius:8px;padding:7px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:#fff;}
+  .reqbtns .appr{background:var(--green);color:#fff;border-color:var(--green);}
+  .reqbtns .call{color:var(--green);} .reqbtns .mail{color:var(--brand);}
+  .tile .edit{margin-top:9px;width:100%;background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--brand);}
+  .bell{font-size:12px;}
+  .modal{display:none;position:fixed;inset:0;z-index:5000;background:rgba(16,24,40,.45);align-items:center;justify-content:center;padding:18px;}
+  .modal.show{display:flex;}
+  .mcard{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow:auto;box-shadow:0 16px 44px rgba(16,24,40,.25);}
+  .mcard h3{margin:0 0 4px;font-size:18px;}
+  .mcard .mh{font-size:12.5px;color:var(--muted);margin:0 0 14px;}
+  .srow{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
+  .srow .nm{font-weight:700;font-size:13px;flex:1 1 120px;display:flex;align-items:center;gap:7px;}
+  .srow select,.srow input{padding:7px 9px;border:1px solid var(--line);border-radius:8px;font-size:13px;}
+  .srow.off select,.srow.off input{opacity:.4;pointer-events:none;}
+  .frow{margin-top:14px;}
+  .frow label{display:block;font-size:12px;font-weight:700;color:#344054;margin-bottom:5px;}
+  .frow input[type=datetime-local]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;}
+  .chk{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13.5px;font-weight:600;}
+  .mact{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px;}
+  .msg{font-size:13px;min-height:16px;}
+  .empty{color:var(--muted);text-align:center;padding:40px 0;}
+  .wk{width:100%;border-collapse:collapse;}
+  .wk th,.wk td{padding:7px 6px;text-align:center;border-bottom:1px solid var(--line);font-size:13px;}
+  .wk th{font-size:11px;text-transform:uppercase;color:var(--muted);}
+  .wk td.day{text-align:left;font-weight:700;}
+  .ov{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;}
+  .ovlist{margin-top:8px;}
+  .ovrow{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--line);}
+  .ovrow .rm{margin-left:auto;cursor:pointer;color:var(--slate);border:none;background:none;font-size:13px;}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><div class="brand-mark">FA</div><b>Rebook Calendar</b></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Main menu</a><a href="#" id="signoutLink" style="color:#475569;">Sign out</a></div>
+  </div>
+  <div class="wrap">
+    <h1>Rebook calendar</h1>
+    <p class="sub">Each business is scheduled per service and appears in the month it's next due. Reminder emails go out a week before, letting customers propose a time — proposals show on their tile for you to approve or call.</p>
+    <div class="controls">
+      <select id="licFilter" style="display:none;"></select>
+      <select id="bizPick"><option value="">+ Schedule a business…</option></select>
+      <button class="ghost" id="availBtn" style="display:none;">🗓 My availability</button>
+      <span class="spacer"></span>
+      <button class="ghost" id="allOn">🔔 Reminders: all on</button>
+      <button class="ghost" id="allOff">Reminders: all off</button>
+    </div>
+    <div class="legend">
+      <span><i class="dotc" style="background:#2563eb"></i> Test &amp; Tag</span>
+      <span><i class="dotc" style="background:#16a34a"></i> Extinguisher Cert</span>
+      <span><i class="dotc" style="background:#475569"></i> Fire Training</span>
+      <span>🔔 = email reminder on</span>
+    </div>
+    <div id="cal"><div class="empty">Loading…</div></div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="mcard">
+      <h3 id="mTitle">Business</h3>
+      <p class="mh">Tick a service, choose how often it repeats, and set the next due date. Completing a job rolls due services forward automatically.</p>
+      <div id="svcRows"></div>
+      <div class="frow">
+        <label>Appointment (day &amp; time) — optional</label>
+        <input type="datetime-local" id="fBooking">
+      </div>
+      <label class="chk"><input type="checkbox" id="fRemind"> Email this business a reminder before their due month</label>
+      <div class="msg" id="mMsg"></div>
+      <div class="mact">
+        <button class="ghost" id="fCancel">Cancel</button>
+        <button class="primary" id="fSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="availModal">
+    <div class="mcard">
+      <h3>My availability</h3>
+      <p class="mh">Set the mornings/afternoons you normally work. Customers booking online are offered these. Add date overrides for one-off days off or extra days.</p>
+      <table class="wk"><thead><tr><th>Day</th><th>Morning</th><th>Afternoon</th></tr></thead><tbody id="wkBody"></tbody></table>
+      <div class="frow">
+        <label>Date override</label>
+        <div class="ov">
+          <input type="date" id="ovDate">
+          <select id="ovType"><option value="off">Day off</option><option value="am">Morning only</option><option value="pm">Afternoon only</option><option value="both">Both (extra day)</option></select>
+          <button class="ghost" id="ovAdd">Add</button>
+        </div>
+        <div class="ovlist" id="ovList"></div>
+      </div>
+      <div class="msg" id="avMsg"></div>
+      <div class="mact">
+        <button class="ghost" id="avCancel">Cancel</button>
+        <button class="primary" id="avSave">Save availability</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
+    const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
+    const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    document.getElementById('signoutLink').addEventListener('click',async(e)=>{ e.preventDefault();
+      try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
+      try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
+      location.href='index.html'; });
+    const {data:prof}=await sb.from('profiles').select('role,full_name,features,avail_weekly,avail_overrides').eq('id',session.user.id).single();
+    const role=prof?.role||'licensee';
+    const isAdmin=role==='admin'||role==='superadmin';
+    if(role==='licensee' && prof?.features?.calendar===false){ location.replace('index.html'); throw new Error('no access'); }
+    document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+role;
+
+    const SVC=[['tt','Test & Tag','#2563eb'],['ec','Extinguisher Cert','#16a34a'],['ft','Fire Training','#475569']];
+    const DAYS=[['mon','Monday'],['tue','Tuesday'],['wed','Wednesday'],['thu','Thursday'],['fri','Friday'],['sat','Saturday'],['sun','Sunday']];
+    const CAD=[3,6,12];
+    let biz=[], sched=[], reqs=[], licName={};
+    let myWeekly=prof?.avail_weekly||{}, myOver=prof?.avail_overrides||{};
+    const cal=document.getElementById('cal');
+    const licFilter=document.getElementById('licFilter');
+    const bizPick=document.getElementById('bizPick');
+
+    async function loadAll(){
+      const {data:bz,error}=await sb.from('businesses').select('id,name,contact_email,phone,booking_at,remind_email,licensee_id').order('name');
+      if(error){ cal.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      biz=bz||[];
+      const {data:sc}=await sb.from('rebook_schedules').select('*'); sched=sc||[];
+      const {data:rq}=await sb.from('booking_requests').select('*').neq('status','declined').order('updated_at',{ascending:false}); reqs=rq||[];
+      if(isAdmin){
+        const {data:ls}=await sb.from('profiles').select('id,full_name,email').eq('role','licensee');
+        (ls||[]).forEach(l=>licName[l.id]=l.full_name||l.email);
+        licFilter.style.display='inline-block';
+        licFilter.innerHTML='<option value="">All licensees</option>'+(ls||[]).map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
+      }
+      render();
+    }
+    function filtered(){ const f=licFilter.value; return f? biz.filter(b=>b.licensee_id===f) : biz; }
+    function mkey(d){ return d.getFullYear()*12+d.getMonth(); }
+    function mkeyStr(s){ const [y,m]=s.split('-').map(Number); return y*12+(m-1); }
+    function fmtDT(iso){ return new Date(iso).toLocaleString('en-NZ',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }
+    function fmtDay(ds){ return new Date(ds+'T00:00:00').toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short'}); }
+    function activeReq(bid){ return reqs.find(r=>r.business_id===bid && ['sent','responded','call_requested'].includes(r.status)); }
+
+    function render(){
+      const fb=filtered();
+      bizPick.innerHTML='<option value="">+ Schedule a business…</option>'+fb.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+      document.getElementById('availBtn').style.display = (role==='licensee') ? 'inline-block' : 'none';
+      const today=new Date(); const curKey=mkey(new Date(today.getFullYear(),today.getMonth(),1));
+      const buckets={};
+      const entry=(k,b)=>{ (buckets[k]=buckets[k]||{}); return buckets[k][b.id]=buckets[k][b.id]||{b,svcs:[],booking:null}; };
+      fb.forEach(b=>{
+        sched.filter(s=>s.business_id===b.id && s.next_due).forEach(s=>{
+          const d=new Date(s.next_due+'T00:00:00'); let k=mkey(d); let overdue=false;
+          if(k<curKey){ k=curKey; overdue=true; }
+          if(k>curKey+23) return;
+          entry(k,b).svcs.push({svc:s.service,due:s.next_due,overdue});
+        });
+        if(b.booking_at){ const k=mkey(new Date(b.booking_at)); if(k>=curKey && k<=curKey+23) entry(k,b).booking=b.booking_at; }
+      });
+      let html='';
+      for(let k=curKey;k<=curKey+23;k++){
+        const yr=Math.floor(k/12), mo=k%12;
+        const label=new Date(yr,mo,1).toLocaleDateString('en-NZ',{month:'long',year:'numeric'});
+        const m=buckets[k]||{};
+        const list=Object.values(m).sort((a,b)=>a.b.name.localeCompare(b.b.name));
+        const tiles=list.map(e=>tile(e,k)).join('');
+        html+=`<div class="mo"><div class="moh">${label}${k===curKey?' <span class="now">this month</span>':''}<span class="moc">${list.length||''}</span></div><div class="mob">${tiles||'<div class="emptym">— nothing due</div>'}</div></div>`;
+      }
+      cal.innerHTML=html;
+      cal.querySelectorAll('.edit').forEach(b=>b.addEventListener('click',()=>openEdit(b.dataset.id)));
+      cal.querySelectorAll('.appr').forEach(b=>b.addEventListener('click',()=>approveReq(b.dataset.req)));
+    }
+    function tile(e,k){
+      const b=e.b;
+      const badges=e.svcs.map(s=>{ const c=SVC.find(x=>x[0]===s.svc)||['','?','#475569']; return `<span class="svc" style="background:${c[2]}1a;color:${c[2]};border-color:${c[2]}55;">${c[1]}${s.overdue?' · overdue':''}</span>`; }).join('');
+      const bk=e.booking?`<div class="bk">📅 ${fmtDT(e.booking)}</div>`:'';
+      const bell=b.remind_email?'<span class="bell" title="Email reminder on">🔔</span>':'';
+      const lic=isAdmin?`<div class="lic">${licName[b.licensee_id]||''}</div>`:'';
+      let reqHtml='';
+      const r=activeReq(b.id);
+      if(r && (!r.due_month || mkeyStr(r.due_month)===k)){
+        const tel=(b.phone||'').replace(/[^+\d]/g,'');
+        const callBtn=tel?`<a class="call" href="tel:${tel}">📞 Call</a>`:'';
+        const mailBtn=b.contact_email?`<a class="mail" href="mailto:${b.contact_email}">✉ Email</a>`:'';
+        if(r.status==='responded'){
+          reqHtml=`<div class="req responded">✔ Proposed: ${fmtDay(r.proposed_date)} · ${r.proposed_ampm==='pm'?'afternoon':'morning'}${r.proposed_note?'<br><span style="font-weight:400">“'+r.proposed_note+'”</span>':''}</div><div class="reqbtns"><button class="appr" data-req="${r.id}">Approve</button>${callBtn}${mailBtn}</div>`;
+        } else if(r.status==='call_requested'){
+          reqHtml=`<div class="req call_requested">📞 Call requested${r.proposed_note?'<br><span style="font-weight:400">“'+r.proposed_note+'”</span>':''}</div><div class="reqbtns">${callBtn}${mailBtn}</div>`;
+        } else if(r.status==='sent'){
+          reqHtml=`<div class="req sent">✉ Invite sent — awaiting reply</div><div class="reqbtns">${callBtn}${mailBtn}</div>`;
+        }
+      }
+      return `<div class="tile"><div class="tt">${b.name}${bell}</div>${lic}<div class="badges">${badges||'<span class="emptym">no services set</span>'}</div>${bk}${reqHtml}<button class="edit" data-id="${b.id}">Edit schedule / booking</button></div>`;
+    }
+
+    async function approveReq(reqId){
+      const r=reqs.find(x=>x.id===reqId); if(!r) return;
+      let iso=null;
+      if(r.proposed_date){ const t=r.proposed_ampm==='pm'?'13:00:00':'09:00:00'; iso=new Date(r.proposed_date+'T'+t).toISOString(); }
+      await sb.from('booking_requests').update({status:'approved',approved_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',reqId);
+      if(iso) await sb.from('businesses').update({booking_at:iso}).eq('id',r.business_id);
+      await loadAll();
+    }
+
+    const modal=document.getElementById('modal'); let editId=null;
+    function openEdit(id){
+      const b=biz.find(x=>x.id===id); if(!b) return; editId=id;
+      document.getElementById('mTitle').textContent=b.name;
+      const rows=SVC.map(([code,label,col])=>{
+        const s=sched.find(x=>x.business_id===id && x.service===code);
+        const on=!!s;
+        return `<div class="srow ${on?'':'off'}" data-svc="${code}"><span class="nm"><input type="checkbox" class="sEnable" ${on?'checked':''}> <i class="dotc" style="background:${col}"></i>${label}</span><select class="sCad">${CAD.map(c=>`<option value="${c}" ${s&&s.cadence_months===c?'selected':''}>${c} months</option>`).join('')}</select><input type="date" class="sDue" value="${s&&s.next_due?s.next_due:''}"></div>`;
+      }).join('');
+      document.getElementById('svcRows').innerHTML=rows;
+      document.getElementById('svcRows').querySelectorAll('.sEnable').forEach(cb=>cb.addEventListener('change',()=>cb.closest('.srow').classList.toggle('off',!cb.checked)));
+      document.getElementById('fBooking').value=b.booking_at?toLocalInput(b.booking_at):'';
+      document.getElementById('fRemind').checked=!!b.remind_email;
+      document.getElementById('mMsg').textContent='';
+      modal.classList.add('show');
+    }
+    function toLocalInput(iso){ const d=new Date(iso); const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes()); }
+    document.getElementById('fCancel').addEventListener('click',()=>modal.classList.remove('show'));
+    modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.remove('show'); });
+    bizPick.addEventListener('change',()=>{ if(bizPick.value){ openEdit(bizPick.value); bizPick.value=''; } });
+    licFilter.addEventListener('change',render);
+
+    document.getElementById('fSave').addEventListener('click',async()=>{
+      const b=biz.find(x=>x.id===editId); if(!b) return;
+      const msg=document.getElementById('mMsg'); msg.textContent='Saving…';
+      try{
+        for(const row of document.getElementById('svcRows').querySelectorAll('.srow')){
+          const code=row.dataset.svc;
+          const on=row.querySelector('.sEnable').checked;
+          const cad=Number(row.querySelector('.sCad').value);
+          const due=row.querySelector('.sDue').value||null;
+          if(on){
+            const {error}=await sb.from('rebook_schedules').upsert({business_id:b.id,licensee_id:b.licensee_id,service:code,cadence_months:cad,next_due:due,updated_at:new Date().toISOString()},{onConflict:'business_id,service'});
+            if(error) throw error;
+          } else { await sb.from('rebook_schedules').delete().eq('business_id',b.id).eq('service',code); }
+        }
+        const bookingVal=document.getElementById('fBooking').value;
+        const {error:be}=await sb.from('businesses').update({booking_at:bookingVal?new Date(bookingVal).toISOString():null,remind_email:document.getElementById('fRemind').checked}).eq('id',b.id);
+        if(be) throw be;
+        modal.classList.remove('show');
+        await loadAll();
+      }catch(e){ msg.textContent=e.message; }
+    });
+
+    async function setAllRemind(val){
+      const ids=filtered().map(b=>b.id); if(!ids.length) return;
+      if(!confirm((val?'Turn ON':'Turn OFF')+' email reminders for '+ids.length+' business'+(ids.length>1?'es':'')+'?')) return;
+      await sb.from('businesses').update({remind_email:val}).in('id',ids);
+      await loadAll();
+    }
+    document.getElementById('allOn').addEventListener('click',()=>setAllRemind(true));
+    document.getElementById('allOff').addEventListener('click',()=>setAllRemind(false));
+
+    const availModal=document.getElementById('availModal');
+    function openAvail(){
+      const body=document.getElementById('wkBody');
+      body.innerHTML=DAYS.map(([k,label])=>{
+        const w=myWeekly[k]||{};
+        return `<tr data-day="${k}"><td class="day">${label}</td><td><input type="checkbox" class="wam" ${w.am?'checked':''}></td><td><input type="checkbox" class="wpm" ${w.pm?'checked':''}></td></tr>`;
+      }).join('');
+      renderOv();
+      document.getElementById('avMsg').textContent='';
+      availModal.classList.add('show');
+    }
+    function renderOv(){
+      const list=document.getElementById('ovList');
+      const keys=Object.keys(myOver).sort();
+      list.innerHTML=keys.length?keys.map(d=>{
+        const o=myOver[d]; const desc=o.off?'Day off':((o.am&&o.pm)?'Both':(o.am?'Morning only':(o.pm?'Afternoon only':'—')));
+        return `<div class="ovrow"><span>${fmtDay(d)} — ${desc}</span><button class="rm" data-d="${d}">remove</button></div>`;
+      }).join(''):'<div class="emptym">No overrides.</div>';
+      list.querySelectorAll('.rm').forEach(b=>b.addEventListener('click',()=>{ delete myOver[b.dataset.d]; renderOv(); }));
+    }
+    document.getElementById('availBtn').addEventListener('click',openAvail);
+    document.getElementById('avCancel').addEventListener('click',()=>availModal.classList.remove('show'));
+    availModal.addEventListener('click',e=>{ if(e.target===availModal) availModal.classList.remove('show'); });
+    document.getElementById('ovAdd').addEventListener('click',()=>{
+      const d=document.getElementById('ovDate').value; if(!d) return;
+      const t=document.getElementById('ovType').value;
+      if(t==='off') myOver[d]={off:true}; else if(t==='am') myOver[d]={am:true,pm:false}; else if(t==='pm') myOver[d]={am:false,pm:true}; else myOver[d]={am:true,pm:true};
+      document.getElementById('ovDate').value=''; renderOv();
+    });
+    document.getElementById('avSave').addEventListener('click',async()=>{
+      const msg=document.getElementById('avMsg'); msg.textContent='Saving…';
+      const wk={};
+      document.getElementById('wkBody').querySelectorAll('tr').forEach(tr=>{ wk[tr.dataset.day]={am:tr.querySelector('.wam').checked,pm:tr.querySelector('.wpm').checked}; });
+      myWeekly=wk;
+      const {error}=await sb.rpc('set_my_availability',{p_weekly:myWeekly,p_overrides:myOver});
+      if(error){ msg.textContent=error.message; return; }
+      availModal.classList.remove('show');
+    });
+
+    loadAll();
+  </script>
+</body>
+</html>

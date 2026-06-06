@@ -81,6 +81,10 @@
   .icon.sales{background:linear-gradient(135deg,#0e7490,#06b6d4);box-shadow:0 8px 18px rgba(8,145,178,.45);}
   .icon.contacts{background:linear-gradient(135deg,#15803d,#22c55e);box-shadow:0 8px 18px rgba(22,101,52,.45);}
   .icon.admin{background:linear-gradient(135deg,#111827,#374151);box-shadow:0 8px 18px rgba(17,24,39,.5);}
+  .icon.xero{background:linear-gradient(135deg,#13b5ea,#0e7490);box-shadow:0 8px 18px rgba(19,181,234,.45);}
+  #salesCard{width:100%!important;max-width:none;flex-direction:row;min-height:96px;gap:22px;order:1;}
+  #bookingCard{order:2;} #contactsCard{order:3;}
+  @media(max-width:600px){ #salesCard{flex-direction:column;min-height:120px;width:100%!important;} }
 
   .btn{
     display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;margin-top:auto;
@@ -136,6 +140,16 @@
   .gate-toggle a{color:var(--brand);cursor:pointer;font-weight:600;text-decoration:none;}
   body.locked{overflow:hidden;}
   .hide{display:none!important;}
+  /* category landing */
+  .cats{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:28px 24px 40px;width:100%;max-width:760px;}
+  .backbar{display:none;width:100%;max-width:760px;padding:16px 24px 0;}
+  .backbar a{color:var(--brand);text-decoration:none;font-weight:700;font-size:15px;cursor:pointer;}
+  .cattitle{font-size:24px;font-weight:800;margin:8px 24px 0;text-align:center;display:none;}
+  .icon.cat-sales{background:linear-gradient(135deg,#0e7490,#06b6d4);box-shadow:0 8px 18px rgba(8,145,178,.45);}
+  .icon.cat-builder{background:linear-gradient(135deg,#1e40af,#3b82f6);box-shadow:0 8px 18px rgba(37,99,235,.45);}
+  .icon.cat-settings{background:linear-gradient(135deg,#475569,#94a3b8);box-shadow:0 8px 18px rgba(71,85,105,.45);}
+  .icon.cat-links{background:linear-gradient(135deg,#15803d,#22c55e);box-shadow:0 8px 18px rgba(22,101,52,.45);}
+  @media(max-width:600px){ .cats{padding:18px 14px 8px;gap:14px;} .backbar{padding:12px 14px 0;} .cattitle{font-size:20px;} }
 </style>
 </head>
 <body class="locked">
@@ -162,7 +176,18 @@
     <h1>FAST<span>AS</span></h1>
   </header>
 
-  <section class="cards">
+  <!-- category landing: pick a category, then see its buttons -->
+  <section class="cats" id="catLanding">
+    <div class="card t-blue catcard" data-cat="sales" role="button"><div class="icon cat-sales"><svg viewBox="0 0 24 24"><path d="M3 3h2v18H3V3zm16 8h2v10h-2V11zm-5-6h2v16h-2V5zM9 9h2v12H9V9z"/></svg></div><h2>Sales</h2></div>
+    <div class="card t-blue catcard" data-cat="builder" role="button"><div class="icon cat-builder"><svg viewBox="0 0 24 24"><path d="M21.7 18.3l-7.1-7.1a5.5 5.5 0 0 0-6.9-6.9l3.2 3.2-2.6 2.6-3.2-3.2a5.5 5.5 0 0 0 6.9 6.9l7.1 7.1a1 1 0 0 0 1.4 0l1.2-1.2a1 1 0 0 0 0-1.4z"/></svg></div><h2>Builder</h2></div>
+    <div class="card t-grey catcard" data-cat="settings" role="button"><div class="icon cat-settings"><svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.56-1.63.94l-2.39-.96a.5.5 0 0 0-.61.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.5.38 1.04.7 1.63.94l.36 2.54c.04.24.25.42.5.42h3.84c.25 0 .46-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.63-.94l2.39.96c.22.09.48 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></div><h2>Settings</h2></div>
+    <div class="card t-green catcard" data-cat="links" role="button"><div class="icon cat-links"><svg viewBox="0 0 24 24"><path d="M3.9 12a3.1 3.1 0 0 1 3.1-3.1h4V7h-4a5 5 0 0 0 0 10h4v-1.9h-4A3.1 3.1 0 0 1 3.9 12zM8 13h8v-2H8v2zm5-6v1.9h4a3.1 3.1 0 0 1 0 6.2h-4V17h4a5 5 0 0 0 0-10h-4z"/></svg></div><h2>Links</h2></div>
+  </section>
+
+  <div class="backbar" id="backbar"><a id="backCats">← Categories</a></div>
+  <h2 class="cattitle" id="catTitle"></h2>
+
+  <section class="cards" style="display:none;">
 
     <!-- Row 1 (blue — create): Invoice Generator + Certificate Builder -->
     <div class="card t-blue" id="startcall" role="button" aria-label="Start an invoice call">
@@ -198,7 +223,7 @@
       <div class="icon wa">
         <svg viewBox="0 0 32 32"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.7L.5 31.5l8-2.1c2.2 1.2 4.8 1.9 7.5 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm0 28c-2.4 0-4.7-.6-6.7-1.8l-.5-.3-4.7 1.2 1.3-4.6-.3-.5A12.4 12.4 0 1 1 28.5 16c0 6.9-5.6 12.5-12.5 12.5zm6.9-9.4c-.4-.2-2.2-1.1-2.6-1.2-.3-.1-.6-.2-.8.2-.2.4-.9 1.2-1.1 1.4-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3-1.9-1.1-1-1.9-2.2-2.1-2.6-.2-.4 0-.6.2-.8.2-.2.4-.4.5-.7.2-.2.2-.4.4-.7.1-.3 0-.5 0-.7-.1-.2-.8-2-1.1-2.7-.3-.7-.6-.6-.8-.6h-.7c-.2 0-.6.1-.9.4-.3.4-1.2 1.2-1.2 2.9 0 1.7 1.2 3.3 1.4 3.6.2.2 2.5 3.8 6 5.3.8.4 1.5.6 2 .8.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.7.3-.9.3-1.6.2-1.7-.1-.2-.3-.3-.7-.5z"/></svg>
       </div>
-      <h2>Invoice Changes</h2>
+      <h2>Comms</h2>
     </a>
 
     <a class="card t-green" id="priceCard" href="pricing.html">
@@ -232,6 +257,13 @@
       <h2>OnePageCRM</h2>
     </a>
 
+    <a class="card t-grey" id="xeroCard" href="https://go.xero.com" target="_blank" rel="noopener">
+      <div class="icon xero">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      </div>
+      <h2>Xero</h2>
+    </a>
+
     <a class="card t-grey" id="patguardCard" href="upload.html">
       <div class="icon gar">
         <svg viewBox="0 0 24 24"><path d="M12 2 5.5 8.5l1.4 1.4L11 5.8V16h2V5.8l4.1 4.1 1.4-1.4L12 2zM5 20h14v-2H5v2z"/></svg>
@@ -239,11 +271,18 @@
       <h2>.gar Uploader</h2>
     </a>
 
-    <a class="card t-grey" id="bookingCard" href="#" target="_blank" rel="noopener">
+    <a class="card t-grey" id="bookingCard" href="calendar.html" style="display:none;">
       <div class="icon cal">
         <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5zm4 6H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2z"/></svg>
       </div>
-      <h2>Bookings</h2>
+      <h2>Rebook Calendar</h2>
+    </a>
+
+    <a class="card t-grey" id="profileCard" href="#" style="display:none;">
+      <div class="icon gar">
+        <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.3 0-8 1.7-8 5v3h16v-3c0-3.3-4.7-5-8-5z"/></svg>
+      </div>
+      <h2>My Profile</h2>
     </a>
 
   </section>
@@ -345,15 +384,15 @@
       else { const link=(chans[0]&&chans[0].link)||prof?.whatsapp_link; if(link) wa.href=link; wa.onclick=null; }
       // Bookings tile → licensees only; opens their own calendar link (or the profile editor if unset)
       const bk=document.getElementById('bookingCard');
-      bk.style.display = (role==='licensee' && feat.bookings!==false) ? 'flex' : 'none';
-      if(prof?.calendar_link){ bk.href=prof.calendar_link; bk.onclick=null; }
-      else { bk.href='#'; bk.onclick=function(e){ e.preventDefault(); openProfile('Add your booking calendar link to use this button.'); }; }
+      bk.style.display = (role==='licensee' && feat.calendar!==false) ? 'flex' : 'none';
+      bk.href='calendar.html'; bk.onclick=null; bk.removeAttribute('target');
       ubRole.textContent=role;
       // Inv/Rep Checker — licensees only; badge counts items awaiting their approval
       if(role==='licensee'){
         checkerCard.style.display=(feat.checker===false)?'none':'flex'; adminCard.style.display='none';
         const {count}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('licensee_id',session.user.id).eq('status','pending');
         if(count&&count>0){ checkBadge.textContent=count; checkBadge.style.display='flex'; } else { checkBadge.style.display='none'; }
+        initCategories();
       } else {
         // Admins and the super admin never see the tiles — their landing
         // experience IS the paged portal. Straight in.
@@ -396,67 +435,75 @@
       const {data:{session:s}}=await sb.auth.getSession();
       await applySession(s);
     });
+    // ===== category landing (licensee) =====
+    const CATS={
+      sales:['salesCard','bookingCard','contactsCard'],
+      builder:['startcall','certCard','patguardCard','checkerCard'],
+      settings:['priceCard','profileCard'],
+      links:['waLink','xeroCard']
+    };
+    const CATLABEL={sales:'Sales',builder:'Builder',settings:'Settings',links:'Links'};
+    let enabledTiles=new Set();
+    function initCategories(){
+      enabledTiles=new Set();
+      Object.values(CATS).flat().forEach(id=>{ const el=document.getElementById(id); if(el && el.style.display!=='none') enabledTiles.add(id); });
+      enabledTiles.add('profileCard');
+      Object.values(CATS).flat().forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+      const cards=document.querySelector('.cards'); if(cards) cards.style.display='none';
+      document.getElementById('catLanding').style.display='flex';
+      document.getElementById('backbar').style.display='none';
+      document.getElementById('catTitle').style.display='none';
+      document.querySelectorAll('.catcard').forEach(c=>{ const has=CATS[c.dataset.cat].some(id=>enabledTiles.has(id)); c.style.display=has?'flex':'none'; });
+    }
+    function showCat(cat){
+      document.getElementById('catLanding').style.display='none';
+      const cards=document.querySelector('.cards'); cards.style.display='flex';
+      Object.entries(CATS).forEach(([k,ids])=>ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display=(k===cat && enabledTiles.has(id))?'flex':'none'; }));
+      const t=document.getElementById('catTitle'); t.textContent=CATLABEL[cat]; t.style.display='block';
+      document.getElementById('backbar').style.display='block';
+      window.scrollTo({top:0});
+    }
+    function showLanding(){ const cards=document.querySelector('.cards'); if(cards) cards.style.display='none'; document.getElementById('catLanding').style.display='flex'; document.getElementById('backbar').style.display='none'; document.getElementById('catTitle').style.display='none'; window.scrollTo({top:0}); }
+    document.querySelectorAll('.catcard').forEach(c=>c.addEventListener('click',()=>showCat(c.dataset.cat)));
+    document.getElementById('backCats').addEventListener('click',showLanding);
+    const profileCardEl=document.getElementById('profileCard');
+    if(profileCardEl) profileCardEl.addEventListener('click',(e)=>{ e.preventDefault(); openProfile(); });
 
     const {data:{session}}=await sb.auth.getSession();
     await applySession(session);
     sb.auth.onAuthStateChange((_e,s)=>applySession(s));
   </script>
 
-
-  <!-- voice widget controller -->
+  <!-- voice widget controller (unchanged behaviour) -->
   <script>
     (function(){
       var host=document.querySelector('elevenlabs-convai');
-
-      // Big, unmissable Close pill — fixed top-centre of the screen, max z-index,
-      // dark so it stands out on any background. Visible the whole time the
-      // widget is open (terms screen, call, and the "ended" screen).
       var closeBtn=document.createElement('button');
-      closeBtn.id='fastasClose'; closeBtn.setAttribute('aria-label','Close');
-      closeBtn.innerHTML='✕&nbsp;&nbsp;Close';
-      closeBtn.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2147483000;height:42px;padding:0 22px;border-radius:999px;border:none;background:#111827;color:#fff;font-size:15px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;font-family:inherit;';
+      closeBtn.id='fastasClose'; closeBtn.setAttribute('aria-label','Close'); closeBtn.textContent='✕';
+      closeBtn.style.cssText='position:fixed;left:calc(50% + 62px);bottom:50px;z-index:100001;width:34px;height:34px;border-radius:50%;border:1px solid #e0e0e0;background:#fff;color:#333;font-size:16px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);display:none;align-items:center;justify-content:center;padding:0;';
       document.body.appendChild(closeBtn);
-
-      // Reset the widget IN PLACE (no page reload — reloading flashed the login
-      // gate and looked like a sign-out). Replacing the element gives a clean
-      // widget ready for the next call; the page and session are untouched.
-      function resetWidget(){
-        try{
-          var fresh=document.createElement('elevenlabs-convai');
-          fresh.setAttribute('agent-id',host.getAttribute('agent-id'));
-          host.parentNode.replaceChild(fresh,host);
-          host=fresh;
-        }catch(e){ try{ host.classList.remove('fastas-show'); }catch(_){} }
-        callWasActive=false; resetQueued=false;
-      }
       closeBtn.addEventListener('click',function(){
         try{ host.shadowRoot.querySelectorAll('button').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('end')>-1||l.indexOf('hang')>-1) b.click(); }); }catch(e){}
-        setTimeout(resetWidget,150);
+        location.reload();
       });
-
-      // Watchdog: ✕ Close shows whenever the widget is open. If the
-      // "conversation ended" screen appears (detected by its text, not by
-      // button labels), auto-reset the page shortly after — so even if the
-      // user never taps Close, the screen always returns to the menu.
-      var callWasActive=false, resetQueued=false;
-      function queueReset(ms){ if(resetQueued) return; resetQueued=true; setTimeout(resetWidget,ms); }
+      function injectCenter(){
+        if(host&&host.shadowRoot&&!host.shadowRoot.getElementById('fastas-center')){
+          var st=document.createElement('style');st.id='fastas-center';
+          st.textContent='.overlay{align-items:center !important; justify-content:flex-end !important;}';
+          host.shadowRoot.appendChild(st);return true;
+        } return false;
+      }
+      var t=0,iv=setInterval(function(){ if(injectCenter()||t++>40) clearInterval(iv); },150);
+      function onTermsScreen(){ try{ var bs=host.shadowRoot.querySelectorAll('button'); for(var i=0;i<bs.length;i++){ var l=(bs[i].textContent||'').toLowerCase(); if(l.indexOf('accept')>-1||l.indexOf('agree')>-1) return true; } }catch(e){} return false; }
+      setInterval(function(){ if(host.classList.contains('fastas-show') && !onTermsScreen()) closeBtn.style.display='flex'; else closeBtn.style.display='none'; },300);
+      var callWasActive=false;
       setInterval(function(){
-        var open=host.classList.contains('fastas-show');
-        closeBtn.style.display = open ? 'flex' : 'none';
-        if(!open) return;
-        var active=false, ended=false;
-        try{
-          host.shadowRoot.querySelectorAll('button,[role="button"]').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('mute')>-1||l.indexOf('hang')>-1||l.indexOf('end call')>-1) active=true; });
-          var txt=(host.shadowRoot.textContent||'').toLowerCase();
-          if(txt.indexOf('ended the conversation')>-1||txt.indexOf('conversation ended')>-1||txt.indexOf('call ended')>-1) ended=true;
-        }catch(e){}
-        if(active && !ended){ callWasActive=true; }
-        else if(ended){ queueReset(2000); }
-        else if(callWasActive){ callWasActive=false; queueReset(1500); }
-      },400);
-
+        var active=false;
+        try{ host.shadowRoot.querySelectorAll('button,[role="button"]').forEach(function(b){ var l=(b.getAttribute('aria-label')||b.textContent||'').toLowerCase(); if(l.indexOf('mute')>-1||l.indexOf('hang')>-1) active=true; }); }catch(e){}
+        if(active){ callWasActive=true; } else if(callWasActive){ callWasActive=false; setTimeout(function(){ location.reload(); },800); }
+      },500);
       function startCall(){
-        if(!host) return; host.classList.add('fastas-show');
+        if(!host) return; host.classList.add('fastas-show'); injectCenter();
         var n=0;(function go(){ var r=host.shadowRoot; if(r){ var b=r.querySelector('button,[role="button"]'); if(b){ b.click(); return; } } if(n++<12) setTimeout(go,300); })();
       }
       document.addEventListener('click',function(e){ if(e.target.closest('#startcall')){ e.preventDefault(); startCall(); } });
