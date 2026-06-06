@@ -47,7 +47,7 @@
   .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);} .pill.superadmin{background:#eff6ff;color:#1d4ed8;}
   .pill.emailed{background:#eef2ff;color:var(--ok);} .pill.generated{background:#f1f5f9;color:#475569;} .pill.submitted{background:#f2f4f7;color:var(--muted);}
   .pill.pending{background:#f1f5f9;color:#475569;} .pill.approved{background:#eef2ff;color:var(--ok);} .pill.rejected{background:#f1f5f9;color:var(--red);}
-  /* ===== Kanban board (OnePageCRM vibe) ===== */
+  /* ===== Kanban board ===== */
   .board{display:flex;gap:0;overflow-x:auto;padding-bottom:8px;}
   .col{flex:1 0 172px;min-width:172px;display:flex;flex-direction:column;}
   .colhead{position:relative;color:#fff;padding:8px 12px 8px 20px;font-weight:700;font-size:12px;margin-right:9px;}
@@ -163,11 +163,8 @@
       </div>
 
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-          <h2 style="margin:0;">Onboarding pipeline</h2>
-          <a href="https://app.onepagecrm.com" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#f1f5f9;border:1px solid #cbd5e1;color:#475569;border-radius:10px;padding:8px 13px;text-decoration:none;font-weight:700;font-size:13px;">⤴ Update OnePageCRM</a>
-        </div>
-        <p class="hint">Track new clients toward onboarding. <b>Remember to mirror each move in OnePageCRM</b> (button above).</p>
+        <h2 style="margin:0 0 6px;">Onboarding pipeline</h2>
+        <p class="hint">Track new clients toward onboarding.</p>
         <div class="row" style="margin:6px 0 14px;">
           <div class="f" style="flex:1 1 180px;"><label>Business / client</label><input id="onbName" placeholder="e.g. Harbour Cafe"></div>
           <div class="f"><label>Contact</label><input id="onbContact" placeholder="name / phone / email"></div>
@@ -261,10 +258,6 @@
             <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#3730a3,#6366f1);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg></span>
             Support inbox <span style="font-weight:400;color:var(--muted);font-size:13px;">— support@fastas.nz</span>
           </a>
-          <a class="qlink" href="https://app.onepagecrm.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
-            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#475569,#64748b);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.3 0-8 1.7-8 5v3h16v-3c0-3.3-4.7-5-8-5z"/></svg></span>
-            OnePageCRM <span style="font-weight:400;color:var(--muted);font-size:13px;">— contacts &amp; actions</span>
-          </a>
           <a class="qlink" href="https://app-au.patguardcloud.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
             <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#475569,#94a3b8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;">PG</span>
             PatGuard Cloud <span style="font-weight:400;color:var(--muted);font-size:13px;">— Australian portal</span>
@@ -311,16 +304,6 @@
         <div class="msg" id="bzCsvMsg"></div>
       </div>
       <div class="card">
-        <h2>Import from OnePageCRM</h2>
-        <p class="hint">Upload a OnePageCRM <b>Contacts export</b> (.csv). Only the relevant fields are imported: <b>Organization → business</b>, contact name, work email, and mobile/phone. Existing businesses (same name) are updated, not duplicated.</p>
-        <div class="row">
-          <div class="f"><label>Licensee</label><select id="opLic" class="licSel"></select></div>
-          <div class="f"><label>OnePageCRM CSV</label><input id="opCsv" type="file" accept=".csv"></div>
-          <button class="primary" id="opUpload">Import contacts</button>
-        </div>
-        <div class="msg" id="opMsg"></div>
-      </div>
-      <div class="card">
         <h2>Business list</h2>
         <div class="row" style="margin-bottom:12px;"><div class="f" style="max-width:360px;"><label>Licensee</label><select id="bzLic" class="licSel"></select></div></div>
         <div id="bzListHost"><div class="empty">Loading…</div></div>
@@ -331,7 +314,7 @@
     <div class="panel" id="panel-reminders">
       <div class="card">
         <h2>Compliance reminders</h2>
-        <p class="hint">Test &amp; Tag, Fire Cert and Fire Training dates (imported from OnePageCRM) that are <b>overdue</b> or due within <b>60 days</b>. <select id="remFilter" style="padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:13px;"></select> <button class="ghost" id="remRefresh">Refresh</button></p>
+        <p class="hint">Test &amp; Tag, Fire Cert and Fire Training dates (from your business records) that are <b>overdue</b> or due within <b>60 days</b>. <select id="remFilter" style="padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:13px;"></select> <button class="ghost" id="remRefresh">Refresh</button></p>
         <div id="remHost"><div class="empty">Loading…</div></div>
       </div>
     </div>
@@ -432,7 +415,6 @@
       document.getElementById('bzAdd').addEventListener('click',addBusiness);
       document.getElementById('bzUpload').addEventListener('click',uploadBzCsv);
       document.getElementById('bzTemplate').addEventListener('click',e=>{e.preventDefault();downloadBzTemplate();});
-      document.getElementById('opUpload').addEventListener('click',importOnePage);
       document.getElementById('sysRecheck').addEventListener('click',checkSystems);
       checkSystems();
       // only the super admin can create admin accounts
@@ -633,51 +615,6 @@
       document.getElementById('bzCsv').value=''; document.getElementById('bzLic').value=lic; loadBzList(lic);
     }
 
-    // robust CSV parser (handles quoted fields, embedded commas/newlines, "" escapes)
-    function parseCsvRows(text){
-      text=text.replace(/^﻿/,'');
-      const rows=[]; let row=[], cur='', q=false;
-      for(let i=0;i<text.length;i++){
-        const ch=text[i];
-        if(q){ if(ch==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=ch; }
-        else { if(ch==='"') q=true; else if(ch===','){ row.push(cur); cur=''; } else if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; } else if(ch!=='\r') cur+=ch; }
-      }
-      if(cur.length||row.length){ row.push(cur); rows.push(row); }
-      return rows;
-    }
-    async function importOnePage(){
-      const msg=document.getElementById('opMsg'); msg.textContent='';
-      const lic=document.getElementById('opLic').value; const f=document.getElementById('opCsv').files[0];
-      if(!lic){ msg.textContent='Pick a licensee.'; msg.className='msg err'; return; }
-      if(!f){ msg.textContent='Choose a OnePageCRM CSV.'; msg.className='msg err'; return; }
-      msg.textContent='Reading…'; msg.className='msg';
-      const rows=parseCsvRows(await f.text());
-      if(rows.length<2){ msg.textContent='No rows found.'; msg.className='msg err'; return; }
-      const header=rows[0].map(h=>h.trim());
-      const ix=n=>header.indexOf(n);
-      const cOrg=ix('Organization'),cF=ix('First name'),cL=ix('Last name'),cE1=ix('Email 1 Work'),cE2=ix('Email 2 Work'),cP1=ix('Phone 1 Mobile'),cP2=ix('Phone 2 Work'),cOP=ix('Organization phone');
-      const cTT6=ix('Test & Tag - 6 Month Date'),cTT12=ix('Test & Tag - 12 Months Date 1'),cFC6=ix('Fire Certs - 6 Months'),cFC12=ix('Fire Certs - 12 Months'),cFT12=ix('Fire Training - 12 months');
-      if(cOrg<0&&cF<0){ msg.textContent='This doesn\'t look like a OnePageCRM contacts export.'; msg.className='msg err'; return; }
-      const get=(r,i)=>(i>=0&&r[i]?String(r[i]).trim():'');
-      const pd=(r,i)=>{ const s=get(r,i); if(!s) return null; const t=Date.parse(s); return isNaN(t)?null:new Date(t).toISOString().slice(0,10); };
-      const map={};
-      for(const r of rows.slice(1)){
-        if(!r.length) continue;
-        const fn=get(r,cF), ln=get(r,cL);
-        const name=get(r,cOrg) || [fn,ln].filter(Boolean).join(' ');
-        if(!name) continue;
-        map[name]={ licensee_id:lic, name, first_name:fn||null, last_name:ln||null,
-          contact_email:(get(r,cE1)||get(r,cE2))||null,
-          phone:((get(r,cP1)||get(r,cP2)||get(r,cOP)).replace(/^'/,'').trim())||null,
-          tt_6m:pd(r,cTT6), tt_12m:pd(r,cTT12), fc_6m:pd(r,cFC6), fc_12m:pd(r,cFC12), ft_12m:pd(r,cFT12) };
-      }
-      const list=Object.values(map);
-      if(!list.length){ msg.textContent='No contacts with a business/name found.'; msg.className='msg err'; return; }
-      const {error}=await sb.from('businesses').upsert(list,{onConflict:'licensee_id,name'});
-      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
-      msg.textContent='Imported '+list.length+' business'+(list.length>1?'es':'')+' from OnePageCRM ✓'; msg.className='msg ok';
-      document.getElementById('opCsv').value=''; document.getElementById('bzLic').value=lic; loadBzList(lic);
-    }
 
     // ===== Booking pipeline board (shared with licensees) =====
     const BKSTAGES=[['to_rebook','To Rebook'],['pending_booking','Pending Booking'],['onboard','Onboard (FAS)'],['pending_job','Pending Job'],['job_finished','Job Finished'],['email_invrep','Email/Inv/Rep (FAS)'],['check_send','Check Inv/Rep>Send'],['paid_rebook','Paid/Rebook (FAS)']];

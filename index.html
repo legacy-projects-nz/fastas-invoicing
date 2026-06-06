@@ -75,7 +75,6 @@
   .icon.check{background:linear-gradient(135deg,#334155,#64748b);box-shadow:0 8px 18px rgba(51,65,85,.45);}
   .icon svg{width:42px;height:42px;fill:#fff;}
   .card h2{margin:0;font-size:15px;font-weight:800;text-align:center;letter-spacing:-.2px;}
-  .icon.crm{background:linear-gradient(135deg,#1f2937,#4b5563);box-shadow:0 8px 18px rgba(31,41,55,.45);}
   .icon.gar{background:linear-gradient(135deg,#475569,#94a3b8);box-shadow:0 8px 18px rgba(71,85,105,.45);}
   .icon.cal{background:linear-gradient(135deg,#3f3f46,#71717a);box-shadow:0 8px 18px rgba(63,63,70,.45);}
   .icon.sales{background:linear-gradient(135deg,#0e7490,#06b6d4);box-shadow:0 8px 18px rgba(8,145,178,.45);}
@@ -152,6 +151,10 @@
   .icon.cat-profile{background:linear-gradient(135deg,#475569,#94a3b8);box-shadow:0 8px 18px rgba(71,85,105,.45);}
   .cats .wide{width:100%!important;max-width:none;flex-direction:row;min-height:96px;gap:22px;order:0;}
   .catbtn{order:3;}
+  .catcard.wide{background:linear-gradient(135deg,#2563eb,#1d4ed8) !important;border:none !important;color:#fff;box-shadow:0 12px 30px rgba(37,99,235,.4);}
+  .catcard.wide h2{color:#fff;}
+  .catcard.wide .icon{background:rgba(255,255,255,.18) !important;box-shadow:none !important;}
+  @media(min-width:601px){ .cats{max-width:600px;} .cats .catcard:not(.wide), .cats .catbtn{flex:1 1 0;width:auto;min-width:0;} }
   @media(max-width:600px){ .cats .wide{flex-direction:column;min-height:120px;} .catbtn{width:calc(50% - 7px);} }
   @media(max-width:600px){ .cats{padding:18px 14px 8px;gap:14px;} .backbar{padding:12px 14px 0;} .cattitle{font-size:20px;} }
 </style>
@@ -237,7 +240,7 @@
       <h2>Price Setting</h2>
     </a>
 
-    <!-- Row 3 (dark grey — review & external): Inv/Rep Checker (licensee) / Admin Portal (admin) + OnePageCRM -->
+    <!-- Row 3: Inv/Rep Checker (licensee) / Admin Portal (admin) -->
     <a class="card t-grey" id="checkerCard" href="checker.html" style="display:none;">
       <span class="cardbadge" id="checkBadge">0</span>
       <div class="icon check">
@@ -252,13 +255,6 @@
         <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.3 7.3 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.56-1.63.94l-2.39-.96a.5.5 0 0 0-.61.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.5.38 1.04.7 1.63.94l.36 2.54c.04.24.25.42.5.42h3.84c.25 0 .46-.18.5-.42l.36-2.54c.59-.24 1.13-.56 1.63-.94l2.39.96c.22.09.48 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg>
       </div>
       <h2>Admin Portal</h2>
-    </a>
-
-    <a class="card t-grey" id="crmCard" href="https://app.onepagecrm.com" target="_blank" rel="noopener">
-      <div class="icon crm">
-        <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.3 0-8 1.7-8 5v3h16v-3c0-3.3-4.7-5-8-5z"/></svg>
-      </div>
-      <h2>OnePageCRM</h2>
     </a>
 
     <a class="card t-grey" id="xeroCard" href="https://go.xero.com" target="_blank" rel="noopener">
@@ -379,7 +375,7 @@
       const feat=(role==='licensee'&&prof?.features)?prof.features:{};
       const featShow=(id,key)=>{ const el=document.getElementById(id); if(el) el.style.display=(feat[key]===false)?'none':'flex'; };
       featShow('startcall','voice'); featShow('certCard','training'); featShow('waLink','whatsapp');
-      featShow('priceCard','pricing'); featShow('crmCard','crm'); featShow('patguardCard','gar');
+      featShow('priceCard','pricing'); featShow('patguardCard','gar');
       // Booking pipeline + Contacts — licensees only
       const salesCard=document.getElementById('salesCard');
       if(salesCard) salesCard.style.display=(role==='licensee' && feat.sales!==false)?'flex':'none';
