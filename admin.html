@@ -77,6 +77,10 @@
   .kcard .ks{color:var(--muted);font-size:10.5px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .kwa{flex:0 0 auto;text-decoration:none;font-size:13px;line-height:1;}
   .kstat{font-size:10px;color:#94a3b8;font-style:italic;margin-top:3px;}
+  .kbubs{display:flex;gap:4px;margin-top:4px;}
+  .kbub{display:inline-flex;align-items:center;font-size:9.5px;font-weight:800;letter-spacing:.3px;padding:2px 7px;border-radius:999px;}
+  .kbub.on{background:#1e3a8a;color:#fff;}
+  .kbub.off{background:#eef1f6;color:#aab2bf;}
   .kcard .kactions{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
   .kbtn{font-size:11px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:6px;padding:4px 8px;cursor:pointer;}
   .kbtn:hover{background:#f3f6fb;}
@@ -145,7 +149,7 @@
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
           <h2 style="margin:0;">Invoice &amp; report pipeline</h2>
-          <button class="ghost" id="pipeRefresh">Refresh</button>
+          <span style="display:flex;gap:8px;align-items:center;"><select id="pipeFilter" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;"></select><button class="ghost" id="pipeRefresh">Refresh</button></span>
         </div>
         <p class="hint">A .gar upload starts a job in <b>Received</b>. Send the invoice &amp; reports (Build) → <b>Sent</b>. The licensee approves → <b>Approved</b>, or rejects with a note → <b>Check</b> (Resend to send again). Mark <b>Complete</b> to archive.</p>
         <div class="board" id="invBoard"><div class="empty">Loading…</div></div>
@@ -208,6 +212,7 @@
       <div class="card">
         <h2>PatGuard backups (.gar)</h2>
         <p class="hint">All uploads — from licensees via the .gar Uploader, or added here. Download to open in PATGuard.</p>
+        <div class="row" style="margin-bottom:10px;"><div class="f" style="max-width:300px;"><label>Filter by licensee</label><select id="pgFilter"></select></div></div>
         <div id="pgHost"><div class="empty">Loading…</div></div>
       </div>
     </div>
@@ -249,13 +254,13 @@
     <div class="panel" id="panel-businesses">
       <div class="card">
         <h2>Businesses</h2>
-        <p class="hint">The client businesses each licensee invoices &amp; reports for. Pick a licensee, then add one or bulk-upload a CSV.</p>
-        <div class="f" style="max-width:360px;"><label>Licensee</label><select id="bzLic"></select></div>
+        <p class="hint">The client businesses each licensee invoices &amp; reports for. Each section below has its own <b>Licensee</b> picker — choose who you're adding to / viewing.</p>
       </div>
       <div class="card">
         <h2>Add a business</h2>
         <div class="row">
-          <div class="f" style="flex:1 1 180px;"><label>Business name *</label><input id="bzName" placeholder="e.g. Tech Iron Group"></div>
+          <div class="f"><label>Licensee</label><select id="bzAddLic" class="licSel"></select></div>
+          <div class="f" style="flex:1 1 170px;"><label>Business name *</label><input id="bzName" placeholder="e.g. Tech Iron Group"></div>
           <div class="f" style="flex:1 1 180px;"><label>Email</label><input id="bzEmail" type="email"></div>
           <div class="f"><label>First name</label><input id="bzFirst"></div>
           <div class="f"><label>Last name</label><input id="bzLast"></div>
@@ -268,6 +273,7 @@
         <h2>Bulk upload (CSV)</h2>
         <p class="hint">Columns in order: <b>business name, email address, first name, last name, phone number</b> (a header row is fine). <a href="#" id="bzTemplate">Download template</a></p>
         <div class="row">
+          <div class="f"><label>Licensee</label><select id="bzCsvLic" class="licSel"></select></div>
           <div class="f"><label>CSV file</label><input id="bzCsv" type="file" accept=".csv"></div>
           <button class="primary" id="bzUpload">Upload CSV</button>
         </div>
@@ -277,6 +283,7 @@
         <h2>Import from OnePageCRM</h2>
         <p class="hint">Upload a OnePageCRM <b>Contacts export</b> (.csv). Only the relevant fields are imported: <b>Organization → business</b>, contact name, work email, and mobile/phone. Existing businesses (same name) are updated, not duplicated.</p>
         <div class="row">
+          <div class="f"><label>Licensee</label><select id="opLic" class="licSel"></select></div>
           <div class="f"><label>OnePageCRM CSV</label><input id="opCsv" type="file" accept=".csv"></div>
           <button class="primary" id="opUpload">Import contacts</button>
         </div>
@@ -284,6 +291,7 @@
       </div>
       <div class="card">
         <h2>Business list</h2>
+        <div class="row" style="margin-bottom:12px;"><div class="f" style="max-width:360px;"><label>Licensee</label><select id="bzLic" class="licSel"></select></div></div>
         <div id="bzListHost"><div class="empty">Loading…</div></div>
       </div>
     </div>
@@ -370,6 +378,8 @@
       document.getElementById('pgUpload').addEventListener('click',uploadGar);
       document.getElementById('onbAdd').addEventListener('click',addOnb);
       document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); loadOnbBoard(); });
+      document.getElementById('pipeFilter').addEventListener('change',()=>{ loadInvBoard(); loadTrainBoard(); });
+      document.getElementById('pgFilter').addEventListener('change',loadPatguard);
       document.getElementById('rcLic').addEventListener('change',e=>{ loadBizList(e.target.value); loadGarBizList(e.target.value); });
       document.getElementById('pgLic').addEventListener('change',e=>loadGarBizList(e.target.value));
       document.getElementById('pgBiz').addEventListener('change',onPgBizChange);
@@ -454,8 +464,10 @@
       docs.forEach(d=>grp(d.licensee_id,d.business_name).items.push(d));
       gars.forEach(x=>grp(x.licensee_id, bizName[x.business_id]||x.file_name).gars.push(x));
       gen.forEach(x=>grp(x.licensee_id,x.business_name).gen.push(x));
+      const flt=(document.getElementById('pipeFilter')||{}).value||'';
       const cols={received:[],sent:[],check:[],approved:[],complete:[]};
       Object.entries(groups).forEach(([k,g])=>{
+        if(flt && g.lid!==flt) return;
         if(archSet.has(k)){ cols.complete.push(bizCard(g,'complete',nm,wa)); return; }
         if(g.items.length===0){ cols.received.push(bizCard(g,'received',nm,wa)); return; }
         const pending=g.items.filter(d=>d.status==='pending').length;
@@ -487,7 +499,8 @@
       let stat='';
       if(stage==='received') stat = (hasGar&&!hasGen) ? 'waiting on invoice' : (ghost ? 'waiting on .gar' : 'ready to build');
       const waLink=wa[g.lid]?`<a class="kwa" href="${wa[g.lid]}" target="_blank" rel="noopener" title="WhatsApp channel">💬</a>`:'';
-      return `<div class="kcard${ghost?' ghost':''}"><div class="ktop"><span class="kt" title="${g.biz}">${g.biz}</span>${waLink}</div><div class="ks">${nm[g.lid]||'—'}</div>${stat?`<div class="kstat">${stat}</div>`:''}${files}${notes}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
+      const bubs=`<div class="kbubs"><span class="kbub ${hasGar?'on':'off'}" title="${hasGar?'.gar received':'.gar not received'}">.gar</span><span class="kbub ${hasGen?'on':'off'}" title="${hasGen?'invoice received':'invoice not received'}">.inv</span></div>`;
+      return `<div class="kcard${ghost?' ghost':''}"><div class="ktop"><span class="kt" title="${g.biz}">${g.biz}</span>${waLink}</div><div class="ks">${nm[g.lid]||'—'}</div>${bubs}${stat?`<div class="kstat">${stat}</div>`:''}${files}${notes}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
     }
     function bindInv(board){
       board.querySelectorAll('a.kdl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
@@ -511,13 +524,14 @@
     }
     async function addBusiness(){
       const msg=document.getElementById('bzMsg'); msg.textContent='';
-      const lic=bzLicId(); const name=document.getElementById('bzName').value.trim();
+      const lic=document.getElementById('bzAddLic').value; const name=document.getElementById('bzName').value.trim();
       if(!lic){ msg.textContent='Pick a licensee.'; msg.className='msg err'; return; }
       if(!name){ msg.textContent='Business name is required.'; msg.className='msg err'; return; }
       const {error}=await sb.from('businesses').insert({licensee_id:lic,name,contact_email:document.getElementById('bzEmail').value.trim()||null,first_name:document.getElementById('bzFirst').value.trim()||null,last_name:document.getElementById('bzLast').value.trim()||null,phone:document.getElementById('bzPhone').value.trim()||null});
       if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
       ['bzName','bzEmail','bzFirst','bzLast','bzPhone'].forEach(id=>document.getElementById(id).value='');
-      msg.textContent='Added ✓'; msg.className='msg ok'; loadBzList(lic);
+      msg.textContent='Added ✓'; msg.className='msg ok';
+      document.getElementById('bzLic').value=lic; loadBzList(lic);
     }
     function downloadBzTemplate(){
       const csv='business name,email address,first name,last name,phone number\nTech Iron Group,office@techiron.co.nz,Amar,Singh,021234567\n';
@@ -535,7 +549,7 @@
     }
     async function uploadBzCsv(){
       const msg=document.getElementById('bzCsvMsg'); msg.textContent='';
-      const lic=bzLicId(); const f=document.getElementById('bzCsv').files[0];
+      const lic=document.getElementById('bzCsvLic').value; const f=document.getElementById('bzCsv').files[0];
       if(!lic){ msg.textContent='Pick a licensee.'; msg.className='msg err'; return; }
       if(!f){ msg.textContent='Choose a CSV file.'; msg.className='msg err'; return; }
       msg.textContent='Reading…'; msg.className='msg';
@@ -544,7 +558,7 @@
       const {error}=await sb.from('businesses').upsert(rows,{onConflict:'licensee_id,name'});
       if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
       msg.textContent='Imported '+rows.length+' business'+(rows.length>1?'es':'')+' ✓'; msg.className='msg ok';
-      document.getElementById('bzCsv').value=''; loadBzList(lic);
+      document.getElementById('bzCsv').value=''; document.getElementById('bzLic').value=lic; loadBzList(lic);
     }
 
     // robust CSV parser (handles quoted fields, embedded commas/newlines, "" escapes)
@@ -561,7 +575,7 @@
     }
     async function importOnePage(){
       const msg=document.getElementById('opMsg'); msg.textContent='';
-      const lic=bzLicId(); const f=document.getElementById('opCsv').files[0];
+      const lic=document.getElementById('opLic').value; const f=document.getElementById('opCsv').files[0];
       if(!lic){ msg.textContent='Pick a licensee.'; msg.className='msg err'; return; }
       if(!f){ msg.textContent='Choose a OnePageCRM CSV.'; msg.className='msg err'; return; }
       msg.textContent='Reading…'; msg.className='msg';
@@ -587,7 +601,7 @@
       const {error}=await sb.from('businesses').upsert(list,{onConflict:'licensee_id,name'});
       if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
       msg.textContent='Imported '+list.length+' business'+(list.length>1?'es':'')+' from OnePageCRM ✓'; msg.className='msg ok';
-      document.getElementById('opCsv').value=''; loadBzList(lic);
+      document.getElementById('opCsv').value=''; document.getElementById('bzLic').value=lic; loadBzList(lic);
     }
 
     // ===== Onboarding board =====
@@ -630,8 +644,9 @@
       const {data:atts}=await sb.from('training_attendees').select('id,report_id,first_name,certificate_pdf_path,cert_emailed');
       const nm=await nameMap();
       const certs={}; (atts||[]).forEach(a=>{ (certs[a.report_id]=certs[a.report_id]||[]).push(a); });
+      const flt=(document.getElementById('pipeFilter')||{}).value||'';
       const cols={req:[],iss:[],done:[]};
-      (reps||[]).forEach(r=>{
+      (reps||[]).filter(r=>!flt||r.licensee_id===flt).forEach(r=>{
         if(r.archived) cols.done.push(trainCard(r,'done',nm,certs));
         else if(r.status==='pending') cols.req.push(trainCard(r,'req',nm,certs));
         else cols.iss.push(trainCard(r,'iss',nm,certs));
@@ -696,9 +711,12 @@
 
     async function loadPatguard(){
       const host=document.getElementById('pgHost');
-      const {data,error}=await sb.from('patguard_files').select('*').order('created_at',{ascending:false});
+      const flt=(document.getElementById('pgFilter')||{}).value||'';
+      let q=sb.from('patguard_files').select('*').order('created_at',{ascending:false});
+      if(flt) q=q.eq('licensee_id',flt);
+      const {data,error}=await q;
       if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
-      if(!data.length){ host.innerHTML='<div class="empty">No .gar files uploaded yet.</div>'; return; }
+      if(!data.length){ host.innerHTML='<div class="empty">No .gar files'+(flt?' for this licensee':'')+'.</div>'; return; }
       const {data:lic}=await sb.from('profiles').select('id,full_name,email');
       const lmap={}; (lic||[]).forEach(l=>lmap[l.id]=l.full_name||l.email);
       host.innerHTML='<table><thead><tr><th>Licensee</th><th>File</th><th>Uploaded</th><th></th><th></th></tr></thead><tbody>'+
@@ -721,7 +739,11 @@
       const opts=licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('')||'<option value="">No licensees</option>';
       document.getElementById('rcLic').innerHTML=opts;
       document.getElementById('pgLic').innerHTML=opts;
-      document.getElementById('bzLic').innerHTML=opts;
+      document.querySelectorAll('.licSel').forEach(s=>s.innerHTML=opts);
+      const filt=document.getElementById('pipeFilter');
+      if(filt) filt.innerHTML='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
+      const pgf=document.getElementById('pgFilter');
+      if(pgf) pgf.innerHTML='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
       const first=licenseeList[0]?licenseeList[0].id:'';
       loadBizList(first); loadGarBizList(first); loadBzList(first);
     }
