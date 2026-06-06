@@ -57,6 +57,35 @@
   .pbar.done{background:#16a34a;}
   .piperow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
   .piperow:last-child{border-bottom:none;}
+  /* ===== Kanban board (OnePageCRM vibe) ===== */
+  .board{display:flex;gap:0;overflow-x:auto;padding-bottom:8px;}
+  .col{flex:1 0 200px;min-width:200px;display:flex;flex-direction:column;}
+  .colhead{position:relative;color:#fff;padding:10px 14px 10px 22px;font-weight:700;font-size:13px;margin-right:9px;}
+  .colhead .ct{opacity:.85;font-weight:600;margin-left:4px;}
+  /* arrow shape between columns */
+  .colhead:after{content:'';position:absolute;top:0;right:-16px;width:0;height:0;border-top:18px solid transparent;border-bottom:18px solid transparent;border-left:16px solid inherit;z-index:2;}
+  .colhead:before{content:'';position:absolute;top:0;left:0;width:0;height:0;border-top:18px solid transparent;border-bottom:18px solid transparent;border-left:16px solid #fff;}
+  .col:first-child .colhead{padding-left:14px;}
+  .col:first-child .colhead:before{display:none;}
+  .colbody{background:#f4f6fa;border:1px solid var(--line);border-top:none;margin-right:9px;padding:8px;min-height:60px;flex:1;border-radius:0 0 8px 8px;}
+  .col:last-child .colhead{margin-right:0;} .col:last-child .colhead:after{display:none;} .col:last-child .colbody{margin-right:0;}
+  .kcard{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 11px;margin-bottom:8px;box-shadow:0 2px 6px rgba(16,24,40,.05);}
+  .kcard:last-child{margin-bottom:0;}
+  .kcard .kt{font-weight:700;font-size:13.5px;color:var(--ink);}
+  .kcard .ks{color:var(--muted);font-size:12px;margin-top:2px;}
+  .kcard .kactions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+  .kbtn{font-size:12px;font-weight:700;border:none;border-radius:7px;padding:6px 10px;cursor:pointer;}
+  .kbtn.go{background:#16a34a;color:#fff;} .kbtn.warn{background:#fff;border:1px solid #f4c4c4;color:var(--red);} .kbtn.alt{background:#eef2ff;color:var(--brand);}
+  .kbtn.line{background:#fff;border:1px solid var(--line);color:var(--ink);}
+  .kcard a.kdl{font-size:12px;color:var(--brand);text-decoration:none;font-weight:600;display:inline-block;margin-top:6px;margin-right:8px;}
+  .knote{background:#fff7ed;border:1px solid #fed7aa;border-radius:7px;padding:6px 8px;font-size:12px;color:#b45309;margin-top:7px;}
+  .kempty{color:#9aa4b2;font-size:12px;text-align:center;padding:14px 4px;}
+  /* stage colours */
+  .s-recv{background:#64748b;} .s-recv:after{border-left-color:#64748b;}
+  .s-sent{background:#2563eb;} .s-sent:after{border-left-color:#2563eb;}
+  .s-check{background:#d97706;} .s-check:after{border-left-color:#d97706;}
+  .s-appr{background:#16a34a;} .s-appr:after{border-left-color:#16a34a;}
+  .s-done{background:#334155;} .s-done:after{border-left-color:#334155;}
   .uprow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px dashed #c9d2e3;border-radius:10px;padding:9px 12px;margin-bottom:8px;}
   .uprow.inv{border-color:#b9ccf5;background:#f8faff;}
   .uplabel{flex:0 0 76px;font-size:11px;font-weight:800;letter-spacing:.4px;color:var(--muted);}
@@ -105,26 +134,20 @@
       </div>
     </div>
 
-    <!-- PIPELINE — track & approve -->
+    <!-- PIPELINE — two Kanban boards -->
     <div class="panel active" id="panel-pipeline">
       <div class="card">
-        <h2>Training approvals</h2>
-        <p class="hint">Pending training sign-ups from all licensees. <b>Approve &amp; send</b> generates the report + certificates and emails them; <b>Reject</b> sets it aside.</p>
-        <div id="apprHost"><div class="empty">Loading…</div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <h2 style="margin:0;">Invoice &amp; report pipeline</h2>
+          <button class="ghost" id="pipeRefresh">Refresh</button>
+        </div>
+        <p class="hint">A .gar upload starts a job in <b>Received</b>. Send the invoice &amp; reports (Build) → <b>Sent</b>. The licensee approves → <b>Approved</b>, or rejects with a note → <b>Check</b> (Resend to send again). Mark <b>Complete</b> to archive.</p>
+        <div class="board" id="invBoard"><div class="empty">Loading…</div></div>
       </div>
       <div class="card">
-        <h2>Business pipeline</h2>
-        <p class="hint">Where each business is up to: Sent → In review → Approved (or Changes needed).</p>
-        <div id="pipeHost"><div class="empty">Loading…</div></div>
-      </div>
-      <div class="card">
-        <h2>Sent items &amp; status</h2>
-        <div id="recHost"><div class="empty">Loading…</div></div>
-      </div>
-      <div class="card">
-        <h2>Fire safety training reports</h2>
-        <p class="hint">Approved/sent training. Download the business report or any attendee certificate.</p>
-        <div id="reportsHost"><div class="empty">Loading…</div></div>
+        <h2>Training &amp; certificate pipeline</h2>
+        <p class="hint"><b>Requested</b> = kiosk sign-up. <b>Approve &amp; send</b> builds the report + certificates and emails them → <b>Issued</b>. Mark <b>Complete</b> to archive.</p>
+        <div class="board" id="trainBoard"><div class="empty">Loading…</div></div>
       </div>
     </div>
 
@@ -276,9 +299,10 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'pipeline',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadUsers(); loadReports(); loadTemplates(); loadApprovals(); loadLicenseeOptions(); loadRecords(); loadPatguard();
+      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard();
       document.getElementById('rcSend').addEventListener('click',sendRecord);
       document.getElementById('pgUpload').addEventListener('click',uploadGar);
+      document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); });
       document.getElementById('sysRecheck').addEventListener('click',checkSystems);
       checkSystems();
       // only the super admin can create admin accounts
@@ -326,27 +350,90 @@
       }catch(e){ host.innerHTML='<div class="empty">'+e.message+'</div>'; }
     }
 
-    async function loadApprovals(){
-      const host=document.getElementById('apprHost');
-      const {data,error}=await sb.from('training_reports').select('*').eq('status','pending').order('created_at',{ascending:false});
-      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+    // ===== Kanban boards =====
+    function kcol(label,cls,cards){
+      return `<div class="col"><div class="colhead ${cls}">${label}<span class="ct">${cards.length}</span></div><div class="colbody">${cards.length?cards.join(''):'<div class="kempty">—</div>'}</div></div>`;
+    }
+    async function nameMap(){
+      const {data}=await sb.from('profiles').select('id,full_name,email');
+      const m={}; (data||[]).forEach(l=>m[l.id]=l.full_name||l.email); return m;
+    }
+
+    async function loadInvBoard(){
+      const board=document.getElementById('invBoard');
+      const [d1,d2,d3]=await Promise.all([
+        sb.from('documents').select('*').order('created_at',{ascending:false}),
+        sb.from('patguard_files').select('*').eq('processed',false).order('created_at',{ascending:false}),
+        sb.from('archived_jobs').select('*').order('archived_at',{ascending:false})
+      ]);
+      const docs=d1.data||[], gars=d2.data||[], arch=d3.data||[];
+      const nm=await nameMap();
+      const archSet=new Set(arch.map(a=>a.licensee_id+'|'+a.business_name));
+      const groups={};
+      docs.forEach(d=>{ const k=d.licensee_id+'|'+d.business_name; (groups[k]=groups[k]||{lid:d.licensee_id,biz:d.business_name,items:[]}).items.push(d); });
+      const cols={received:[],sent:[],check:[],approved:[],complete:[]};
+      gars.forEach(g=>cols.received.push(garCard(g,nm)));
+      Object.entries(groups).forEach(([k,g])=>{
+        const pending=g.items.filter(d=>d.status==='pending').length;
+        const rejected=g.items.filter(d=>d.status==='rejected').length;
+        if(archSet.has(k)) cols.complete.push(jobCard(g,'complete',nm));
+        else if(pending>0) cols.sent.push(jobCard(g,'sent',nm));
+        else if(rejected>0) cols.check.push(jobCard(g,'check',nm));
+        else cols.approved.push(jobCard(g,'approved',nm));
+      });
+      board.innerHTML=kcol('Received','s-recv',cols.received)+kcol('Sent','s-sent',cols.sent)+kcol('Check','s-check',cols.check)+kcol('Approved','s-appr',cols.approved)+kcol('Complete','s-done',cols.complete.slice(0,5));
+      bindInv(board);
+    }
+    function garCard(g,nm){
+      return `<div class="kcard"><div class="kt">${g.file_name}</div><div class="ks">${nm[g.licensee_id]||'—'} · ${new Date(g.created_at).toLocaleDateString()}</div>
+        <div class="kactions"><button class="kbtn alt jbuild" data-lic="${g.licensee_id}">Build →</button><button class="kbtn line ghandle" data-id="${g.id}">Mark handled</button></div></div>`;
+    }
+    function jobCard(g,stage,nm){
+      const dls=g.items.map(d=>`<a class="kdl" data-bucket="documents" data-path="${d.storage_path}" href="#">⬇ ${d.title||d.doc_type}</a>`).join('');
+      const notes=g.items.filter(d=>d.status==='rejected'&&d.licensee_note).map(d=>`<div class="knote"><b>${d.title||d.doc_type}:</b> ${d.licensee_note}</div>`).join('');
+      let act='';
+      if(stage==='check') act=`<button class="kbtn go jresend" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">↻ Resend to licensee</button>`;
+      else if(stage==='approved') act=`<button class="kbtn go jcomplete" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">✓ Complete</button>`;
+      return `<div class="kcard"><div class="kt">${g.biz}</div><div class="ks">${nm[g.lid]||'—'} · ${g.items.length} file${g.items.length>1?'s':''}</div>${dls?'<div style="margin-top:6px">'+dls+'</div>':''}${notes}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
+    }
+    function bindInv(board){
+      board.querySelectorAll('a.kdl').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
+      board.querySelectorAll('.jbuild').forEach(b=>b.addEventListener('click',()=>{ location.hash='#build'; setTimeout(()=>{ const s=document.getElementById('rcLic'); if(s) s.value=b.dataset.lic; const bz=document.getElementById('rcBiz'); if(bz) bz.focus(); },60); }));
+      board.querySelectorAll('.ghandle').forEach(b=>b.addEventListener('click',async()=>{ await sb.from('patguard_files').update({processed:true}).eq('id',b.dataset.id); loadInvBoard(); }));
+      board.querySelectorAll('.jresend').forEach(b=>b.addEventListener('click',async()=>{ const biz=decodeURIComponent(b.dataset.biz); if(!confirm('Resend '+biz+' to the licensee? Rejected items return to pending.')) return; await sb.from('documents').update({status:'pending',licensee_note:null,decided_at:null}).eq('licensee_id',b.dataset.lic).eq('business_name',biz).eq('status','rejected'); loadInvBoard(); }));
+      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const biz=decodeURIComponent(b.dataset.biz); await sb.from('archived_jobs').insert({licensee_id:b.dataset.lic,business_name:biz,archived_by:session.user.id}); loadInvBoard(); }));
+    }
+
+    async function loadTrainBoard(){
+      const board=document.getElementById('trainBoard');
+      const {data:reps}=await sb.from('training_reports').select('*').order('created_at',{ascending:false});
+      const {data:atts}=await sb.from('training_attendees').select('id,report_id,first_name,certificate_pdf_path,cert_emailed');
+      const nm=await nameMap();
+      const certs={}; (atts||[]).forEach(a=>{ (certs[a.report_id]=certs[a.report_id]||[]).push(a); });
+      const cols={req:[],iss:[],done:[]};
+      (reps||[]).forEach(r=>{
+        if(r.archived) cols.done.push(trainCard(r,'done',nm,certs));
+        else if(r.status==='pending') cols.req.push(trainCard(r,'req',nm,certs));
+        else cols.iss.push(trainCard(r,'iss',nm,certs));
+      });
       const badge=document.getElementById('apprBadge');
-      if(data.length){ badge.textContent=data.length; badge.style.display='inline-block'; } else badge.style.display='none';
-      if(!data.length){ host.innerHTML='<div class="empty">No pending training to approve.</div>'; return; }
-      host.innerHTML='<table><thead><tr><th>Ref</th><th>Business</th><th>Date</th><th>Type</th><th>Att.</th><th>Contact</th><th></th></tr></thead><tbody>'+
-        data.map(r=>`<tr><td><b>${r.report_ref||'—'}</b></td><td>${r.business_name}</td><td>${r.training_date||'—'}</td><td>${r.training_type.replace('_',' ')}</td><td>${r.total_attendees}</td><td>${r.contact_email||''}</td>
-          <td style="text-align:right;white-space:nowrap"><button class="primary appr" data-id="${r.id}">Approve &amp; send</button> <button class="ghost danger rej" data-id="${r.id}" data-ref="${r.report_ref}">Reject</button></td></tr>`).join('')+'</tbody></table>';
-      host.querySelectorAll('button.appr').forEach(b=>b.addEventListener('click',async()=>{
-        if(!confirm('Approve and send this training report + certificates?')) return;
-        b.disabled=true; b.textContent='Sending…';
-        try{ await callEdge('approve-training',{report_id:b.dataset.id,action:'approve'}); loadApprovals(); loadReports(); }
-        catch(e){ alert(e.message); b.disabled=false; b.textContent='Approve & send'; }
-      }));
-      host.querySelectorAll('button.rej').forEach(b=>b.addEventListener('click',async()=>{
-        const note=prompt('Reason for rejecting '+b.dataset.ref+'? (optional)'); if(note===null) return;
-        try{ await callEdge('approve-training',{report_id:b.dataset.id,action:'reject',note:note}); loadApprovals(); loadReports(); }
-        catch(e){ alert(e.message); }
-      }));
+      if(cols.req.length){ badge.textContent=cols.req.length; badge.style.display='inline-block'; } else badge.style.display='none';
+      board.innerHTML=kcol('Requested','s-sent',cols.req)+kcol('Issued','s-appr',cols.iss)+kcol('Complete','s-done',cols.done.slice(0,5));
+      bindTrain(board);
+    }
+    function trainCard(r,stage,nm,certs){
+      const rdl=r.report_pdf_path?`<a class="kdl" data-bucket="reports" data-path="${r.report_pdf_path}" href="#">⬇ Report</a>`:'';
+      const cdl=(certs[r.id]||[]).filter(a=>a.certificate_pdf_path).map(a=>`<a class="kdl" data-bucket="certificates" data-path="${a.certificate_pdf_path}" href="#">⬇ ${a.first_name}</a>`).join(' ');
+      let act='';
+      if(stage==='req') act=`<button class="kbtn go tappr" data-id="${r.id}">Approve &amp; send</button><button class="kbtn warn trej" data-id="${r.id}" data-ref="${r.report_ref}">Reject</button>`;
+      else if(stage==='iss') act=`<button class="kbtn go tcomplete" data-id="${r.id}">✓ Complete</button>`;
+      return `<div class="kcard"><div class="kt">${r.business_name}</div><div class="ks">${r.report_ref||''} · ${nm[r.licensee_id]||''} · ${r.total_attendees} att.</div>${(rdl||cdl)?'<div style="margin-top:6px">'+rdl+(rdl&&cdl?' ':'')+cdl+'</div>':''}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
+    }
+    function bindTrain(board){
+      board.querySelectorAll('a.kdl').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
+      board.querySelectorAll('.tappr').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Approve and send this training report + certificates?')) return; b.disabled=true; b.textContent='Sending…'; try{ await callEdge('approve-training',{report_id:b.dataset.id,action:'approve'}); loadTrainBoard(); }catch(e){ alert(e.message); b.disabled=false; b.textContent='Approve & send'; } }));
+      board.querySelectorAll('.trej').forEach(b=>b.addEventListener('click',async()=>{ const note=prompt('Reason for rejecting '+b.dataset.ref+'? (optional)'); if(note===null) return; try{ await callEdge('approve-training',{report_id:b.dataset.id,action:'reject',note}); loadTrainBoard(); }catch(e){ alert(e.message); } }));
+      board.querySelectorAll('.tcomplete').forEach(b=>b.addEventListener('click',async()=>{ await sb.from('training_reports').update({archived:true}).eq('id',b.dataset.id); loadTrainBoard(); }));
     }
 
     // ===== Systems: live health checks (no links) =====
@@ -429,8 +516,8 @@
         if(upErr) throw upErr;
         const {error}=await sb.from('patguard_files').insert({licensee_id,file_name:file.name,storage_path:path});
         if(error) throw error;
-        msg.textContent='Uploaded ✓'; msg.className='msg ok'; document.getElementById('pgFile').value='';
-        loadPatguard();
+        msg.textContent='Uploaded ✓ — it now shows in the pipeline “Received” column.'; msg.className='msg ok'; document.getElementById('pgFile').value='';
+        loadPatguard(); loadInvBoard();
       }catch(e){ msg.textContent='Upload failed: '+e.message; msg.className='msg err'; }
       btn.disabled=false;
     }
@@ -463,7 +550,7 @@
         }
         document.getElementById('rcBiz').value='';
         msg.textContent='Sent '+sent+' file'+(sent>1?'s':'')+' for approval ✓'; msg.className='msg ok';
-        loadRecords();
+        loadInvBoard();
       }catch(e){ msg.textContent=(sent?('Sent '+sent+', then failed: '):'')+e.message; msg.className='msg err'; }
       btn.disabled=false;
     }
