@@ -47,16 +47,6 @@
   .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);} .pill.superadmin{background:#eff6ff;color:#1d4ed8;}
   .pill.emailed{background:#ecfdf3;color:var(--ok);} .pill.generated{background:#f1f5f9;color:#475569;} .pill.submitted{background:#f2f4f7;color:var(--muted);}
   .pill.pending{background:#f1f5f9;color:#475569;} .pill.approved{background:#ecfdf3;color:var(--ok);} .pill.rejected{background:#f1f5f9;color:var(--red);}
-  .pipe{display:flex;align-items:center;flex-wrap:wrap;}
-  .pstep{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap;}
-  .pdot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;background:#cbd5e1;}
-  .pstep.done{color:#067647;} .pstep.done .pdot{background:#16a34a;}
-  .pstep.active{color:#475569;} .pstep.active .pdot{background:#475569;}
-  .pstep.alert{color:var(--red);} .pstep.alert .pdot{background:#475569;}
-  .pbar{width:26px;height:2px;background:#e2e8f0;margin:0 7px;flex:0 0 auto;}
-  .pbar.done{background:#16a34a;}
-  .piperow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
-  .piperow:last-child{border-bottom:none;}
   /* ===== Kanban board (OnePageCRM vibe) ===== */
   .board{display:flex;gap:0;overflow-x:auto;padding-bottom:8px;}
   .col{flex:1 0 172px;min-width:172px;display:flex;flex-direction:column;}
@@ -967,4 +957,57 @@
       btn.disabled=false;
     }
     async function sendRecord(){
-      const msg=document.getElementById('rcMsg'); msg.textConten
+      const msg=document.getElementById('rcMsg'); msg.textContent='';
+      const licensee_id=document.getElementById('rcLic').value;
+      const business=document.getElementById('rcBiz').value.trim();
+      if(!licensee_id||!business){ msg.textContent='Pick a licensee and enter a business name.'; msg.className='msg err'; return; }
+      const slots=[{type:'invoice',f:'rcF-inv',t:'rcT-inv'},{type:'report',f:'rcF-r1',t:'rcT-r1'},{type:'report',f:'rcF-r2',t:'rcT-r2'},{type:'report',f:'rcF-r3',t:'rcT-r3'},{type:'report',f:'rcF-r4',t:'rcT-r4'}]
+        .map(s=>({type:s.type,file:document.getElementById(s.f).files[0],title:document.getElementById(s.t).value.trim(),fId:s.f,tId:s.t}))
+        .filter(s=>s.file);
+      if(!slots.length){ msg.textContent='Choose at least one file (invoice or report).'; msg.className='msg err'; return; }
+      const newReports=slots.filter(s=>s.type==='report').length;
+      if(newReports){
+        const {count}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('licensee_id',licensee_id).eq('business_name',business).eq('doc_type','report').eq('status','pending');
+        if((count??0)+newReports>4){ msg.textContent='Max 4 pending reports per business — this business already has '+(count??0)+' awaiting approval.'; msg.className='msg err'; return; }
+      }
+      const btn=document.getElementById('rcSend'); btn.disabled=true;
+      let sent=0;
+      try{
+        for(const s of slots){
+          const path=licensee_id+'/'+Date.now()+'-'+s.file.name;
+          const {error:upErr}=await sb.storage.from('documents').upload(path,s.file,{upsert:true});
+          if(upErr) throw upErr;
+          const {error}=await sb.from('documents').insert({licensee_id,business_name:business,doc_type:s.type,title:s.title||s.file.name.replace(/\.pdf$/i,''),storage_path:path,status:'pending',created_by:session.user.id});
+          if(error) throw error;
+          sent++;
+          document.getElementById(s.fId).value=''; document.getElementById(s.tId).value='';
+        }
+        document.getElementById('rcBiz').value='';
+        try{ await callEdge('notify-licensee',{licensee_id,business_name:business,count:sent}); }catch(_){}
+        msg.textContent='Sent '+sent+' file'+(sent>1?'s':'')+' for approval ✓ (licensee emailed)'; msg.className='msg ok';
+        loadInvBoard();
+      }catch(e){ msg.textContent=(sent?('Sent '+sent+', then failed: '):'')+e.message; msg.className='msg err'; }
+      btn.disabled=false;
+    }
+    async function download(bucket,path){
+      const {data,error}=await sb.storage.from(bucket).createSignedUrl(path,120);
+      if(error){ alert(error.message); return; }
+      window.open(data.signedUrl,'_blank');
+    }
+    async function loadTemplates(){ /* templates are generated live; nothing to load */ }
+    async function viewTemplate(btn){
+      const type=btn.dataset.type;
+      const msg=document.getElementById(type==='certificate'?'tplCertMsg':'tplReportMsg');
+      btn.disabled=true; msg.textContent=' Generating…'; msg.className='msg';
+      try{
+        const res=await fetch(SUPABASE_URL+'/functions/v1/template-samples?type='+type,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token()}});
+        if(!res.ok) throw new Error('Error '+res.status);
+        const blob=await res.blob();
+        window.open(URL.createObjectURL(blob),'_blank');
+        msg.textContent='';
+      }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
+      btn.disabled=false;
+    }
+  </script>
+</body>
+</html>

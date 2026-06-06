@@ -202,4 +202,70 @@
       document.getElementById('fTitle').value=d.title||''; document.getElementById('fContact').value=d.contact||'';
       document.getElementById('fAmount').value=d.amount||''; document.getElementById('fDue').value=d.due_date||''; fStage.value=d.stage;
       document.getElementById('fDelete').style.visibility='visible'; document.getElementById('mMsg').textContent=''; modal.classList.add('show'); }
-    docum
+    document.getElementById('addDeal').addEventListener('click',openAdd);
+    document.getElementById('fCancel').addEventListener('click',()=>modal.classList.remove('show'));
+    modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.remove('show'); });
+    document.getElementById('fSave').addEventListener('click',async()=>{
+      const msg=document.getElementById('mMsg'); msg.textContent='';
+      const title=document.getElementById('fTitle').value.trim();
+      if(!title){ msg.textContent='Name is required.'; msg.className='msg err'; return; }
+      const rec={ title, contact:document.getElementById('fContact').value.trim()||null,
+        amount:document.getElementById('fAmount').value?Number(document.getElementById('fAmount').value):null,
+        due_date:document.getElementById('fDue').value||null, stage:fStage.value, updated_at:new Date().toISOString() };
+      let error;
+      if(editingId){ ({error}=await sb.from('bookings').update(rec).eq('id',editingId)); }
+      else { rec.licensee_id=session.user.id; ({error}=await sb.from('bookings').insert(rec)); }
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      modal.classList.remove('show'); load();
+    });
+    document.getElementById('fDelete').addEventListener('click',async()=>{
+      if(!editingId||!confirm('Delete this deal?')) return;
+      await sb.from('bookings').delete().eq('id',editingId); modal.classList.remove('show'); load();
+    });
+
+    load();
+
+    // ---- Payments board (only if licensee has Payment Tracking enabled) ----
+    const PAYSTAGES=[['sent','Awaiting Payment','#475569'],['paid','Paid','#16a34a']];
+    let pays=[];
+    async function loadPay(){
+      const {data,error}=await sb.from('payments').select('*').order('sent_at',{ascending:false});
+      if(error){ document.getElementById('payBoard').innerHTML='<div class="colempty">'+error.message+'</div>'; return; }
+      pays=data||[]; renderPay();
+    }
+    function renderPay(){
+      const board=document.getElementById('payBoard');
+      const waiting=pays.filter(p=>p.status==='sent');
+      const owe=waiting.reduce((a,p)=>a+(Number(p.amount)||0),0);
+      document.getElementById('payTotals').textContent=waiting.length+' awaiting · '+money(owe);
+      board.innerHTML=PAYSTAGES.map(s=>{
+        const items=pays.filter(p=>p.status===s[0]);
+        const sum=items.reduce((a,p)=>a+(Number(p.amount)||0),0);
+        const cards=items.map(p=>{
+          const when=p.status==='paid'?('paid'+(p.paid_at?' '+fmtDue(p.paid_at.slice(0,10)):'')):('sent'+(p.sent_at?' '+fmtDue(p.sent_at.slice(0,10)):''));
+          return `<div class="paycard" draggable="true" data-id="${p.id}"><div class="pt">${p.business_name}</div><div class="pm"><b>${p.amount!=null?money(p.amount):'—'}</b> · ${when}</div></div>`;
+        });
+        return `<div class="paycol"><div class="payhead" style="background:${s[2]};">${s[1]}<span class="pct">${money(sum)} (${items.length})</span></div><div class="paybody" data-status="${s[0]}">${cards.join('')||'<div class="colempty">—</div>'}</div></div>`;
+      }).join('');
+      bindPay();
+    }
+    function bindPay(){
+      document.querySelectorAll('.paycard').forEach(el=>{
+        el.addEventListener('dragstart',e=>{ el.classList.add('dragging'); e.dataTransfer.setData('text/plain',el.dataset.id); });
+        el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+      });
+      document.querySelectorAll('.paybody').forEach(col=>{
+        col.addEventListener('dragover',e=>{ e.preventDefault(); col.classList.add('over'); });
+        col.addEventListener('dragleave',()=>col.classList.remove('over'));
+        col.addEventListener('drop',async e=>{ e.preventDefault(); col.classList.remove('over');
+          const id=e.dataTransfer.getData('text/plain'); const st=col.dataset.status;
+          const p=pays.find(x=>x.id===id); if(!p||p.status===st) return;
+          p.status=st; p.paid_at= st==='paid'? new Date().toISOString():null; renderPay();
+          await sb.from('payments').update({status:st,paid_at:p.paid_at,updated_at:new Date().toISOString()}).eq('id',id);
+        });
+      });
+    }
+    if(prof?.features?.payments===true){ document.getElementById('paySection').style.display='block'; loadPay(); }
+  </script>
+</body>
+</html>

@@ -369,4 +369,8 @@
         document.getElementById('resetConfirm').value=''; document.getElementById('resetBtn').disabled=true;
         msg.textContent='Full reset complete ✓ — system is empty, accounts intact.'; msg.className='msg ok';
         loadStats();
-      }catch(e){ msg.textContent=e.message; msg.className='msg 
+            }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
+    }
+  </script>
+</body>
+</html>
