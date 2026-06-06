@@ -56,11 +56,15 @@
         <div id="upNewWrap" style="display:none;margin-top:12px;">
           <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;">New business details</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <input id="upBizNew" placeholder="Business name *" style="grid-column:1/-1;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
-            <input id="upEmail" type="email" placeholder="Email" style="padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
-            <input id="upPhone" placeholder="Phone" style="padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
-            <input id="upFirst" placeholder="First name" style="padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
-            <input id="upLast" placeholder="Last name" style="padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+            <input id="upBizNew" placeholder="Business name *" style="grid-column:1/-1;min-width:0;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+            <input id="upEmail" type="email" placeholder="Email" style="min-width:0;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+            <input id="upPhone" placeholder="Phone" style="min-width:0;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+            <input id="upFirst" placeholder="First name" style="min-width:0;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+            <input id="upLast" placeholder="Last name" style="min-width:0;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;">
+          </div>
+          <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button class="primary" id="saveBizBtn" style="padding:10px 18px;">Save business</button>
+            <span class="msg" id="bizMsg" style="margin:0;"></span>
           </div>
         </div>
       </div>
@@ -108,11 +112,13 @@
     const msg=document.getElementById('msg');
     let chosen=null;
 
+    const sendBtn=document.getElementById('send');
+    sendBtn.disabled=true; // can't upload until a .gar is chosen
     function pick(f){
       if(!f) return;
       if(!f.name.toLowerCase().endsWith('.gar')){ msg.textContent='That isn\'t a .gar file.'; msg.className='msg err'; return; }
       chosen=f; selName.textContent='📦 '+f.name+' ('+(f.size/1024/1024).toFixed(1)+' MB)';
-      selected.style.display='flex'; msg.textContent=''; msg.className='msg';
+      selected.style.display='flex'; msg.textContent=''; msg.className='msg'; sendBtn.disabled=false;
     }
     drop.addEventListener('click',()=>fileIn.click());
     fileIn.addEventListener('change',()=>pick(fileIn.files[0]));
@@ -131,34 +137,42 @@
     upBiz.addEventListener('change',toggleNew);
     loadBiz();
 
+    // Save a new business first (separate from uploading the .gar)
+    document.getElementById('saveBizBtn').addEventListener('click',async()=>{
+      const bmsg=document.getElementById('bizMsg'); bmsg.textContent='';
+      const name=upBizNew.value.trim();
+      if(!name){ bmsg.textContent='Business name is required.'; bmsg.className='msg err'; return; }
+      const btn=document.getElementById('saveBizBtn'); btn.disabled=true;
+      const {data:nb,error}=await sb.from('businesses').insert({
+        licensee_id:session.user.id, name,
+        contact_email:document.getElementById('upEmail').value.trim()||null,
+        phone:document.getElementById('upPhone').value.trim()||null,
+        first_name:document.getElementById('upFirst').value.trim()||null,
+        last_name:document.getElementById('upLast').value.trim()||null
+      }).select().single();
+      btn.disabled=false;
+      if(error){ bmsg.textContent=error.message; bmsg.className='msg err'; return; }
+      ['upBizNew','upEmail','upPhone','upFirst','upLast'].forEach(id=>document.getElementById(id).value='');
+      await loadBiz(); upBiz.value=nb.id; toggleNew();
+      msg.textContent='Business saved ✓ — now choose your .gar file to upload.'; msg.className='msg ok';
+    });
+
     document.getElementById('send').addEventListener('click',async()=>{
-      if(!chosen) return;
-      if(!upBiz.value){ msg.textContent='Pick or add the business this .gar is for.'; msg.className='msg err'; return; }
+      if(!chosen){ msg.textContent='Choose a .gar file first.'; msg.className='msg err'; return; }
+      if(!upBiz.value){ msg.textContent='Pick a business this .gar is for.'; msg.className='msg err'; return; }
+      if(upBiz.value==='__new'){ msg.textContent='Save the new business first (Save business button above).'; msg.className='msg err'; return; }
       const btn=document.getElementById('send'); btn.disabled=true; msg.textContent='Uploading… (large files can take a minute)'; msg.className='msg';
       try{
-        let business_id=upBiz.value;
-        if(business_id==='__new'){
-          const name=upBizNew.value.trim();
-          if(!name){ msg.textContent='Enter the new business name.'; msg.className='msg err'; btn.disabled=false; return; }
-          const {data:nb,error:be}=await sb.from('businesses').insert({
-            licensee_id:session.user.id, name,
-            contact_email:document.getElementById('upEmail').value.trim()||null,
-            phone:document.getElementById('upPhone').value.trim()||null,
-            first_name:document.getElementById('upFirst').value.trim()||null,
-            last_name:document.getElementById('upLast').value.trim()||null
-          }).select().single();
-          if(be) throw be; business_id=nb.id;
-        }
+        const business_id=upBiz.value;
         const path=session.user.id+'/'+Date.now()+'-'+chosen.name;
         const {error:upErr}=await sb.storage.from('patguard').upload(path,chosen,{contentType:'application/octet-stream',upsert:true});
         if(upErr) throw upErr;
         const {error}=await sb.from('patguard_files').insert({licensee_id:session.user.id,business_id,file_name:chosen.name,storage_path:path});
         if(error) throw error;
         msg.textContent='Uploaded ✓ — the admin team can now access it.'; msg.className='msg ok';
-        chosen=null; selected.style.display='none'; fileIn.value=''; upBizNew.value='';
-        loadBiz(); loadList();
+        chosen=null; selected.style.display='none'; fileIn.value=''; loadList();
       }catch(e){ msg.textContent='Upload failed: '+e.message; msg.className='msg err'; }
-      btn.disabled=false;
+      btn.disabled = !chosen;
     });
 
     async function loadList(){

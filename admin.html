@@ -95,6 +95,14 @@
   .s-check{background:#7c3aed;} .s-check:after{border-left-color:#7c3aed;}
   .s-appr{background:#16a34a;} .s-appr:after{border-left-color:#16a34a;}
   .s-done{background:#334155;} .s-done:after{border-left-color:#334155;}
+  /* mobile: stack the board columns vertically, full width */
+  @media (max-width:760px){
+    .board{flex-direction:column;overflow-x:visible;}
+    .col{min-width:0;width:100%;}
+    .colhead{margin-right:0;border-radius:8px 8px 0 0;padding-left:14px;}
+    .colhead:after,.colhead:before{display:none;}
+    .colbody{margin-right:0;border-radius:0 0 8px 8px;margin-bottom:12px;}
+  }
   .uprow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px dashed #c9d2e3;border-radius:10px;padding:9px 12px;margin-bottom:8px;}
   .uprow.inv{border-color:#b9ccf5;background:#f8faff;}
   .uplabel{flex:0 0 76px;font-size:11px;font-weight:800;letter-spacing:.4px;color:var(--muted);}
@@ -118,6 +126,7 @@
       <div class="tab active" data-tab="pipeline">Pipelines <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
       <div class="tab" data-tab="build">Build</div>
       <div class="tab" data-tab="businesses">Businesses</div>
+      <div class="tab" data-tab="reminders">Reminders <span id="remBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
       <div class="tab" data-tab="links">Links</div>
       <div class="tab" data-tab="admin">Admin</div>
       <div class="tab" data-tab="settings">Settings</div>
@@ -296,6 +305,15 @@
       </div>
     </div>
 
+    <!-- REMINDERS — compliance due dates -->
+    <div class="panel" id="panel-reminders">
+      <div class="card">
+        <h2>Compliance reminders</h2>
+        <p class="hint">Test &amp; Tag, Fire Cert and Fire Training dates (imported from OnePageCRM) that are <b>overdue</b> or due within <b>60 days</b>. <select id="remFilter" style="padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:13px;"></select> <button class="ghost" id="remRefresh">Refresh</button></p>
+        <div id="remHost"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
     <!-- SETTINGS — templates & system health -->
     <div class="panel" id="panel-settings">
       <div class="card">
@@ -373,13 +391,15 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'pipeline',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadOnbBoard();
+      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadReminders();
       document.getElementById('rcSend').addEventListener('click',sendRecord);
       document.getElementById('pgUpload').addEventListener('click',uploadGar);
       document.getElementById('onbAdd').addEventListener('click',addOnb);
       document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); loadOnbBoard(); });
       document.getElementById('pipeFilter').addEventListener('change',()=>{ loadInvBoard(); loadTrainBoard(); });
       document.getElementById('pgFilter').addEventListener('change',loadPatguard);
+      document.getElementById('remRefresh').addEventListener('click',loadReminders);
+      document.getElementById('remFilter').addEventListener('change',loadReminders);
       document.getElementById('rcLic').addEventListener('change',e=>{ loadBizList(e.target.value); loadGarBizList(e.target.value); });
       document.getElementById('pgLic').addEventListener('change',e=>loadGarBizList(e.target.value));
       document.getElementById('pgBiz').addEventListener('change',onPgBizChange);
@@ -509,6 +529,33 @@
       board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); await sb.from('archived_jobs').insert({licensee_id:b.dataset.lic,business_name:bz,archived_by:session.user.id}); loadInvBoard(); }));
     }
 
+    // ===== Reminders (compliance due dates) =====
+    const DUEFIELDS=[['tt_6m','Test & Tag 6-month'],['tt_12m','Test & Tag 12-month'],['fc_6m','Fire Cert 6-month'],['fc_12m','Fire Cert 12-month'],['ft_12m','Fire Training 12-month']];
+    async function loadReminders(){
+      const host=document.getElementById('remHost');
+      const flt=(document.getElementById('remFilter')||{}).value||'';
+      let q=sb.from('businesses').select('*');
+      if(flt) q=q.eq('licensee_id',flt);
+      const {data,error}=await q;
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      const nm={}; licenseeList.forEach(l=>nm[l.id]=l.full_name||l.email);
+      const today=new Date(); today.setHours(0,0,0,0);
+      const horizon=new Date(today); horizon.setDate(horizon.getDate()+60);
+      const items=[];
+      (data||[]).forEach(b=>DUEFIELDS.forEach(([f,label])=>{
+        if(!b[f]) return; const d=new Date(b[f]+'T00:00:00'); if(isNaN(d)) return;
+        if(d<=horizon){ const days=Math.round((d-today)/86400000); items.push({biz:b.name,lic:nm[b.licensee_id]||'—',label,date:b[f],days}); }
+      }));
+      items.sort((a,b)=>a.days-b.days);
+      const badge=document.getElementById('remBadge');
+      const overdue=items.filter(i=>i.days<0).length;
+      if(items.length){ badge.textContent=items.length; badge.style.display='inline-block'; } else badge.style.display='none';
+      if(!items.length){ host.innerHTML='<div class="empty">Nothing due in the next 60 days.</div>'; return; }
+      host.innerHTML='<table><thead><tr><th>Business</th><th>Licensee</th><th>Check</th><th>Due</th><th>Status</th></tr></thead><tbody>'+
+        items.map(i=>`<tr><td><b>${i.biz}</b></td><td>${i.lic}</td><td>${i.label}</td><td>${i.date}</td>
+          <td>${i.days<0?`<span class="pill rejected">overdue ${-i.days}d</span>`:(i.days<=14?`<span class="pill pending">in ${i.days}d</span>`:`<span class="pill" style="background:#eef2f8;color:#667085">in ${i.days}d</span>`)}</td></tr>`).join('')+'</tbody></table>';
+    }
+
     // ===== Businesses page =====
     function bzLicId(){ return document.getElementById('bzLic').value; }
     async function loadBzList(lic){
@@ -584,8 +631,10 @@
       const header=rows[0].map(h=>h.trim());
       const ix=n=>header.indexOf(n);
       const cOrg=ix('Organization'),cF=ix('First name'),cL=ix('Last name'),cE1=ix('Email 1 Work'),cE2=ix('Email 2 Work'),cP1=ix('Phone 1 Mobile'),cP2=ix('Phone 2 Work'),cOP=ix('Organization phone');
+      const cTT6=ix('Test & Tag - 6 Month Date'),cTT12=ix('Test & Tag - 12 Months Date 1'),cFC6=ix('Fire Certs - 6 Months'),cFC12=ix('Fire Certs - 12 Months'),cFT12=ix('Fire Training - 12 months');
       if(cOrg<0&&cF<0){ msg.textContent='This doesn\'t look like a OnePageCRM contacts export.'; msg.className='msg err'; return; }
       const get=(r,i)=>(i>=0&&r[i]?String(r[i]).trim():'');
+      const pd=(r,i)=>{ const s=get(r,i); if(!s) return null; const t=Date.parse(s); return isNaN(t)?null:new Date(t).toISOString().slice(0,10); };
       const map={};
       for(const r of rows.slice(1)){
         if(!r.length) continue;
@@ -594,7 +643,8 @@
         if(!name) continue;
         map[name]={ licensee_id:lic, name, first_name:fn||null, last_name:ln||null,
           contact_email:(get(r,cE1)||get(r,cE2))||null,
-          phone:((get(r,cP1)||get(r,cP2)||get(r,cOP)).replace(/^'/,'').trim())||null };
+          phone:((get(r,cP1)||get(r,cP2)||get(r,cOP)).replace(/^'/,'').trim())||null,
+          tt_6m:pd(r,cTT6), tt_12m:pd(r,cTT12), fc_6m:pd(r,cFC6), fc_12m:pd(r,cFC12), ft_12m:pd(r,cFT12) };
       }
       const list=Object.values(map);
       if(!list.length){ msg.textContent='No contacts with a business/name found.'; msg.className='msg err'; return; }
@@ -742,8 +792,9 @@
       document.querySelectorAll('.licSel').forEach(s=>s.innerHTML=opts);
       const filt=document.getElementById('pipeFilter');
       if(filt) filt.innerHTML='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
-      const pgf=document.getElementById('pgFilter');
-      if(pgf) pgf.innerHTML='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
+      const allOpt='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
+      const pgf=document.getElementById('pgFilter'); if(pgf) pgf.innerHTML=allOpt;
+      const remf=document.getElementById('remFilter'); if(remf) remf.innerHTML=allOpt;
       const first=licenseeList[0]?licenseeList[0].id:'';
       loadBizList(first); loadGarBizList(first); loadBzList(first);
     }
@@ -815,7 +866,8 @@
           document.getElementById(s.fId).value=''; document.getElementById(s.tId).value='';
         }
         document.getElementById('rcBiz').value='';
-        msg.textContent='Sent '+sent+' file'+(sent>1?'s':'')+' for approval ✓'; msg.className='msg ok';
+        try{ await callEdge('notify-licensee',{licensee_id,business_name:business,count:sent}); }catch(_){}
+        msg.textContent='Sent '+sent+' file'+(sent>1?'s':'')+' for approval ✓ (licensee emailed)'; msg.className='msg ok';
         loadInvBoard();
       }catch(e){ msg.textContent=(sent?('Sent '+sent+', then failed: '):'')+e.message; msg.className='msg err'; }
       btn.disabled=false;

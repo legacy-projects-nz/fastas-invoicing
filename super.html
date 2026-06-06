@@ -77,6 +77,7 @@
       <div class="tab active" data-tab="overview">Overview</div>
       <div class="tab" data-tab="security">Accounts</div>
       <div class="tab" data-tab="permissions">Permissions</div>
+      <div class="tab" data-tab="activity">Activity log</div>
       <div class="tab" data-tab="archive">Archive</div>
       <div class="tab" data-tab="danger">Danger zone</div>
     </nav>
@@ -129,6 +130,15 @@
         <h2>WhatsApp channels</h2>
         <p class="hint">Name + link per channel, one per row. One channel = their "Invoice Changes" button opens it directly; several = a chooser. Links must be <b>chat.whatsapp.com</b> or <b>wa.me</b>.</p>
         <div id="waChHost"><div class="empty">Select a licensee above.</div></div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div class="panel" id="panel-activity">
+      <div class="card">
+        <h2>Activity log</h2>
+        <p class="hint">Who did what across the system — sends, approvals, rejections, training decisions. <button class="ghost" id="actRefresh">Refresh</button></p>
+        <div id="actHost"><div class="empty">Loading…</div></div>
       </div>
     </div>
 
@@ -255,6 +265,15 @@
       };
     }
 
+    const ACTLABEL={doc_sent:'Sent for approval',doc_approved:'Licensee approved',doc_rejected:'Licensee rejected',training_emailed:'Training approved & sent',training_approved:'Training approved',training_rejected:'Training rejected'};
+    async function loadActivity(){
+      const host=document.getElementById('actHost');
+      const {data,error}=await sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(200);
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      if(!data.length){ host.innerHTML='<div class="empty">No activity recorded yet.</div>'; return; }
+      host.innerHTML='<table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Detail</th></tr></thead><tbody>'+
+        data.map(a=>`<tr><td>${new Date(a.created_at).toLocaleString()}</td><td>${a.actor_email||'—'}</td><td>${ACTLABEL[a.action]||a.action}</td><td>${a.detail||''}</td></tr>`).join('')+'</tbody></table>';
+    }
     async function loadAccounts(){
       const {users}=await callFn({action:'list_users'});
       document.getElementById('pwUser').innerHTML=users.map(u=>`<option value="${u.id}">${u.full_name||u.email} (${u.email}) — ${u.role}</option>`).join('');
@@ -277,7 +296,8 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'overview',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadStats(); loadAccounts(); loadPermLic();
+      loadStats(); loadAccounts(); loadPermLic(); loadActivity();
+      document.getElementById('actRefresh').addEventListener('click',loadActivity);
       document.getElementById('refreshStats').addEventListener('click',loadStats);
 
       document.getElementById('pwSet').addEventListener('click',async()=>{
