@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FASTAS · Booking pipeline</title>
+<title>FASTAS · Booking Pipeline</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
 <style>
   :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--red:#475569;--ok:#067647;--amber:#475569;--bg1:#f7f9fc;--bg2:#eef2f8;--pink:#475569;}
@@ -83,8 +83,8 @@
 </head>
 <body>
   <div class="topbar">
-    <div class="brand"><div class="brand-mark">FA</div><b>Booking pipeline</b></div>
-    <div style="display:flex;align-items:center;"><span class="who" id="who"></span><a href="index.html">Main menu</a><a href="#" id="signoutLink" style="color:var(--red);">Sign out</a></div>
+    <div class="brand"><div class="brand-mark">FA</div><b>Booking Pipeline</b></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Main menu</a><a href="#" id="signoutLink" style="color:#475569;">Sign out</a></div>
   </div>
   <div class="bar">
     <h1>Sales &amp; bookings</h1>
@@ -129,7 +129,7 @@
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
 
     const {data:{session}}=await sb.auth.getSession();
-    if(!session){ location.href='index.html'; }
+    if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{ e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
       try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
@@ -202,70 +202,4 @@
       document.getElementById('fTitle').value=d.title||''; document.getElementById('fContact').value=d.contact||'';
       document.getElementById('fAmount').value=d.amount||''; document.getElementById('fDue').value=d.due_date||''; fStage.value=d.stage;
       document.getElementById('fDelete').style.visibility='visible'; document.getElementById('mMsg').textContent=''; modal.classList.add('show'); }
-    document.getElementById('addDeal').addEventListener('click',openAdd);
-    document.getElementById('fCancel').addEventListener('click',()=>modal.classList.remove('show'));
-    modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.remove('show'); });
-    document.getElementById('fSave').addEventListener('click',async()=>{
-      const msg=document.getElementById('mMsg'); msg.textContent='';
-      const title=document.getElementById('fTitle').value.trim();
-      if(!title){ msg.textContent='Name is required.'; msg.className='msg err'; return; }
-      const rec={ title, contact:document.getElementById('fContact').value.trim()||null,
-        amount:document.getElementById('fAmount').value?Number(document.getElementById('fAmount').value):null,
-        due_date:document.getElementById('fDue').value||null, stage:fStage.value, updated_at:new Date().toISOString() };
-      let error;
-      if(editingId){ ({error}=await sb.from('bookings').update(rec).eq('id',editingId)); }
-      else { rec.licensee_id=session.user.id; ({error}=await sb.from('bookings').insert(rec)); }
-      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
-      modal.classList.remove('show'); load();
-    });
-    document.getElementById('fDelete').addEventListener('click',async()=>{
-      if(!editingId||!confirm('Delete this deal?')) return;
-      await sb.from('bookings').delete().eq('id',editingId); modal.classList.remove('show'); load();
-    });
-
-    load();
-
-    // ---- Payments board (only if licensee has Payment Tracking enabled) ----
-    const PAYSTAGES=[['sent','Awaiting Payment','#475569'],['paid','Paid','#16a34a']];
-    let pays=[];
-    async function loadPay(){
-      const {data,error}=await sb.from('payments').select('*').order('sent_at',{ascending:false});
-      if(error){ document.getElementById('payBoard').innerHTML='<div class="colempty">'+error.message+'</div>'; return; }
-      pays=data||[]; renderPay();
-    }
-    function renderPay(){
-      const board=document.getElementById('payBoard');
-      const waiting=pays.filter(p=>p.status==='sent');
-      const owe=waiting.reduce((a,p)=>a+(Number(p.amount)||0),0);
-      document.getElementById('payTotals').textContent=waiting.length+' awaiting · '+money(owe);
-      board.innerHTML=PAYSTAGES.map(s=>{
-        const items=pays.filter(p=>p.status===s[0]);
-        const sum=items.reduce((a,p)=>a+(Number(p.amount)||0),0);
-        const cards=items.map(p=>{
-          const when=p.status==='paid'?('paid'+(p.paid_at?' '+fmtDue(p.paid_at.slice(0,10)):'')):('sent'+(p.sent_at?' '+fmtDue(p.sent_at.slice(0,10)):''));
-          return `<div class="paycard" draggable="true" data-id="${p.id}"><div class="pt">${p.business_name}</div><div class="pm"><b>${p.amount!=null?money(p.amount):'—'}</b> · ${when}</div></div>`;
-        });
-        return `<div class="paycol"><div class="payhead" style="background:${s[2]};">${s[1]}<span class="pct">${money(sum)} (${items.length})</span></div><div class="paybody" data-status="${s[0]}">${cards.join('')||'<div class="colempty">—</div>'}</div></div>`;
-      }).join('');
-      bindPay();
-    }
-    function bindPay(){
-      document.querySelectorAll('.paycard').forEach(el=>{
-        el.addEventListener('dragstart',e=>{ el.classList.add('dragging'); e.dataTransfer.setData('text/plain',el.dataset.id); });
-        el.addEventListener('dragend',()=>el.classList.remove('dragging'));
-      });
-      document.querySelectorAll('.paybody').forEach(col=>{
-        col.addEventListener('dragover',e=>{ e.preventDefault(); col.classList.add('over'); });
-        col.addEventListener('dragleave',()=>col.classList.remove('over'));
-        col.addEventListener('drop',async e=>{ e.preventDefault(); col.classList.remove('over');
-          const id=e.dataTransfer.getData('text/plain'); const st=col.dataset.status;
-          const p=pays.find(x=>x.id===id); if(!p||p.status===st) return;
-          p.status=st; p.paid_at= st==='paid'? new Date().toISOString():null; renderPay();
-          await sb.from('payments').update({status:st,paid_at:p.paid_at,updated_at:new Date().toISOString()}).eq('id',id);
-        });
-      });
-    }
-    if(prof?.features?.payments===true){ document.getElementById('paySection').style.display='block'; loadPay(); }
-  </script>
-</body>
-</html>
+    docum

@@ -115,7 +115,7 @@
 </head>
 <body>
   <div class="topbar">
-    <div class="brand"><div class="brand-mark">FA</div><b>Admin portal</b></div>
+    <div class="brand"><div class="brand-mark">FA</div><b>Admin Portal</b></div>
     <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a id="superLink" href="super.html" style="display:none;color:#1d4ed8;">⚡ Super admin</a><a href="#" id="signoutLink" style="color:#475569;">Sign out</a></div>
   </div>
 
@@ -369,7 +369,7 @@
     </div><!-- /layout -->
   </div>
 
-  <div class="wrap" id="denied" style="display:none;"><div class="card"><h2>Admins only</h2><p class="hint">You're signed in but this area is for admins. <a href="index.html">Back to app</a></p></div></div>
+  <div class="wrap" id="denied" style="display:none;"><div class="card"><h2>Admins only</h2><p class="hint">You're signed in but this area is for admins. <a href="index.html">← Main menu</a></p></div></div>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -379,7 +379,7 @@
     const FN=SUPABASE_URL+'/functions/v1/admin-users';
 
     const {data:{session}}=await sb.auth.getSession();
-    if(!session){ location.href='index.html'; }
+    if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{
       e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
@@ -967,118 +967,4 @@
       btn.disabled=false;
     }
     async function sendRecord(){
-      const msg=document.getElementById('rcMsg'); msg.textContent='';
-      const licensee_id=document.getElementById('rcLic').value;
-      const business=document.getElementById('rcBiz').value.trim();
-      if(!licensee_id||!business){ msg.textContent='Pick a licensee and enter a business name.'; msg.className='msg err'; return; }
-      // gather the filled slots: 1 invoice + up to 4 reports
-      const slots=[{type:'invoice',f:'rcF-inv',t:'rcT-inv'},{type:'report',f:'rcF-r1',t:'rcT-r1'},{type:'report',f:'rcF-r2',t:'rcT-r2'},{type:'report',f:'rcF-r3',t:'rcT-r3'},{type:'report',f:'rcF-r4',t:'rcT-r4'}]
-        .map(s=>({type:s.type,file:document.getElementById(s.f).files[0],title:document.getElementById(s.t).value.trim(),fId:s.f,tId:s.t}))
-        .filter(s=>s.file);
-      if(!slots.length){ msg.textContent='Choose at least one file (invoice or report).'; msg.className='msg err'; return; }
-      const newReports=slots.filter(s=>s.type==='report').length;
-      if(newReports){
-        const {count}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('licensee_id',licensee_id).eq('business_name',business).eq('doc_type','report').eq('status','pending');
-        if((count??0)+newReports>4){ msg.textContent='Max 4 pending reports per business — this business already has '+(count??0)+' awaiting approval.'; msg.className='msg err'; return; }
-      }
-      const btn=document.getElementById('rcSend'); btn.disabled=true;
-      let sent=0;
-      try{
-        for(const s of slots){
-          const path=licensee_id+'/'+Date.now()+'-'+s.file.name;
-          const {error:upErr}=await sb.storage.from('documents').upload(path,s.file,{upsert:true});
-          if(upErr) throw upErr;
-          const {error}=await sb.from('documents').insert({licensee_id,business_name:business,doc_type:s.type,title:s.title||s.file.name.replace(/\.pdf$/i,''),storage_path:path,status:'pending',created_by:session.user.id});
-          if(error) throw error;
-          sent++;
-          document.getElementById(s.fId).value=''; document.getElementById(s.tId).value='';
-        }
-        document.getElementById('rcBiz').value='';
-        try{ await callEdge('notify-licensee',{licensee_id,business_name:business,count:sent}); }catch(_){}
-        msg.textContent='Sent '+sent+' file'+(sent>1?'s':'')+' for approval ✓ (licensee emailed)'; msg.className='msg ok';
-        loadInvBoard();
-      }catch(e){ msg.textContent=(sent?('Sent '+sent+', then failed: '):'')+e.message; msg.className='msg err'; }
-      btn.disabled=false;
-    }
-    function pipeHTML(pending,rejected){
-      const reviewDone=pending===0, ok=reviewDone&&rejected===0, alert=reviewDone&&rejected>0;
-      const step=(label,cls,icon)=>`<span class="pstep ${cls}"><span class="pdot">${icon}</span>${label}</span>`;
-      return `<div class="pipe">
-        ${step('Sent','done','✓')}<span class="pbar done"></span>
-        ${reviewDone?step('Reviewed','done','✓'):step('In review · '+pending,'active',pending)}
-        <span class="pbar ${reviewDone?'done':''}"></span>
-        ${alert?step('Changes needed · '+rejected,'alert','!'):(ok?step('Approved','done','✓'):step('Approval','','…'))}
-      </div>`;
-    }
-    async function loadRecords(){
-      const host=document.getElementById('recHost');
-      const pipeHost=document.getElementById('pipeHost');
-      const {data,error}=await sb.from('documents').select('*').order('created_at',{ascending:false});
-      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; pipeHost.innerHTML=''; return; }
-      if(!data.length){ host.innerHTML='<div class="empty">Nothing sent yet.</div>'; pipeHost.innerHTML='<div class="empty">No businesses in the pipeline yet.</div>'; return; }
-      const lmap={}; licenseeList.forEach(l=>lmap[l.id]=l.email);
-      const lname={}; licenseeList.forEach(l=>lname[l.id]=l.full_name||l.email);
-      // pipeline summary per licensee + business
-      const groups={};
-      data.forEach(d=>{ const k=d.licensee_id+'|'+d.business_name; (groups[k]=groups[k]||[]).push(d); });
-      pipeHost.innerHTML=Object.entries(groups).map(([k,items])=>{
-        const [lid,biz]=k.split('|');
-        const pending=items.filter(d=>d.status==='pending').length;
-        const rejected=items.filter(d=>d.status==='rejected').length;
-        return `<div class="piperow"><div><b>${biz}</b> <span style="color:var(--muted);font-size:12px;">· ${lname[lid]||'—'} · ${items.length} item${items.length>1?'s':''}</span></div>${pipeHTML(pending,rejected)}</div>`;
-      }).join('');
-      host.innerHTML='<table><thead><tr><th>Business</th><th>Type</th><th>Licensee</th><th>Status</th><th>Licensee note</th><th>File</th></tr></thead><tbody>'+
-        data.map(d=>`<tr><td>${d.business_name}${d.title?' — '+d.title:''}</td><td>${d.doc_type}</td><td>${lmap[d.licensee_id]||'—'}</td>
-          <td><span class="pill ${d.status}">${d.status}</span></td><td>${d.licensee_note?d.licensee_note:'—'}</td>
-          <td>${d.storage_path?`<a class="dl" data-bucket="documents" data-path="${d.storage_path}" href="#">⬇ ${d.title||d.doc_type}</a>`:'—'}</td></tr>`).join('')+'</tbody></table>';
-      host.querySelectorAll('a.dl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
-    }
-
-    async function loadReports(){
-      const host=document.getElementById('reportsHost');
-      const {data:reps,error}=await sb.from('training_reports').select('*').order('created_at',{ascending:false});
-      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
-      if(!reps.length){ host.innerHTML='<div class="empty">No training reports yet.</div>'; return; }
-      let h='<table><thead><tr><th>Ref</th><th>Business</th><th>Date</th><th>Type</th><th>Att.</th><th>Status</th><th>Report</th><th>Certificates</th><th></th></tr></thead><tbody>';
-      for(const r of reps){
-        h+=`<tr><td><b>${r.report_ref||'—'}</b></td><td>${r.business_name}</td><td>${r.training_date||'—'}</td>
-          <td>${r.training_type.replace('_',' ')}</td><td>${r.total_attendees}</td>
-          <td><span class="pill ${r.status}">${r.status}</span></td>
-          <td>${r.report_pdf_path?`<a class="dl" data-bucket="reports" data-path="${r.report_pdf_path}" href="#">Download</a>`:'—'}</td>
-          <td id="certs-${r.id}"><a class="dl loadCerts" data-id="${r.id}" href="#">Show</a></td>
-          <td style="text-align:right"><button class="ghost danger delRep" data-id="${r.id}" data-ref="${r.report_ref}">Delete</button></td></tr>`;
-      }
-      host.innerHTML=h+'</tbody></table>';
-      host.querySelectorAll('a.dl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
-      host.querySelectorAll('a.loadCerts').forEach(a=>a.addEventListener('click',async e=>{e.preventDefault();showCerts(a.dataset.id);}));
-      host.querySelectorAll('button.delRep').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Delete report '+b.dataset.ref+'? This removes its attendees too.')) return; await sb.from('training_reports').delete().eq('id',b.dataset.id); loadReports(); }));
-    }
-    async function showCerts(id){
-      const cell=document.getElementById('certs-'+id);
-      const {data:att}=await sb.from('training_attendees').select('*').eq('report_id',id);
-      cell.innerHTML = att.map(a=>`<a class="dl certdl" data-path="${a.certificate_pdf_path||''}" href="#">${a.first_name} ${a.cert_emailed?'✓':''}</a>`).join('<br>');
-      cell.querySelectorAll('a.certdl').forEach(a=>a.addEventListener('click',e=>{e.preventDefault(); if(a.dataset.path) download('certificates',a.dataset.path); else alert('No certificate file');}));
-    }
-    async function download(bucket,path){
-      const {data,error}=await sb.storage.from(bucket).createSignedUrl(path,120);
-      if(error){ alert(error.message); return; }
-      window.open(data.signedUrl,'_blank');
-    }
-
-    async function loadTemplates(){ /* templates are generated live; nothing to load */ }
-    async function viewTemplate(btn){
-      const type=btn.dataset.type;
-      const msg=document.getElementById(type==='certificate'?'tplCertMsg':'tplReportMsg');
-      btn.disabled=true; msg.textContent=' Generating…'; msg.className='msg';
-      try{
-        const res=await fetch(SUPABASE_URL+'/functions/v1/template-samples?type='+type,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token()}});
-        if(!res.ok) throw new Error('Error '+res.status);
-        const blob=await res.blob();
-        window.open(URL.createObjectURL(blob),'_blank');
-        msg.textContent='';
-      }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
-      btn.disabled=false;
-    }
-  </script>
-</body>
-</html>
+      const msg=document.getElementById('rcMsg'); msg.textConten

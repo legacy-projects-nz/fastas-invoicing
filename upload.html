@@ -94,7 +94,7 @@
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
 
     const {data:{session}}=await sb.auth.getSession();
-    if(!session){ location.href='index.html'; }
+    if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{
       e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
