@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASTAS · Contacts</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
+<style>
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--green:#16a34a;--red:#475569;--bg1:#f7f9fc;--bg2:#eef2f8;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;margin-left:14px;}
+  .topbar .who{font-size:13px;color:var(--muted);}
+  .wrap{max-width:680px;margin:0 auto;padding:18px 16px 60px;}
+  h1{font-size:22px;margin:4px 0 12px;}
+  .search{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-size:16px;outline:none;margin-bottom:14px;}
+  .search:focus{border-color:var(--brand);}
+  .c{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:10px;box-shadow:0 4px 12px rgba(16,24,40,.04);}
+  .c .nm{font-weight:700;font-size:16px;}
+  .c .who2{color:var(--muted);font-size:13px;margin-top:1px;}
+  .acts{display:flex;gap:10px;margin-top:11px;}
+  .acts a{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;font-weight:700;font-size:14px;border-radius:11px;padding:11px;}
+  .acts a.call{background:#ecfdf3;color:var(--green);border:1px solid #bbf7d0;}
+  .acts a.mail{background:#eff6ff;color:var(--brand);border:1px solid #dbe7ff;}
+  .acts a.off{background:#f4f5f7;color:#9aa4b2;border:1px solid var(--line);pointer-events:none;}
+  .empty{color:var(--muted);text-align:center;padding:50px 0;}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><div class="brand-mark">FA</div><b>Contacts</b></div>
+    <div style="display:flex;align-items:center;"><span class="who" id="who"></span><a href="index.html">Main menu</a><a href="#" id="signoutLink" style="color:var(--red);">Sign out</a></div>
+  </div>
+  <div class="wrap">
+    <h1>Business contacts</h1>
+    <input class="search" id="search" placeholder="Search business or contact…">
+    <div id="host"><div class="empty">Loading…</div></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
+    const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
+    const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.href='index.html'; }
+    document.getElementById('signoutLink').addEventListener('click',async(e)=>{ e.preventDefault();
+      try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
+      try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
+      location.href='index.html'; });
+    const {data:prof}=await sb.from('profiles').select('role,full_name,features').eq('id',session.user.id).single();
+    if((prof?.role||'licensee')==='licensee' && prof?.features?.contacts===false){ location.href='index.html'; }
+    document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+(prof?.role||'licensee');
+
+    let list=[];
+    const host=document.getElementById('host'), search=document.getElementById('search');
+    async function load(){
+      const {data,error}=await sb.from('businesses').select('name,contact_email,first_name,last_name,phone').order('name');
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      list=data||[]; render();
+    }
+    function render(){
+      const q=(search.value||'').toLowerCase();
+      const rows=list.filter(b=>!q || b.name.toLowerCase().includes(q) || [b.first_name,b.last_name,b.contact_email,b.phone].filter(Boolean).join(' ').toLowerCase().includes(q));
+      if(!rows.length){ host.innerHTML='<div class="empty">No contacts'+(q?' match':' yet')+'.</div>'; return; }
+      host.innerHTML=rows.map(b=>{
+        const who=[b.first_name,b.last_name].filter(Boolean).join(' ');
+        const tel=(b.phone||'').replace(/[^+\d]/g,'');
+        const call=tel?`<a class="call" href="tel:${tel}">📞 Call</a>`:`<a class="call off">📞 No phone</a>`;
+        const mail=b.contact_email?`<a class="mail" href="mailto:${b.contact_email}">✉ Email</a>`:`<a class="mail off">✉ No email</a>`;
+        return `<div class="c"><div class="nm">${b.name}</div>${who||b.phone||b.contact_email?`<div class="who2">${[who,b.phone,b.contact_email].filter(Boolean).join(' · ')}</div>`:''}<div class="acts">${call}${mail}</div></div>`;
+      }).join('');
+    }
+    search.addEventListener('input',render);
+    load();
+  </script>
+</body>
+</html>

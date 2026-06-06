@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FASTAS · Pricing & items</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
 <style>
-  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--amber:#d97706;--red:#dc2626;--bg1:#f7f9fc;--bg2:#eef2f8;--ok:#067647;}
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--amber:#475569;--red:#475569;--bg1:#f7f9fc;--bg2:#eef2f8;--ok:#067647;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;}
   .brand{display:flex;align-items:center;gap:10px;}
-  .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
   .brand b{font-size:17px;}
   .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;}
   .topbar .who{font-size:13px;color:var(--muted);}
@@ -27,7 +27,7 @@
   .toolbar input:focus{border-color:var(--brand);}
   .savebar{position:sticky;bottom:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -6px 20px rgba(16,24,40,.06);margin-top:18px;}
   .savebar.hidden{display:none;}
-  button.primary{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:15px;cursor:pointer;}
+  button.primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:15px;cursor:pointer;}
   button.primary:disabled{opacity:.5;cursor:default;}
   button.ghost{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer;font-size:14px;}
   table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
@@ -37,15 +37,15 @@
   td.code{font-family:ui-monospace,Menlo,monospace;font-weight:600;white-space:nowrap;}
   input.name{width:100%;min-width:160px;padding:8px 10px;border:1px solid transparent;border-radius:8px;font-size:14px;background:transparent;}
   input.name:hover{border-color:var(--line);}
-  input.name:focus{border-color:var(--amber);background:#fff;outline:none;box-shadow:0 0 0 3px rgba(217,119,6,.12);}
+  input.name:focus{border-color:var(--amber);background:#fff;outline:none;box-shadow:0 0 0 3px rgba(71,85,105,.12);}
   input.price{width:96px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;text-align:right;outline:none;}
-  input.price:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.15);}
+  input.price:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(71,85,105,.15);}
   select.status{padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;}
   tr.changed{background:#fffbeb;}
-  tr.del{background:#fef2f2;text-decoration:line-through;opacity:.6;}
-  button.rm{background:#fff;border:1px solid #f4c4c4;color:var(--red);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;}
+  tr.del{background:#f1f5f9;text-decoration:line-through;opacity:.6;}
+  button.rm{background:#fff;border:1px solid #cbd5e1;color:var(--red);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;}
   button.undo{background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;}
-  .msg{font-size:14px;} .msg.ok{color:var(--ok);} .msg.err{color:#d92d20;}
+  .msg{font-size:14px;} .msg.ok{color:var(--ok);} .msg.err{color:#475569;}
   .loading{padding:40px;text-align:center;color:var(--muted);}
   .additem{display:none;background:#fff;border:1px dashed #c9d2e3;border-radius:12px;padding:14px;margin-bottom:14px;gap:10px;align-items:end;flex-wrap:wrap;}
   .additem.show{display:flex;}
@@ -57,7 +57,7 @@
 <body>
   <div class="topbar">
     <div class="brand"><div class="brand-mark">FA</div><b>Pricing &amp; items</b></div>
-    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Main menu</a><a href="#" id="signoutLink" style="color:#d92d20;">Sign out</a></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="index.html">← Main menu</a><a href="#" id="signoutLink" style="color:#475569;">Sign out</a></div>
   </div>
 
   <div class="wrap">

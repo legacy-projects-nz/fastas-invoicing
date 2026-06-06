@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FAST NZ · Fire Safety Training Sign-up</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
 <style>
-  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--red:#dc2626;--brand:#2563eb;--bg1:#fff5f5;--bg2:#fef2f2;--ok:#067647;}
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--red:#475569;--brand:#2563eb;--bg1:#fff5f5;--bg2:#f1f5f9;--ok:#067647;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
   .hero{text-align:center;padding:36px 20px 10px;}
-  .badge{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 16px;box-shadow:0 6px 18px rgba(220,38,38,.12);}
-  .flame{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#dc2626,#f43f5e);display:flex;align-items:center;justify-content:center;}
+  .badge{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 16px;box-shadow:0 6px 18px rgba(71,85,105,.12);}
+  .flame{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#475569,#64748b);display:flex;align-items:center;justify-content:center;}
   .flame svg{width:18px;height:18px;fill:#fff;}
   .badge b{font-weight:800;letter-spacing:.5px;}
   h1{font-size:30px;margin:18px 0 6px;}
@@ -25,28 +25,28 @@
   label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#344054;}
   .req{color:var(--red);}
   input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;outline:none;font-family:inherit;}
-  input:focus,select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,.12);}
+  input:focus,select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(71,85,105,.12);}
   .full{grid-column:1/-1;}
   .att-row{display:grid;grid-template-columns:1.1fr 1.1fr 1.4fr 1.2fr auto;gap:8px;align-items:end;margin-bottom:10px;}
   @media(max-width:700px){.att-row{grid-template-columns:1fr 1fr;}}
   .att-row .rm{background:#fff;border:1px solid var(--line);border-radius:10px;width:42px;height:42px;cursor:pointer;font-size:18px;color:var(--red);}
-  .addbtn{background:#fff;border:1px dashed #f4a8a8;color:var(--red);border-radius:10px;padding:11px 16px;cursor:pointer;font-weight:600;font-size:14px;}
-  .submit{margin-top:22px;width:100%;background:linear-gradient(135deg,#dc2626,#f43f5e);color:#fff;border:none;border-radius:12px;padding:16px;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(220,38,38,.3);}
+  .addbtn{background:#fff;border:1px dashed #cbd5e1;color:var(--red);border-radius:10px;padding:11px 16px;cursor:pointer;font-weight:600;font-size:14px;}
+  .submit{margin-top:22px;width:100%;background:linear-gradient(135deg,#475569,#64748b);color:#fff;border:none;border-radius:12px;padding:16px;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(71,85,105,.3);}
   .submit:disabled{opacity:.6;cursor:default;}
   .msg{text-align:center;margin-top:14px;font-size:14px;min-height:20px;}
-  .msg.err{color:#d92d20;} .msg.ok{color:var(--ok);}
+  .msg.err{color:#475569;} .msg.ok{color:var(--ok);}
   .done{display:none;text-align:center;padding:40px 20px;}
   .done .tick{width:74px;height:74px;border-radius:50%;background:#ecfdf3;color:#067647;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 16px;}
   .done h2{font-size:24px;margin:0 0 8px;}
   .done p{color:var(--muted);max-width:480px;margin:0 auto 22px;line-height:1.55;}
-  .done button{background:linear-gradient(135deg,#dc2626,#f43f5e);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:16px;font-weight:700;cursor:pointer;}
+  .done button{background:linear-gradient(135deg,#475569,#64748b);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:16px;font-weight:700;cursor:pointer;}
   .pill-types{display:flex;gap:10px;flex-wrap:wrap;}
   .pill-types label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;margin:0;}
   .pill-types input{width:auto;}
 </style>
 </head>
 <body>
-  <a href="index.html" style="position:fixed;top:14px;left:16px;z-index:50;display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--red);text-decoration:none;box-shadow:0 4px 12px rgba(220,38,38,.12);">← Main menu</a>
+  <a href="index.html" style="position:fixed;top:14px;left:16px;z-index:50;display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--red);text-decoration:none;box-shadow:0 4px 12px rgba(71,85,105,.12);">← Main menu</a>
   <div class="hero">
     <div class="badge"><span class="flame"><svg viewBox="0 0 24 24"><path d="M12 2C9 6 7 8.5 7 12a5 5 0 0 0 10 0c0-1.7-.6-3.2-1.6-4.6-.4 1.2-1.1 1.9-2 2.1.6-2.3-.4-5-3.4-7.5z"/></svg></span><b>FAST NZ</b></div>
     <h1>Fire Safety Training Sign-up</h1>

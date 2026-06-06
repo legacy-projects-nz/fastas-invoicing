@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FastAs · Super Admin</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
 <style>
-  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--red:#dc2626;--ok:#067647;--bg1:#f7f9fc;--bg2:#eef2f8;}
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--red:#475569;--ok:#067647;--bg1:#f7f9fc;--bg2:#eef2f8;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#fff;color:var(--ink);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;}
   .brand{display:flex;align-items:center;gap:10px;}
-  .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
   .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;margin-left:14px;}
   .topbar .who{font-size:13px;color:var(--muted);}
   .wrap{max-width:1120px;margin:0 auto;padding:24px 20px 70px;}
@@ -40,9 +40,9 @@
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
   .f{display:flex;flex-direction:column;gap:5px;} .f label{font-size:12px;font-weight:600;color:#344054;}
   input,select{padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;}
-  button.primary{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;}
+  button.primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;}
   button.ghost{background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13px;}
-  button.danger{background:#fff;border:1px solid #f4c4c4;color:var(--red);border-radius:10px;padding:11px 18px;font-weight:700;font-size:14px;cursor:pointer;}
+  button.danger{background:#fff;border:1px solid #cbd5e1;color:var(--red);border-radius:10px;padding:11px 18px;font-weight:700;font-size:14px;cursor:pointer;}
   button.danger.solid{background:var(--red);color:#fff;border:none;}
   button:disabled{opacity:.5;cursor:default;}
   .msg{font-size:13px;margin-top:10px;min-height:18px;} .msg.ok{color:var(--ok);} .msg.err{color:var(--red);}
@@ -51,12 +51,12 @@
   th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
   tr:last-child td{border-bottom:none;}
   .pill{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:700;}
-  .pill.superadmin{background:#f3e8ff;color:#7c3aed;} .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);}
+  .pill.superadmin{background:#eff6ff;color:#1d4ed8;} .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);}
   .check{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);}
   .check:last-child{border-bottom:none;}
   .check .dot{width:12px;height:12px;border-radius:50%;margin-top:4px;flex:0 0 auto;}
   .check b{display:block;font-size:14px;} .check span{font-size:12.5px;color:var(--muted);}
-  .dz{border-color:#f4c4c4;background:#fffafa;}
+  .dz{border-color:#cbd5e1;background:#fffafa;}
   .dz h2{color:var(--red);}
   .dzrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed #f0d4d4;flex-wrap:wrap;}
   .dzrow:last-child{border-bottom:none;}
@@ -161,7 +161,7 @@
         <div class="dzrow"><div class="meta">Invoices &amp; reports<span>All approval documents and their files</span></div><button class="danger" data-wipe="documents">Delete all</button></div>
         <div class="dzrow"><div class="meta">PatGuard files<span>All .gar records and files</span></div><button class="danger" data-wipe="patguard">Delete all</button></div>
         <div class="dzrow"><div class="meta">Pricing items<span>Every licensee's price list</span></div><button class="danger" data-wipe="pricing">Delete all</button></div>
-        <div class="dzrow" style="border-top:2px solid #f4c4c4;padding-top:16px;">
+        <div class="dzrow" style="border-top:2px solid #cbd5e1;padding-top:16px;">
           <div class="meta"><b>FULL DATA RESET</b><span>Wipes ALL of the above. Accounts are kept. Type RESET to arm.</span></div>
           <span style="display:flex;gap:8px;align-items:center;">
             <input id="resetConfirm" placeholder="type RESET" style="width:110px;">
@@ -185,7 +185,7 @@
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
     const FN=SUPABASE_URL+'/functions/v1/admin-users';
     const TABLES=['profiles','pricing_items','training_reports','training_attendees','documents','patguard_files','report_templates'];
-    const FEATURES=[['voice','Invoice Generator'],['training','Certificate Builder'],['whatsapp','Invoice Changes'],['pricing','Price Setting'],['checker','Inv/Rep Checker'],['crm','OnePageCRM'],['gar','.gar Uploader'],['bookings','Bookings']];
+    const FEATURES=[['voice','Invoice Generator'],['training','Certificate Builder'],['whatsapp','Invoice Changes'],['pricing','Price Setting'],['checker','Inv/Rep Checker'],['crm','OnePageCRM'],['gar','.gar Uploader'],['bookings','Bookings'],['sales','Booking Pipeline'],['contacts','Contacts'],['payments','Payment Tracking']];
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.href='index.html'; }
@@ -216,9 +216,9 @@
       const {count:tpend}=await sb.from('training_reports').select('id',{count:'exact',head:true}).eq('status','pending');
       const {count:dpend}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('status','pending');
       const {count:drej}=await sb.from('documents').select('id',{count:'exact',head:true}).eq('status','rejected');
-      attn.insertAdjacentHTML('beforeend',`<div class="stat" style="background:#fff7ed;"><b>${tpend??0}</b><span>Training awaiting approval</span></div>`);
-      attn.insertAdjacentHTML('beforeend',`<div class="stat" style="background:#fff7ed;"><b>${dpend??0}</b><span>Docs awaiting licensees</span></div>`);
-      attn.insertAdjacentHTML('beforeend',`<div class="stat" style="background:#fef2f2;"><b>${drej??0}</b><span>Docs rejected (changes needed)</span></div>`);
+      attn.insertAdjacentHTML('beforeend',`<div class="stat" style="background:#f1f5f9;"><b>${tpend??0}</b><span>Training awaiting approval</span></div>`);
+      attn.insertAdjacentHTML('beforeend',`<div class="stat" style="background:#f1f5f9;"><b>${dpend??0}</b><span>Docs awaiting licensees</span></div>`);
+      attn.insertAdjacentHTML('beforeend',`<div class="stat" style="background:#f1f5f9;"><b>${drej??0}</b><span>Docs rejected (changes needed)</span></div>`);
     }
 
     let permLicensees=[];

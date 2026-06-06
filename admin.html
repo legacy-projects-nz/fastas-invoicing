@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FASTAS · Admin</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
 <style>
-  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--red:#dc2626;--bg1:#f7f9fc;--bg2:#eef2f8;--ok:#067647;}
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--red:#475569;--bg1:#f7f9fc;--bg2:#eef2f8;--ok:#067647;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;}
   .brand{display:flex;align-items:center;gap:10px;}
-  .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .brand-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
   .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;}
   .who{font-size:13px;color:var(--muted);}
   .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 70px;}
@@ -37,22 +37,22 @@
   th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);}
   input,select{padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;outline:none;font-family:inherit;}
   input:focus,select:focus{border-color:var(--brand);}
-  button.primary{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-weight:700;cursor:pointer;font-size:14px;}
+  button.primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:9px;padding:10px 18px;font-weight:700;cursor:pointer;font-size:14px;}
   button.primary:disabled{opacity:.5;}
   button.ghost{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;}
-  button.danger{color:var(--red);border-color:#f4c4c4;}
+  button.danger{color:var(--red);border-color:#cbd5e1;}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;}
   .row .f{display:flex;flex-direction:column;gap:5px;} .row .f label{font-size:12px;font-weight:600;color:#344054;}
   .pill{font-size:11px;padding:3px 9px;border-radius:999px;font-weight:700;}
-  .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);} .pill.superadmin{background:#f3e8ff;color:#7c3aed;}
-  .pill.emailed{background:#ecfdf3;color:var(--ok);} .pill.generated{background:#fff7ed;color:#b45309;} .pill.submitted{background:#f2f4f7;color:var(--muted);}
-  .pill.pending{background:#fff7ed;color:#b45309;} .pill.approved{background:#ecfdf3;color:var(--ok);} .pill.rejected{background:#fef2f2;color:var(--red);}
+  .pill.admin{background:#eff4ff;color:var(--brand);} .pill.licensee{background:#f2f4f7;color:var(--muted);} .pill.superadmin{background:#eff6ff;color:#1d4ed8;}
+  .pill.emailed{background:#ecfdf3;color:var(--ok);} .pill.generated{background:#f1f5f9;color:#475569;} .pill.submitted{background:#f2f4f7;color:var(--muted);}
+  .pill.pending{background:#f1f5f9;color:#475569;} .pill.approved{background:#ecfdf3;color:var(--ok);} .pill.rejected{background:#f1f5f9;color:var(--red);}
   .pipe{display:flex;align-items:center;flex-wrap:wrap;}
   .pstep{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap;}
   .pdot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;background:#cbd5e1;}
   .pstep.done{color:#067647;} .pstep.done .pdot{background:#16a34a;}
-  .pstep.active{color:#b45309;} .pstep.active .pdot{background:#d97706;}
-  .pstep.alert{color:var(--red);} .pstep.alert .pdot{background:#dc2626;}
+  .pstep.active{color:#475569;} .pstep.active .pdot{background:#475569;}
+  .pstep.alert{color:var(--red);} .pstep.alert .pdot{background:#475569;}
   .pbar{width:26px;height:2px;background:#e2e8f0;margin:0 7px;flex:0 0 auto;}
   .pbar.done{background:#16a34a;}
   .piperow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
@@ -87,12 +87,12 @@
   .kbtn.go{background:var(--brand);color:#fff;border-color:var(--brand);}
   .kcard a.kdl{font-size:11px;color:var(--muted);text-decoration:none;font-weight:600;display:block;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
   .kcard a.kdl:hover{color:var(--brand);}
-  .knote{background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;padding:4px 7px;font-size:10.5px;color:#6b21a8;margin-top:5px;}
+  .knote{background:#f7f9fc;border:1px solid #dbe7ff;border-radius:6px;padding:4px 7px;font-size:10.5px;color:#1e3a8a;margin-top:5px;}
   .kempty{color:#9aa4b2;font-size:11px;text-align:center;padding:10px 4px;}
   /* stage colours */
   .s-recv{background:#64748b;} .s-recv:after{border-left-color:#64748b;}
   .s-sent{background:#2563eb;} .s-sent:after{border-left-color:#2563eb;}
-  .s-check{background:#7c3aed;} .s-check:after{border-left-color:#7c3aed;}
+  .s-check{background:#1d4ed8;} .s-check:after{border-left-color:#1d4ed8;}
   .s-appr{background:#16a34a;} .s-appr:after{border-left-color:#16a34a;}
   .s-done{background:#334155;} .s-done:after{border-left-color:#334155;}
   /* mobile: stack the board columns vertically, full width */
@@ -116,17 +116,18 @@
 <body>
   <div class="topbar">
     <div class="brand"><div class="brand-mark">FA</div><b>Admin portal</b></div>
-    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a id="superLink" href="super.html" style="display:none;color:#7c3aed;">⚡ Super admin</a><a href="#" id="signoutLink" style="color:#d92d20;">Sign out</a></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a id="superLink" href="super.html" style="display:none;color:#1d4ed8;">⚡ Super admin</a><a href="#" id="signoutLink" style="color:#475569;">Sign out</a></div>
   </div>
 
   <div class="wrap" id="app" style="display:none;">
     <h1>FastAs Administration</h1>
     <div class="layout">
     <nav class="tabs">
-      <div class="tab active" data-tab="pipeline">Pipelines <span id="apprBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
+      <div class="tab active" data-tab="pipeline">Pipelines <span id="apprBadge" style="display:none;margin-left:6px;background:#475569;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
+      <div class="tab" data-tab="payments">Payments <span id="payBadge" style="display:none;margin-left:6px;background:#1d4ed8;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
       <div class="tab" data-tab="build">Build</div>
       <div class="tab" data-tab="businesses">Businesses</div>
-      <div class="tab" data-tab="reminders">Reminders <span id="remBadge" style="display:none;margin-left:6px;background:#dc2626;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
+      <div class="tab" data-tab="reminders">Reminders <span id="remBadge" style="display:none;margin-left:6px;background:#475569;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
       <div class="tab" data-tab="links">Links</div>
       <div class="tab" data-tab="admin">Admin</div>
       <div class="tab" data-tab="settings">Settings</div>
@@ -172,7 +173,7 @@
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
           <h2 style="margin:0;">Onboarding pipeline</h2>
-          <a href="https://app.onepagecrm.com" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#fff7ed;border:1px solid #fed7aa;color:#b45309;border-radius:10px;padding:8px 13px;text-decoration:none;font-weight:700;font-size:13px;">⤴ Update OnePageCRM</a>
+          <a href="https://app.onepagecrm.com" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:#f1f5f9;border:1px solid #cbd5e1;color:#475569;border-radius:10px;padding:8px 13px;text-decoration:none;font-weight:700;font-size:13px;">⤴ Update OnePageCRM</a>
         </div>
         <p class="hint">Track new clients toward onboarding. <b>Remember to mirror each move in OnePageCRM</b> (button above).</p>
         <div class="row" style="margin:6px 0 14px;">
@@ -182,6 +183,35 @@
         </div>
         <div class="msg" id="onbMsg"></div>
         <div class="board" id="onbBoard"><div class="empty">Loading…</div></div>
+      </div>
+
+      <div class="card">
+        <h2>Booking pipeline (all licensees)</h2>
+        <p class="hint">Licensees run this on their side; the <b>(FAS)</b> stages are yours. When a job hits <b>Email/Inv/Rep (FAS)</b>, prepare its invoice &amp; reports in <b>Build</b>; drag to <b>Paid/Rebook</b> once done. Uses the licensee filter above.</p>
+        <div class="board" id="bkBoard"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS — invoice sent → paid -->
+    <div class="panel" id="panel-payments">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <h2 style="margin:0;">Payment pipeline</h2>
+          <span style="display:flex;gap:8px;align-items:center;"><select id="payFilter" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;"></select><button class="ghost" id="payRefresh">Refresh</button></span>
+        </div>
+        <p class="hint">Tracks invoices out the door until they're paid — only for licensees with <b>Payment Tracking</b> switched on. A record lands in <b>Invoice Sent</b> automatically when you mark a job <b>Complete</b>; drag to <b>Invoice Paid</b> once the customer pays. Licensees see the same board on their side.</p>
+        <div style="background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:14px;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:7px;">Payment tracking — switch on per licensee</div>
+          <div id="payFlags" style="display:flex;flex-wrap:wrap;gap:8px;"><div class="empty">Loading…</div></div>
+        </div>
+        <div class="row" style="margin:6px 0 14px;align-items:flex-end;">
+          <div class="f"><label>Licensee</label><select id="payLic"></select></div>
+          <div class="f" style="flex:1 1 200px;"><label>Business</label><input id="payBiz" placeholder="business name"></div>
+          <div class="f" style="max-width:130px;"><label>Amount ($)</label><input id="payAmt" type="number" step="0.01" placeholder="optional"></div>
+          <button class="primary" id="payAdd">+ Add invoice</button>
+        </div>
+        <div class="msg" id="payMsg"></div>
+        <div class="board" id="payBoard"><div class="empty">Loading…</div></div>
       </div>
     </div>
 
@@ -240,7 +270,7 @@
             Support inbox <span style="font-weight:400;color:var(--muted);font-size:13px;">— support@fastas.nz</span>
           </a>
           <a class="qlink" href="https://app.onepagecrm.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
-            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#9a3412,#fb923c);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.3 0-8 1.7-8 5v3h16v-3c0-3.3-4.7-5-8-5z"/></svg></span>
+            <span style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#475569,#64748b);display:flex;align-items:center;justify-content:center;color:#fff;"><svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.3 0-8 1.7-8 5v3h16v-3c0-3.3-4.7-5-8-5z"/></svg></span>
             OnePageCRM <span style="font-weight:400;color:var(--muted);font-size:13px;">— contacts &amp; actions</span>
           </a>
           <a class="qlink" href="https://app-au.patguardcloud.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:13px 16px;border:1px solid var(--line);border-radius:14px;text-decoration:none;color:var(--ink);font-weight:600;">
@@ -391,12 +421,15 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'pipeline',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadReminders();
+      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadReminders(); loadBookingsBoard(); loadPaymentsBoard(); loadPayFlags();
+      document.getElementById('payAdd').addEventListener('click',addPayment);
+      document.getElementById('payRefresh').addEventListener('click',()=>{ loadPaymentsBoard(); loadPayFlags(); });
+      document.getElementById('payFilter').addEventListener('change',loadPaymentsBoard);
       document.getElementById('rcSend').addEventListener('click',sendRecord);
       document.getElementById('pgUpload').addEventListener('click',uploadGar);
       document.getElementById('onbAdd').addEventListener('click',addOnb);
-      document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); loadOnbBoard(); });
-      document.getElementById('pipeFilter').addEventListener('change',()=>{ loadInvBoard(); loadTrainBoard(); });
+      document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadBookingsBoard(); });
+      document.getElementById('pipeFilter').addEventListener('change',()=>{ loadInvBoard(); loadTrainBoard(); loadBookingsBoard(); });
       document.getElementById('pgFilter').addEventListener('change',loadPatguard);
       document.getElementById('remRefresh').addEventListener('click',loadReminders);
       document.getElementById('remFilter').addEventListener('change',loadReminders);
@@ -526,7 +559,7 @@
       board.querySelectorAll('a.kdl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
       board.querySelectorAll('.jbuild').forEach(b=>b.addEventListener('click',()=>{ const lic=b.dataset.lic, bz=decodeURIComponent(b.dataset.biz||''); location.hash='#build'; setTimeout(()=>{ const s=document.getElementById('rcLic'); if(s){ s.value=lic; s.dispatchEvent(new Event('change')); } const i=document.getElementById('rcBiz'); if(i){ i.value=bz; i.focus(); } },90); }));
       board.querySelectorAll('.jresend').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); if(!confirm('Resend '+bz+' to the licensee? Rejected items return to pending.')) return; await sb.from('documents').update({status:'pending',licensee_note:null,decided_at:null}).eq('licensee_id',b.dataset.lic).eq('business_name',bz).eq('status','rejected'); loadInvBoard(); }));
-      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); await sb.from('archived_jobs').insert({licensee_id:b.dataset.lic,business_name:bz,archived_by:session.user.id}); loadInvBoard(); }));
+      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); const lic=b.dataset.lic; await sb.from('archived_jobs').insert({licensee_id:lic,business_name:bz,archived_by:session.user.id}); await maybeCreatePayment(lic,bz); loadInvBoard(); loadPaymentsBoard(); }));
     }
 
     // ===== Reminders (compliance due dates) =====
@@ -654,6 +687,99 @@
       document.getElementById('opCsv').value=''; document.getElementById('bzLic').value=lic; loadBzList(lic);
     }
 
+    // ===== Booking pipeline board (shared with licensees) =====
+    const BKSTAGES=[['to_rebook','To Rebook'],['pending_booking','Pending Booking'],['onboard','Onboard (FAS)'],['pending_job','Pending Job'],['job_finished','Job Finished'],['email_invrep','Email/Inv/Rep (FAS)'],['check_send','Check Inv/Rep>Send'],['paid_rebook','Paid/Rebook (FAS)']];
+    async function loadBookingsBoard(){
+      const board=document.getElementById('bkBoard');
+      const flt=(document.getElementById('pipeFilter')||{}).value||'';
+      const {data}=await sb.from('bookings').select('*').order('created_at',{ascending:false});
+      const nm={}; licenseeList.forEach(l=>nm[l.id]=l.full_name||l.email);
+      const rows=(data||[]).filter(b=>!flt||b.licensee_id===flt);
+      board.innerHTML=BKSTAGES.map(s=>{
+        const fas=s[1].includes('(FAS)')||s[0]==='check_send';
+        const items=rows.filter(b=>b.stage===s[0]);
+        const cards=items.map(b=>`<div class="kcard bkcard" draggable="true" data-id="${b.id}"><div class="kt">${b.title}</div><div class="ks">${nm[b.licensee_id]||''}</div><div class="ks">${b.amount?'$'+Number(b.amount).toLocaleString():'$0'}${b.due_date?' · '+b.due_date:''}</div></div>`);
+        return `<div class="col"><div class="colhead ${fas?'s-sent':'s-recv'}">${s[1]}<span class="ct">${items.length}</span></div><div class="colbody bkdrop" data-stage="${s[0]}">${cards.join('')||'<div class="kempty">—</div>'}</div></div>`;
+      }).join('');
+      board.querySelectorAll('.bkcard').forEach(el=>{
+        el.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain',el.dataset.id); el.style.opacity='.4'; });
+        el.addEventListener('dragend',()=>el.style.opacity='1');
+      });
+      board.querySelectorAll('.bkdrop').forEach(col=>{
+        col.addEventListener('dragover',e=>e.preventDefault());
+        col.addEventListener('drop',async e=>{ e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); if(!id) return; await sb.from('bookings').update({stage:col.dataset.stage,updated_at:new Date().toISOString()}).eq('id',id); loadBookingsBoard(); });
+      });
+    }
+
+    // ===== Payments board (invoice sent → paid) =====
+    const PAYCOLS=[['sent','Invoice Sent','s-sent'],['paid','Invoice Paid','s-appr']];
+    async function loadPaymentsBoard(){
+      const board=document.getElementById('payBoard'); if(!board) return;
+      const flt=(document.getElementById('payFilter')||{}).value||'';
+      const {data,error}=await sb.from('payments').select('*').order('sent_at',{ascending:false});
+      if(error){ board.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      const nm={}; licenseeList.forEach(l=>nm[l.id]=l.full_name||l.email);
+      const rows=(data||[]).filter(p=>!flt||p.licensee_id===flt);
+      board.innerHTML=PAYCOLS.map(c=>{
+        const items=rows.filter(p=>p.status===c[0]);
+        const cards=items.map(p=>{
+          const amt=p.amount!=null?'$'+Number(p.amount).toLocaleString():'—';
+          const when=p.status==='paid'?('Paid'+(p.paid_at?' · '+p.paid_at.slice(0,10):'')):('Sent'+(p.sent_at?' · '+p.sent_at.slice(0,10):''));
+          return `<div class="kcard paycard" draggable="true" data-id="${p.id}"><div class="ktop"><span class="kt" title="${p.business_name}">${p.business_name}</span><button class="paydel" data-id="${p.id}" title="Remove" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:13px;line-height:1;">✕</button></div><div class="ks">${nm[p.licensee_id]||'—'}</div><div class="ks"><b>${amt}</b></div><div class="kstat">${when}</div></div>`;
+        });
+        return `<div class="col"><div class="colhead ${c[2]}">${c[1]}<span class="ct">${items.length}</span></div><div class="colbody paydrop" data-status="${c[0]}">${cards.join('')||'<div class="kempty">—</div>'}</div></div>`;
+      }).join('');
+      const badge=document.getElementById('payBadge'); const waiting=rows.filter(p=>p.status==='sent').length;
+      if(badge){ if(waiting){ badge.textContent=waiting; badge.style.display='inline-block'; } else badge.style.display='none'; }
+      board.querySelectorAll('.paycard').forEach(el=>{
+        el.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain',el.dataset.id); el.style.opacity='.4'; });
+        el.addEventListener('dragend',()=>el.style.opacity='1');
+      });
+      board.querySelectorAll('.paydrop').forEach(col=>{
+        col.addEventListener('dragover',e=>e.preventDefault());
+        col.addEventListener('drop',async e=>{ e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); if(!id) return; const st=col.dataset.status;
+          await sb.from('payments').update({status:st,paid_at: st==='paid'?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq('id',id); loadPaymentsBoard(); });
+      });
+      board.querySelectorAll('.paydel').forEach(b=>b.addEventListener('click',async(e)=>{ e.stopPropagation(); if(!confirm('Remove this payment record?')) return; await sb.from('payments').delete().eq('id',b.dataset.id); loadPaymentsBoard(); }));
+    }
+    async function loadPayFlags(){
+      const host=document.getElementById('payFlags'); if(!host) return;
+      const {data,error}=await sb.from('profiles').select('id,full_name,email,features').eq('role','licensee').order('email');
+      if(error){ host.innerHTML='<span class="empty">'+error.message+'</span>'; return; }
+      host.innerHTML=(data||[]).map(l=>{
+        const on=!!(l.features&&l.features.payments===true);
+        return `<label style="display:inline-flex;align-items:center;gap:7px;background:${on?'#ecfdf3':'#eef1f6'};border:1px solid ${on?'#bbf7d0':'var(--line)'};border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;"><input type="checkbox" class="payflag" data-id="${l.id}" ${on?'checked':''} style="cursor:pointer;">${l.full_name||l.email}</label>`;
+      }).join('')||'<span class="empty">No licensees.</span>';
+      host.querySelectorAll('.payflag').forEach(c=>c.addEventListener('change',async()=>{
+        const id=c.dataset.id, val=c.checked;
+        const {data:p}=await sb.from('profiles').select('features').eq('id',id).single();
+        const feat=Object.assign({}, (p&&p.features)?p.features:{}); feat.payments=val;
+        const {error:e2}=await sb.from('profiles').update({features:feat}).eq('id',id);
+        if(e2){ alert(e2.message); c.checked=!val; return; }
+        loadPayFlags();
+      }));
+    }
+    async function addPayment(){
+      const lic=document.getElementById('payLic').value, biz=document.getElementById('payBiz').value.trim(), amt=document.getElementById('payAmt').value;
+      const msg=document.getElementById('payMsg'); msg.textContent='';
+      if(!lic||!biz){ msg.textContent='Pick a licensee and enter a business.'; msg.className='msg err'; return; }
+      const {error}=await sb.from('payments').insert({licensee_id:lic,business_name:biz,amount:amt?Number(amt):null,status:'sent',created_by:session.user.id});
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      msg.textContent='Added to Invoice Sent ✓'; msg.className='msg ok';
+      document.getElementById('payBiz').value=''; document.getElementById('payAmt').value=''; loadPaymentsBoard();
+    }
+    async function maybeCreatePayment(lic,biz){
+      try{
+        const {data:p}=await sb.from('profiles').select('features').eq('id',lic).single();
+        if(!(p&&p.features&&p.features.payments===true)) return;            // licensee not opted in
+        const {count}=await sb.from('payments').select('id',{count:'exact',head:true}).eq('licensee_id',lic).eq('business_name',biz).eq('status','sent');
+        if(count) return;                                                    // already waiting on payment — don't duplicate
+        const {data:g}=await sb.from('generated_invoices').select('total').eq('licensee_id',lic).eq('business_name',biz).order('created_at',{ascending:false}).limit(1);
+        const amount=(g&&g[0]&&g[0].total!=null)?g[0].total:null;
+        await sb.from('payments').insert({licensee_id:lic,business_name:biz,amount,status:'sent',created_by:session.user.id});
+      }catch(_){}
+    }
+
     // ===== Onboarding board =====
     const ONB=[['lead','Lead','s-recv'],['contacted','Contacted','s-sent'],['quoted','Quoted','s-check'],['onboarded','Onboarded','s-appr']];
     async function loadOnbBoard(){
@@ -729,7 +855,7 @@
       {key:'resend',   name:'Resend',   desc:'email sending'},
     ];
     function sysRow(s,state,detail){
-      const colors={ok:['#ecfdf3','#067647','Operational'],bad:['#fef2f2','#dc2626','Problem'],wait:['#f2f4f7','#667085','Checking…']};
+      const colors={ok:['#ecfdf3','#067647','Operational'],bad:['#f1f5f9','#475569','Problem'],wait:['#f2f4f7','#667085','Checking…']};
       const c=colors[state];
       return `<div style="display:flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;">
         <span style="width:12px;height:12px;border-radius:50%;background:${c[1]};box-shadow:0 0 0 4px ${c[0]};flex:0 0 auto;"></span>
@@ -795,6 +921,8 @@
       const allOpt='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
       const pgf=document.getElementById('pgFilter'); if(pgf) pgf.innerHTML=allOpt;
       const remf=document.getElementById('remFilter'); if(remf) remf.innerHTML=allOpt;
+      const payl=document.getElementById('payLic'); if(payl) payl.innerHTML=opts;
+      const payf=document.getElementById('payFilter'); if(payf) payf.innerHTML=allOpt;
       const first=licenseeList[0]?licenseeList[0].id:'';
       loadBizList(first); loadGarBizList(first); loadBzList(first);
     }
