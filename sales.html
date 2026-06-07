@@ -101,7 +101,7 @@
 
   <div id="paySection" style="display:none;">
     <div class="bar" style="margin-top:14px;border-top:1px solid var(--line);padding-top:16px;"><h1 style="font-size:18px;">Payments</h1><span class="totals" id="payTotals"></span></div>
-    <p class="hint">Invoices the FAST AS team has sent out on your behalf. Drag a card to <b>Paid</b> once the customer has paid — the admin sees the same update.</p>
+    <p class="hint">Invoices the FAST AS team has sent out on your behalf — they stay <b>Unpaid</b> until the admin marks them <b>Paid</b>.</p>
     <div class="payboard" id="payBoard"></div>
   </div>
 
@@ -250,7 +250,7 @@
     load();
 
     // ---- Payments board (only if licensee has Payment Tracking enabled) ----
-    const PAYSTAGES=[['sent','Awaiting Payment','#475569'],['paid','Paid','#4f46e5']];
+    const PAYSTAGES=[['sent','Unpaid','#475569'],['paid','Paid','#4f46e5']];
     let pays=[];
     async function loadPay(){
       const {data,error}=await sb.from('payments').select('*').order('sent_at',{ascending:false});
@@ -267,28 +267,13 @@
         const sum=items.reduce((a,p)=>a+(Number(p.amount)||0),0);
         const cards=items.map(p=>{
           const when=p.status==='paid'?('paid'+(p.paid_at?' '+fmtDue(p.paid_at.slice(0,10)):'')):('sent'+(p.sent_at?' '+fmtDue(p.sent_at.slice(0,10)):''));
-          return `<div class="paycard" draggable="true" data-id="${p.id}"><div class="pt">${p.business_name}</div><div class="pm"><b>${p.amount!=null?money(p.amount):'—'}</b> · ${when}</div></div>`;
+          return `<div class="paycard" data-id="${p.id}"><div class="pt">${p.business_name}</div><div class="pm"><b>${p.amount!=null?money(p.amount):'—'}</b> · ${when}</div></div>`;
         });
         return `<div class="paycol"><div class="payhead" style="background:${s[2]};">${s[1]}<span class="pct">${money(sum)} (${items.length})</span></div><div class="paybody" data-status="${s[0]}">${cards.join('')||'<div class="colempty">—</div>'}</div></div>`;
       }).join('');
       bindPay();
     }
-    function bindPay(){
-      document.querySelectorAll('.paycard').forEach(el=>{
-        el.addEventListener('dragstart',e=>{ el.classList.add('dragging'); e.dataTransfer.setData('text/plain',el.dataset.id); });
-        el.addEventListener('dragend',()=>el.classList.remove('dragging'));
-      });
-      document.querySelectorAll('.paybody').forEach(col=>{
-        col.addEventListener('dragover',e=>{ e.preventDefault(); col.classList.add('over'); });
-        col.addEventListener('dragleave',()=>col.classList.remove('over'));
-        col.addEventListener('drop',async e=>{ e.preventDefault(); col.classList.remove('over');
-          const id=e.dataTransfer.getData('text/plain'); const st=col.dataset.status;
-          const p=pays.find(x=>x.id===id); if(!p||p.status===st) return;
-          p.status=st; p.paid_at= st==='paid'? new Date().toISOString():null; renderPay();
-          await sb.from('payments').update({status:st,paid_at:p.paid_at,updated_at:new Date().toISOString()}).eq('id',id);
-        });
-      });
-    }
+    function bindPay(){ /* read-only on the licensee side — the admin marks invoices paid */ }
     if(prof?.features?.payments===true){ document.getElementById('paySection').style.display='block'; loadPay(); }
   </script>
 </body>

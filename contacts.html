@@ -26,6 +26,7 @@
   .acts a.call{background:#eef2ff;color:var(--green);border:1px solid #c7d2fe;}
   .acts a.mail{background:#eff6ff;color:var(--brand);border:1px solid #dbe7ff;}
   .acts a.off{background:#f4f5f7;color:#9aa4b2;border:1px solid var(--line);pointer-events:none;}
+  .acts a.arch{background:#f1f5f9;color:var(--ink);border:1px solid var(--line);}
   .empty{color:var(--muted);text-align:center;padding:50px 0;}
   .modal{display:none;position:fixed;inset:0;z-index:5000;background:rgba(16,24,40,.45);align-items:center;justify-content:center;padding:18px;}
   .modal.show{display:flex;}
@@ -85,7 +86,8 @@
         const tel=(b.phone||'').replace(/[^+\d]/g,'');
         const call=tel?`<a class="call" href="tel:${tel}">📞 Call</a>`:`<a class="call off">📞 No phone</a>`;
         const mail=b.contact_email?`<a class="mail" href="#" data-email="${b.contact_email}">✉ Email</a>`:`<a class="mail off">✉ No email</a>`;
-        return `<div class="c"><div class="nm">${b.name}</div>${who||b.phone||b.contact_email?`<div class="who2">${[who,b.phone,b.contact_email].filter(Boolean).join(' · ')}</div>`:''}<div class="acts">${call}${mail}</div></div>`;
+        const arch=`<a class="arch" href="archive.html?biz=${encodeURIComponent(b.name)}&email=${encodeURIComponent(b.contact_email||'')}">📁 Files</a>`;
+        return `<div class="c"><div class="nm">${b.name}</div>${who||b.phone||b.contact_email?`<div class="who2">${[who,b.phone,b.contact_email].filter(Boolean).join(' · ')}</div>`:''}<div class="acts">${call}${mail}${arch}</div></div>`;
       }).join('');
       host.querySelectorAll('a.mail[data-email]').forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); openCompose(a.dataset.email); }));
     }

@@ -116,7 +116,6 @@
     <div class="layout">
     <nav class="tabs">
       <div class="tab active" data-tab="pipeline">Pipelines <span id="apprBadge" style="display:none;margin-left:6px;background:#475569;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
-      <div class="tab" data-tab="payments">Payments <span id="payBadge" style="display:none;margin-left:6px;background:#1d4ed8;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
       <div class="tab" data-tab="build">Build</div>
       <div class="tab" data-tab="businesses">Businesses</div>
       <div class="tab" data-tab="reminders">Reminders <span id="remBadge" style="display:none;margin-left:6px;background:#475569;color:#fff;border-radius:999px;padding:0 7px;font-size:12px;">0</span></div>
@@ -153,7 +152,8 @@
           <h2 style="margin:0;">Invoice &amp; report pipeline</h2>
           <span style="display:flex;gap:8px;align-items:center;"><select id="pipeFilter" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;"></select><button class="ghost" id="pipeRefresh">Refresh</button></span>
         </div>
-        <p class="hint">A .gar upload starts a job in <b>Received</b>. Send the invoice &amp; reports (Build) → <b>Sent</b>. The licensee approves → <b>Approved</b>, or rejects with a note → <b>Check</b> (Resend to send again). Mark <b>Complete</b> to archive.</p>
+        <p class="hint">A .gar upload starts a job in <b>Received</b> → Build → <b>Sent</b> → licensee <b>Approved</b> → <b>Complete</b>. Payment-tracked licensees then sit in <b>Payment check</b> until you click <b>Payment received</b>.</p>
+        <div style="background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin-bottom:12px;"><div style="font-weight:700;font-size:12.5px;margin-bottom:7px;">Payment tracking — switch on per licensee</div><div id="payFlags" style="display:flex;flex-wrap:wrap;gap:8px;"><div class="empty">Loading…</div></div></div>
         <div class="board" id="invBoard"><div class="empty">Loading…</div></div>
       </div>
       <div class="card">
@@ -178,29 +178,6 @@
         <h2>Booking pipeline (all licensees)</h2>
         <p class="hint">Licensees run this on their side; the <b>(FAS)</b> stages are yours. When a job hits <b>Email/Inv/Rep (FAS)</b>, prepare its invoice &amp; reports in <b>Build</b>; drag to <b>Paid/Rebook</b> once done. Uses the licensee filter above.</p>
         <div class="board" id="bkBoard"><div class="empty">Loading…</div></div>
-      </div>
-    </div>
-
-    <!-- PAYMENTS — invoice sent → paid -->
-    <div class="panel" id="panel-payments">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-          <h2 style="margin:0;">Payment pipeline</h2>
-          <span style="display:flex;gap:8px;align-items:center;"><select id="payFilter" style="padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;"></select><button class="ghost" id="payRefresh">Refresh</button></span>
-        </div>
-        <p class="hint">Tracks invoices out the door until they're paid — only for licensees with <b>Payment Tracking</b> switched on. A record lands in <b>Invoice Sent</b> automatically when you mark a job <b>Complete</b>; drag to <b>Invoice Paid</b> once the customer pays. Licensees see the same board on their side.</p>
-        <div style="background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:14px;">
-          <div style="font-weight:700;font-size:13px;margin-bottom:7px;">Payment tracking — switch on per licensee</div>
-          <div id="payFlags" style="display:flex;flex-wrap:wrap;gap:8px;"><div class="empty">Loading…</div></div>
-        </div>
-        <div class="row" style="margin:6px 0 14px;align-items:flex-end;">
-          <div class="f"><label>Licensee</label><select id="payLic"></select></div>
-          <div class="f" style="flex:1 1 200px;"><label>Business</label><input id="payBiz" placeholder="business name"></div>
-          <div class="f" style="max-width:130px;"><label>Amount ($)</label><input id="payAmt" type="number" step="0.01" placeholder="optional"></div>
-          <button class="primary" id="payAdd">+ Add invoice</button>
-        </div>
-        <div class="msg" id="payMsg"></div>
-        <div class="board" id="payBoard"><div class="empty">Loading…</div></div>
       </div>
     </div>
 
@@ -396,14 +373,11 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'pipeline',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadReminders(); loadBookingsBoard(); loadPaymentsBoard(); loadPayFlags();
-      document.getElementById('payAdd').addEventListener('click',addPayment);
-      document.getElementById('payRefresh').addEventListener('click',()=>{ loadPaymentsBoard(); loadPayFlags(); });
-      document.getElementById('payFilter').addEventListener('change',loadPaymentsBoard);
+      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadReminders(); loadBookingsBoard(); loadPayFlags();
       document.getElementById('rcSend').addEventListener('click',sendRecord);
       document.getElementById('pgUpload').addEventListener('click',uploadGar);
       document.getElementById('onbAdd').addEventListener('click',addOnb);
-      document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadBookingsBoard(); });
+      document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadBookingsBoard(); loadPayFlags(); });
       document.getElementById('pipeFilter').addEventListener('change',()=>{ loadInvBoard(); loadTrainBoard(); loadBookingsBoard(); });
       document.getElementById('pgFilter').addEventListener('change',loadPatguard);
       document.getElementById('remRefresh').addEventListener('click',loadReminders);
@@ -473,18 +447,20 @@
 
     async function loadInvBoard(){
       const board=document.getElementById('invBoard');
-      const [d1,d2,d3,d4,d5]=await Promise.all([
+      const [d1,d2,d3,d4,d5,d6]=await Promise.all([
         sb.from('documents').select('*').order('created_at',{ascending:false}),
         sb.from('patguard_files').select('*').eq('processed',false).order('created_at',{ascending:false}),
         sb.from('archived_jobs').select('*').order('archived_at',{ascending:false}),
         sb.from('generated_invoices').select('*').order('created_at',{ascending:false}),
-        sb.from('businesses').select('id,name')
+        sb.from('businesses').select('id,name'),
+        sb.from('payments').select('*').order('created_at',{ascending:false})
       ]);
-      const docs=d1.data||[], gars=d2.data||[], arch=d3.data||[], gen=d4.data||[], biz=d5.data||[];
+      const docs=d1.data||[], gars=d2.data||[], arch=d3.data||[], gen=d4.data||[], biz=d5.data||[], pays=d6.data||[];
       const {data:profs}=await sb.from('profiles').select('id,full_name,email,whatsapp_channels,whatsapp_link');
       const nm={}, wa={};
       (profs||[]).forEach(p=>{ nm[p.id]=p.full_name||p.email; const c=(Array.isArray(p.whatsapp_channels)&&p.whatsapp_channels[0])?p.whatsapp_channels[0].link:p.whatsapp_link; if(c) wa[p.id]=c; });
       const bizName={}; biz.forEach(b=>bizName[b.id]=b.name);
+      const payByKey={}; pays.forEach(p=>{ const k=p.licensee_id+'|'+p.business_name; if(!payByKey[k]) payByKey[k]=p; });
       const archSet=new Set(arch.map(a=>a.licensee_id+'|'+a.business_name));
       const groups={};
       const grp=(lid,name)=>{ const k=lid+'|'+name; return groups[k]=groups[k]||{lid,biz:name,items:[],gars:[],gen:[]}; };
@@ -492,10 +468,15 @@
       gars.forEach(x=>grp(x.licensee_id, bizName[x.business_id]||x.file_name).gars.push(x));
       gen.forEach(x=>grp(x.licensee_id,x.business_name).gen.push(x));
       const flt=(document.getElementById('pipeFilter')||{}).value||'';
-      const cols={received:[],sent:[],check:[],approved:[],complete:[]};
+      const cols={received:[],sent:[],check:[],approved:[],paycheck:[],complete:[]};
       Object.entries(groups).forEach(([k,g])=>{
         if(flt && g.lid!==flt) return;
-        if(archSet.has(k)){ cols.complete.push(bizCard(g,'complete',nm,wa)); return; }
+        if(archSet.has(k)){
+          const pay=payByKey[k];
+          if(pay && pay.status==='sent') cols.paycheck.push(bizCard(g,'paycheck',nm,wa,pay));
+          else cols.complete.push(bizCard(g,'complete',nm,wa));
+          return;
+        }
         if(g.items.length===0){ cols.received.push(bizCard(g,'received',nm,wa)); return; }
         const pending=g.items.filter(d=>d.status==='pending').length;
         const rejected=g.items.filter(d=>d.status==='rejected').length;
@@ -503,7 +484,7 @@
         else if(rejected>0) cols.check.push(bizCard(g,'check',nm,wa));
         else cols.approved.push(bizCard(g,'approved',nm,wa));
       });
-      board.innerHTML=kcol('Received','s-recv',cols.received)+kcol('Sent','s-sent',cols.sent)+kcol('Check','s-check',cols.check)+kcol('Approved','s-appr',cols.approved)+kcol('Complete','s-done',cols.complete.slice(0,5));
+      board.innerHTML=kcol('Received','s-recv',cols.received)+kcol('Sent','s-sent',cols.sent)+kcol('Check','s-check',cols.check)+kcol('Approved','s-appr',cols.approved)+kcol('Payment check','s-sent',cols.paycheck)+kcol('Complete','s-done',cols.complete.slice(0,8));
       bindInv(board);
     }
     function fileExt(label,bucket,path,external){
@@ -511,29 +492,32 @@
       const attr=external?`href="${path}" target="_blank" rel="noopener"`:`data-bucket="${bucket}" data-path="${path}" href="#"`;
       return `<a class="kdl" ${attr} title="${label}">${safe} ⬇</a>`;
     }
-    function bizCard(g,stage,nm,wa){
+    function bizCard(g,stage,nm,wa,pay){
       const hasGar=g.gars.length>0, hasGen=g.gen.length>0;
       const ghost=stage==='received' && !hasGar && hasGen;
       let files='';
       if(hasGen && g.gen[0].file_path){ const fp=g.gen[0].file_path; files+=fileExt('Invoice', 'invoices', fp, /^https?:\/\//.test(fp)); }
-      g.gars.forEach(()=>{}); g.gars.forEach(x=>files+=fileExt('.gar','patguard',x.storage_path,false));
+      g.gars.forEach(x=>files+=fileExt('.gar','patguard',x.storage_path,false));
       g.items.forEach(d=>files+=fileExt(d.title||d.doc_type,'documents',d.storage_path,false));
       const notes=g.items.filter(d=>d.status==='rejected'&&d.licensee_note).map(d=>`<div class="knote">${d.licensee_note}</div>`).join('');
       let act='';
       if(stage==='received') act=`<button class="kbtn go jbuild" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">Build →</button>`;
       else if(stage==='check') act=`<button class="kbtn jresend" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">↻ Resend</button>`;
       else if(stage==='approved') act=`<button class="kbtn go jcomplete" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">✓ Complete</button>`;
+      else if(stage==='paycheck') act=`<button class="kbtn go jpaid" data-payid="${pay?pay.id:''}">✓ Payment received</button>`;
       let stat='';
       if(stage==='received') stat = (hasGar&&!hasGen) ? 'waiting on invoice' : (ghost ? 'waiting on .gar' : 'ready to build');
+      else if(stage==='paycheck') stat = 'awaiting payment'+(pay&&pay.amount!=null?' · $'+Number(pay.amount).toLocaleString():'');
       const waLink=wa[g.lid]?`<a class="kwa" href="${wa[g.lid]}" target="_blank" rel="noopener" title="WhatsApp channel">💬</a>`:'';
       const bubs=`<div class="kbubs"><span class="kbub ${hasGar?'on':'off'}" title="${hasGar?'.gar received':'.gar not received'}">.gar</span><span class="kbub ${hasGen?'on':'off'}" title="${hasGen?'invoice received':'invoice not received'}">.inv</span></div>`;
       return `<div class="kcard${ghost?' ghost':''}"><div class="ktop"><span class="kt" title="${g.biz}">${g.biz}</span>${waLink}</div><div class="ks">${nm[g.lid]||'—'}</div>${bubs}${stat?`<div class="kstat">${stat}</div>`:''}${files}${notes}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
     }
     function bindInv(board){
       board.querySelectorAll('a.kdl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
-      board.querySelectorAll('.jbuild').forEach(b=>b.addEventListener('click',()=>{ const lic=b.dataset.lic, bz=decodeURIComponent(b.dataset.biz||''); location.hash='#build'; setTimeout(()=>{ const s=document.getElementById('rcLic'); if(s){ s.value=lic; s.dispatchEvent(new Event('change')); } const i=document.getElementById('rcBiz'); if(i){ i.value=bz; i.focus(); } },90); }));
+      board.querySelectorAll('.jbuild').forEach(b=>b.addEventListener('click',()=>{ const lic=b.dataset.lic, bz=decodeURIComponent(b.dataset.biz||''); location.hash='#build'; setTimeout(()=>{ const sel=document.getElementById('rcLic'); if(sel){ sel.value=lic; sel.dispatchEvent(new Event('change')); } const i=document.getElementById('rcBiz'); if(i){ i.value=bz; i.focus(); } },90); }));
       board.querySelectorAll('.jresend').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); if(!confirm('Resend '+bz+' to the licensee? Rejected items return to pending.')) return; await sb.from('documents').update({status:'pending',licensee_note:null,decided_at:null}).eq('licensee_id',b.dataset.lic).eq('business_name',bz).eq('status','rejected'); loadInvBoard(); }));
-      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); const lic=b.dataset.lic; await sb.from('archived_jobs').insert({licensee_id:lic,business_name:bz,archived_by:session.user.id}); await maybeCreatePayment(lic,bz); await rollRebook(lic,bz); loadInvBoard(); loadPaymentsBoard(); }));
+      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); const lic=b.dataset.lic; await sb.from('archived_jobs').insert({licensee_id:lic,business_name:bz,archived_by:session.user.id}); await maybeCreatePayment(lic,bz); await rollRebook(lic,bz); loadInvBoard(); }));
+      board.querySelectorAll('.jpaid').forEach(b=>b.addEventListener('click',async()=>{ if(!b.dataset.payid) return; await sb.from('payments').update({status:'paid',paid_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',b.dataset.payid); loadInvBoard(); }));
     }
 
     // ===== Reminders (compliance due dates) =====
@@ -652,37 +636,6 @@
       });
     }
 
-    // ===== Payments board (invoice sent → paid) =====
-    const PAYCOLS=[['sent','Invoice Sent','s-sent'],['paid','Invoice Paid','s-appr']];
-    async function loadPaymentsBoard(){
-      const board=document.getElementById('payBoard'); if(!board) return;
-      const flt=(document.getElementById('payFilter')||{}).value||'';
-      const {data,error}=await sb.from('payments').select('*').order('sent_at',{ascending:false});
-      if(error){ board.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
-      const nm={}; licenseeList.forEach(l=>nm[l.id]=l.full_name||l.email);
-      const rows=(data||[]).filter(p=>!flt||p.licensee_id===flt);
-      board.innerHTML=PAYCOLS.map(c=>{
-        const items=rows.filter(p=>p.status===c[0]);
-        const cards=items.map(p=>{
-          const amt=p.amount!=null?'$'+Number(p.amount).toLocaleString():'—';
-          const when=p.status==='paid'?('Paid'+(p.paid_at?' · '+p.paid_at.slice(0,10):'')):('Sent'+(p.sent_at?' · '+p.sent_at.slice(0,10):''));
-          return `<div class="kcard paycard" draggable="true" data-id="${p.id}"><div class="ktop"><span class="kt" title="${p.business_name}">${p.business_name}</span><button class="paydel" data-id="${p.id}" title="Remove" style="border:none;background:none;color:#94a3b8;cursor:pointer;font-size:13px;line-height:1;">✕</button></div><div class="ks">${nm[p.licensee_id]||'—'}</div><div class="ks"><b>${amt}</b></div><div class="kstat">${when}</div></div>`;
-        });
-        return `<div class="col"><div class="colhead ${c[2]}">${c[1]}<span class="ct">${items.length+sreq.length}</span></div><div class="colbody paydrop" data-status="${c[0]}">${cards.concat(rcards).join('')||'<div class="kempty">—</div>'}</div></div>`;
-      }).join('');
-      const badge=document.getElementById('payBadge'); const waiting=rows.filter(p=>p.status==='sent').length;
-      if(badge){ if(waiting){ badge.textContent=waiting; badge.style.display='inline-block'; } else badge.style.display='none'; }
-      board.querySelectorAll('.paycard').forEach(el=>{
-        el.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain',el.dataset.id); el.style.opacity='.4'; });
-        el.addEventListener('dragend',()=>el.style.opacity='1');
-      });
-      board.querySelectorAll('.paydrop').forEach(col=>{
-        col.addEventListener('dragover',e=>e.preventDefault());
-        col.addEventListener('drop',async e=>{ e.preventDefault(); const id=e.dataTransfer.getData('text/plain'); if(!id) return; const st=col.dataset.status;
-          await sb.from('payments').update({status:st,paid_at: st==='paid'?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq('id',id); loadPaymentsBoard(); });
-      });
-      board.querySelectorAll('.paydel').forEach(b=>b.addEventListener('click',async(e)=>{ e.stopPropagation(); if(!confirm('Remove this payment record?')) return; await sb.from('payments').delete().eq('id',b.dataset.id); loadPaymentsBoard(); }));
-    }
     async function rollRebook(lic,bizName){
       // When a job is completed, roll forward each service that's currently due, by its own cadence, and clear the appointment.
       try{
@@ -718,15 +671,6 @@
         if(e2){ alert(e2.message); c.checked=!val; return; }
         loadPayFlags();
       }));
-    }
-    async function addPayment(){
-      const lic=document.getElementById('payLic').value, biz=document.getElementById('payBiz').value.trim(), amt=document.getElementById('payAmt').value;
-      const msg=document.getElementById('payMsg'); msg.textContent='';
-      if(!lic||!biz){ msg.textContent='Pick a licensee and enter a business.'; msg.className='msg err'; return; }
-      const {error}=await sb.from('payments').insert({licensee_id:lic,business_name:biz,amount:amt?Number(amt):null,status:'sent',created_by:session.user.id});
-      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
-      msg.textContent='Added to Invoice Sent ✓'; msg.className='msg ok';
-      document.getElementById('payBiz').value=''; document.getElementById('payAmt').value=''; loadPaymentsBoard();
     }
     async function maybeCreatePayment(lic,biz){
       try{
@@ -881,8 +825,6 @@
       const allOpt='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
       const pgf=document.getElementById('pgFilter'); if(pgf) pgf.innerHTML=allOpt;
       const remf=document.getElementById('remFilter'); if(remf) remf.innerHTML=allOpt;
-      const payl=document.getElementById('payLic'); if(payl) payl.innerHTML=opts;
-      const payf=document.getElementById('payFilter'); if(payf) payf.innerHTML=allOpt;
       const first=licenseeList[0]?licenseeList[0].id:'';
       loadBizList(first); loadGarBizList(first); loadBzList(first);
     }

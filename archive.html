@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASTAS · Business Archive</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
+<style>
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--green:#4f46e5;--red:#475569;--ok:#4338ca;--bg1:#f7f9fc;--bg2:#eef2f8;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;margin-left:14px;}
+  .topbar .who{font-size:13px;color:var(--muted);}
+  .wrap{max-width:680px;margin:0 auto;padding:18px 16px 60px;}
+  h1{font-size:22px;margin:4px 0 2px;}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 16px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 4px 12px rgba(16,24,40,.04);}
+  .card h2{font-size:14px;margin:0 0 10px;}
+  .frow{display:flex;align-items:flex-start;gap:11px;padding:10px 0;border-bottom:1px dashed var(--line);}
+  .frow:last-child{border-bottom:none;}
+  .frow input[type=checkbox]{margin-top:3px;width:18px;height:18px;}
+  .fmeta{flex:1;min-width:0;}
+  .fname{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ftag{font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;margin-right:6px;}
+  .ftag.inv{background:#eff6ff;color:var(--brand);} .ftag.rep{background:#eef2ff;color:var(--ok);}
+  .fsub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .dl{font-size:12.5px;color:var(--brand);text-decoration:none;font-weight:600;}
+  label.fld{display:block;font-size:12px;font-weight:700;color:#344054;margin:10px 0 5px;}
+  input.tin,textarea.tin{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;}
+  textarea.tin{min-height:120px;resize:vertical;}
+  .send{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;cursor:pointer;font-size:14px;margin-top:12px;}
+  .send:disabled{opacity:.5;cursor:default;}
+  .msg{font-size:13px;margin-top:8px;min-height:16px;} .msg.ok{color:var(--green);} .msg.err{color:var(--red);}
+  .empty{color:var(--muted);text-align:center;padding:30px 0;font-size:14px;}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><div class="brand-mark">FA</div><b>Business Archive</b></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="contacts.html">← Contacts</a><a href="#" id="signoutLink" style="color:#475569;">Sign out</a></div>
+  </div>
+  <div class="wrap">
+    <h1 id="bizName">Business</h1>
+    <p class="sub">All invoices &amp; reports on file. Tick the ones to send, write a subject &amp; message, then email them to the business.</p>
+    <div class="card">
+      <h2>Files</h2>
+      <div id="fileHost"><div class="empty">Loading…</div></div>
+    </div>
+    <div class="card">
+      <h2>Send to the business</h2>
+      <label class="fld">To</label>
+      <input class="tin" id="eTo" type="email" placeholder="business email">
+      <label class="fld">Subject</label>
+      <input class="tin" id="eSubject" placeholder="e.g. Your invoice & reports">
+      <label class="fld">Message</label>
+      <textarea class="tin" id="eMsg" placeholder="Write a short message…"></textarea>
+      <button class="send" id="eSend">Send selected files</button>
+      <div class="msg" id="eStatus"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
+    const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
+    const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    document.getElementById('signoutLink').addEventListener('click',async(e)=>{ e.preventDefault();
+      try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
+      try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
+      location.href='index.html'; });
+    const {data:prof}=await sb.from('profiles').select('role,full_name').eq('id',session.user.id).single();
+    document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+(prof?.role||'licensee');
+
+    const params=new URLSearchParams(location.search);
+    const biz=params.get('biz')||'';
+    let toEmail=params.get('email')||'';
+    document.getElementById('bizName').textContent=biz||'Business';
+    if(!biz){ document.getElementById('fileHost').innerHTML='<div class="empty">No business specified.</div>'; }
+
+    let files=[];
+    async function load(){
+      if(!biz) return;
+      if(!toEmail){ const {data:b}=await sb.from('businesses').select('contact_email').eq('name',biz).limit(1); if(b&&b[0]&&b[0].contact_email) toEmail=b[0].contact_email; }
+      document.getElementById('eTo').value=toEmail||'';
+      const {data:docs}=await sb.from('documents').select('*').eq('business_name',biz).order('created_at',{ascending:false});
+      const {data:gen}=await sb.from('generated_invoices').select('*').eq('business_name',biz).order('created_at',{ascending:false});
+      files=[];
+      (docs||[]).forEach(d=>{ if(d.storage_path) files.push({bucket:'documents',path:d.storage_path,name:(d.title||d.doc_type)+'.pdf',type:d.doc_type,status:d.status,when:d.created_at}); });
+      (gen||[]).forEach(g=>{ if(g.file_path && !/^https?:\/\//.test(g.file_path)) files.push({bucket:'invoices',path:g.file_path,name:'Invoice'+(g.total!=null?' $'+g.total:'')+'.pdf',type:'invoice',status:'generated',when:g.created_at}); });
+      render();
+    }
+    function fmt(w){ return w? new Date(w).toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'}) : ''; }
+    function render(){
+      const host=document.getElementById('fileHost');
+      if(!files.length){ host.innerHTML='<div class="empty">No invoices or reports on file for this business yet.</div>'; return; }
+      host.innerHTML=files.map((f,i)=>`<div class="frow">
+        <input type="checkbox" data-i="${i}">
+        <div class="fmeta"><div class="fname"><span class="ftag ${f.type==='invoice'?'inv':'rep'}">${f.type==='invoice'?'Invoice':'Report'}</span>${f.name}</div>
+        <div class="fsub">${f.status||''}${f.when?' · '+fmt(f.when):''} · <a class="dl" href="#" data-dl="${i}">Download</a></div></div>
+      </div>`).join('');
+      host.querySelectorAll('a[data-dl]').forEach(a=>a.addEventListener('click',async e=>{ e.preventDefault();
+        const f=files[a.dataset.dl]; const {data,error}=await sb.storage.from(f.bucket).createSignedUrl(f.path,120);
+        if(error){ alert(error.message); return; } window.open(data.signedUrl,'_blank');
+      }));
+    }
+    document.getElementById('eSend').addEventListener('click',async()=>{
+      const st=document.getElementById('eStatus'); const btn=document.getElementById('eSend');
+      const to=document.getElementById('eTo').value.trim();
+      const chosen=[...document.querySelectorAll('#fileHost input[type=checkbox]:checked')].map(c=>files[c.dataset.i]).map(f=>({bucket:f.bucket,path:f.path,name:f.name}));
+      if(!to){ st.textContent='Add a recipient email.'; st.className='msg err'; return; }
+      if(!chosen.length){ st.textContent='Tick at least one file to send.'; st.className='msg err'; return; }
+      btn.disabled=true; st.textContent='Sending '+chosen.length+' file'+(chosen.length>1?'s':'')+'…'; st.className='msg';
+      try{
+        const r=await fetch(SUPABASE_URL+'/functions/v1/send-document',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({to,subject:document.getElementById('eSubject').value,message:document.getElementById('eMsg').value,files:chosen})});
+        const o=await r.json().catch(()=>({})); if(!r.ok||o.error) throw new Error(o.error||'Send failed.');
+        st.textContent='Sent ✓ — '+o.sent+' file'+(o.sent>1?'s':'')+' emailed. Replies go to '+(o.reply_to||'you')+'.'; st.className='msg ok';
+        document.querySelectorAll('#fileHost input[type=checkbox]').forEach(c=>c.checked=false);
+      }catch(e){ st.textContent=e.message; st.className='msg err'; }
+      btn.disabled=false;
+    });
+    load();
+  </script>
+</body>
+</html>
