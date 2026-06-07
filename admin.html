@@ -103,6 +103,17 @@
   .empty{color:var(--muted);font-size:14px;padding:14px 0;}
   .rkcard{background:#eff6ff;border-color:#dbe7ff !important;}
   .rbadge{font-size:8px;font-weight:800;background:#2563eb;color:#fff;border-radius:4px;padding:1px 4px;margin-right:4px;}
+  .modal{display:none;position:fixed;inset:0;z-index:6000;background:rgba(16,24,40,.45);align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto;}
+  .modal.show{display:flex;}
+  .mcard{background:#fff;border-radius:16px;width:100%;max-width:560px;box-shadow:0 16px 44px rgba(16,24,40,.25);margin:auto;}
+  .mhead{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+  .mhead h3{margin:0;font-size:17px;}
+  .mclose{background:none;border:none;font-size:17px;color:var(--muted);cursor:pointer;}
+  .mbody{padding:14px 18px 18px;}
+  .mbody h4{margin:14px 0 6px;font-size:13px;}
+  .jmfile{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px;}
+  .jmfile:last-child{border-bottom:none;}
+  .kcard{cursor:pointer;}
 </style>
 </head>
 <body>
@@ -323,6 +334,32 @@
 
   <div class="wrap" id="denied" style="display:none;"><div class="card"><h2>Admins only</h2><p class="hint">You're signed in but this area is for admins. <a href="index.html">← Main menu</a></p></div></div>
 
+  <div class="modal" id="jobModal">
+    <div class="mcard">
+      <div class="mhead"><h3>Edit job</h3><button class="mclose" id="jmClose">✕</button></div>
+      <div class="mbody">
+        <div class="row" style="align-items:flex-end;">
+          <div class="f" style="flex:1 1 200px;"><label>Business name</label><input id="jmName"></div>
+          <button class="ghost" id="jmSaveName">Rename</button>
+        </div>
+        <p class="hint" style="margin:8px 0 4px;">Licensee: <b id="jmLic">—</b> &nbsp;·&nbsp; Stage: <b id="jmStage">—</b></p>
+        <h4>Files</h4>
+        <div id="jmFiles"></div>
+        <div class="row" style="margin-top:10px;align-items:flex-end;">
+          <div class="f" style="flex:1 1 180px;"><label>Add a file</label><input id="jmFile" type="file"></div>
+          <div class="f"><label>As</label><select id="jmType"><option value="invoice">Invoice</option><option value="report">Report</option><option value="gar">.gar</option></select></div>
+          <button class="primary" id="jmAdd">Add</button>
+        </div>
+        <h4>Move stage</h4>
+        <div id="jmStageBtns" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+        <div class="msg" id="jmMsg"></div>
+        <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px;">
+          <button id="jmDelete" style="background:#fff;border:1px solid #cbd5e1;color:var(--red);border-radius:9px;padding:9px 14px;cursor:pointer;font-weight:700;font-size:13px;">Delete entire job</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
     const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
@@ -373,7 +410,7 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'pipeline',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadReminders(); loadBookingsBoard(); loadPayFlags();
+      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadReminders(); loadBookingsBoard(); loadPayFlags(); bindJobModal();
       document.getElementById('rcSend').addEventListener('click',sendRecord);
       document.getElementById('pgUpload').addEventListener('click',uploadGar);
       document.getElementById('onbAdd').addEventListener('click',addOnb);
@@ -510,17 +547,116 @@
       else if(stage==='paycheck') stat = 'awaiting payment'+(pay&&pay.amount!=null?' · $'+Number(pay.amount).toLocaleString():'');
       const waLink=wa[g.lid]?`<a class="kwa" href="${wa[g.lid]}" target="_blank" rel="noopener" title="WhatsApp channel">💬</a>`:'';
       const bubs=`<div class="kbubs"><span class="kbub ${hasGar?'on':'off'}" title="${hasGar?'.gar received':'.gar not received'}">.gar</span><span class="kbub ${hasGen?'on':'off'}" title="${hasGen?'invoice received':'invoice not received'}">.inv</span></div>`;
-      return `<div class="kcard${ghost?' ghost':''}"><div class="ktop"><span class="kt" title="${g.biz}">${g.biz}</span>${waLink}</div><div class="ks">${nm[g.lid]||'—'}</div>${bubs}${stat?`<div class="kstat">${stat}</div>`:''}${files}${notes}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
+      return `<div class="kcard${ghost?' ghost':''}" data-lid="${g.lid}" data-biz="${encodeURIComponent(g.biz)}"><div class="ktop"><span class="kt" title="${g.biz}">${g.biz}</span>${waLink}</div><div class="ks">${nm[g.lid]||'—'}</div>${bubs}${stat?`<div class="kstat">${stat}</div>`:''}${files}${notes}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
     }
     function bindInv(board){
-      board.querySelectorAll('a.kdl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
-      board.querySelectorAll('.jbuild').forEach(b=>b.addEventListener('click',()=>{ const lic=b.dataset.lic, bz=decodeURIComponent(b.dataset.biz||''); location.hash='#build'; setTimeout(()=>{ const sel=document.getElementById('rcLic'); if(sel){ sel.value=lic; sel.dispatchEvent(new Event('change')); } const i=document.getElementById('rcBiz'); if(i){ i.value=bz; i.focus(); } },90); }));
-      board.querySelectorAll('.jresend').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); if(!confirm('Resend '+bz+' to the licensee? Rejected items return to pending.')) return; await sb.from('documents').update({status:'pending',licensee_note:null,decided_at:null}).eq('licensee_id',b.dataset.lic).eq('business_name',bz).eq('status','rejected'); loadInvBoard(); }));
-      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async()=>{ const bz=decodeURIComponent(b.dataset.biz); const lic=b.dataset.lic; await sb.from('archived_jobs').insert({licensee_id:lic,business_name:bz,archived_by:session.user.id}); await maybeCreatePayment(lic,bz); await rollRebook(lic,bz); loadInvBoard(); }));
-      board.querySelectorAll('.jpaid').forEach(b=>b.addEventListener('click',async()=>{ if(!b.dataset.payid) return; await sb.from('payments').update({status:'paid',paid_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',b.dataset.payid); loadInvBoard(); }));
+      board.querySelectorAll('a.kdl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();download(a.dataset.bucket,a.dataset.path);}));
+      board.querySelectorAll('.jbuild').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); const lic=b.dataset.lic, bz=decodeURIComponent(b.dataset.biz||''); location.hash='#build'; setTimeout(()=>{ const sel=document.getElementById('rcLic'); if(sel){ sel.value=lic; sel.dispatchEvent(new Event('change')); } const i=document.getElementById('rcBiz'); if(i){ i.value=bz; i.focus(); } },90); }));
+      board.querySelectorAll('.jresend').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); const bz=decodeURIComponent(b.dataset.biz); if(!confirm('Resend '+bz+'? Rejected items return to pending.')) return; await sb.from('documents').update({status:'pending',licensee_note:null,decided_at:null}).eq('licensee_id',b.dataset.lic).eq('business_name',bz).eq('status','rejected'); loadInvBoard(); }));
+      board.querySelectorAll('.jcomplete').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); const bz=decodeURIComponent(b.dataset.biz); const lic=b.dataset.lic; await sb.from('archived_jobs').insert({licensee_id:lic,business_name:bz,archived_by:session.user.id}); await maybeCreatePayment(lic,bz); await rollRebook(lic,bz); loadInvBoard(); }));
+      board.querySelectorAll('.jpaid').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); if(!b.dataset.payid) return; await sb.from('payments').update({status:'paid',paid_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',b.dataset.payid); loadInvBoard(); }));
+      board.querySelectorAll('.kcard').forEach(c=>c.addEventListener('click',()=>{ if(c.dataset.lid) openJobModal(c.dataset.lid, decodeURIComponent(c.dataset.biz)); }));
     }
 
-    // ===== Reminders (compliance due dates) =====
+    // ===== editable job tile =====
+    let jmLid=null, jmBiz=null, _jmFiles=[];
+    function bindJobModal(){
+      const m=document.getElementById('jobModal');
+      document.getElementById('jmClose').onclick=()=>m.classList.remove('show');
+      m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); });
+      document.getElementById('jmSaveName').onclick=async()=>{
+        const nn=document.getElementById('jmName').value.trim(); if(!nn||nn===jmBiz) return;
+        await sb.from('documents').update({business_name:nn}).eq('licensee_id',jmLid).eq('business_name',jmBiz);
+        await sb.from('generated_invoices').update({business_name:nn}).eq('licensee_id',jmLid).eq('business_name',jmBiz);
+        await sb.from('payments').update({business_name:nn}).eq('licensee_id',jmLid).eq('business_name',jmBiz);
+        await sb.from('archived_jobs').update({business_name:nn}).eq('licensee_id',jmLid).eq('business_name',jmBiz);
+        await sb.from('businesses').update({name:nn}).eq('licensee_id',jmLid).eq('name',jmBiz);
+        jmBiz=nn; renderJob(); loadInvBoard();
+      };
+      document.getElementById('jmAdd').onclick=async()=>{
+        const f=document.getElementById('jmFile').files[0]; const type=document.getElementById('jmType').value; const msg=document.getElementById('jmMsg');
+        if(!f){ msg.textContent='Choose a file.'; msg.className='msg err'; return; }
+        msg.textContent='Uploading…'; msg.className='msg';
+        try{
+          if(type==='gar'){
+            const {data:bz}=await sb.from('businesses').select('id').eq('licensee_id',jmLid).eq('name',jmBiz).limit(1);
+            const path=jmLid+'/'+Date.now()+'-'+f.name;
+            const {error:ue}=await sb.storage.from('patguard').upload(path,f,{upsert:true}); if(ue) throw ue;
+            await sb.from('patguard_files').insert({licensee_id:jmLid,business_id:(bz&&bz[0]?bz[0].id:null),file_name:f.name,storage_path:path});
+          } else {
+            const path=jmLid+'/'+Date.now()+'-'+f.name;
+            const {error:ue}=await sb.storage.from('documents').upload(path,f,{upsert:true}); if(ue) throw ue;
+            await sb.from('documents').insert({licensee_id:jmLid,business_name:jmBiz,doc_type:type,title:f.name.replace(/\.[^.]+$/,''),storage_path:path,status:'pending',created_by:session.user.id});
+          }
+          document.getElementById('jmFile').value=''; msg.textContent='Added \u2713'; msg.className='msg ok'; renderJob(); loadInvBoard();
+        }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
+      };
+      document.getElementById('jmDelete').onclick=async()=>{
+        if(!confirm('Delete the ENTIRE job for '+jmBiz+'? This removes its invoices, reports, .gar files and pipeline records (the business itself is kept). Cannot be undone.')) return;
+        const {data:docs}=await sb.from('documents').select('id,storage_path').eq('licensee_id',jmLid).eq('business_name',jmBiz);
+        for(const d of (docs||[])) if(d.storage_path) await sb.storage.from('documents').remove([d.storage_path]);
+        await sb.from('documents').delete().eq('licensee_id',jmLid).eq('business_name',jmBiz);
+        const {data:bz}=await sb.from('businesses').select('id').eq('licensee_id',jmLid).eq('name',jmBiz).limit(1);
+        if(bz&&bz[0]){ const {data:gars}=await sb.from('patguard_files').select('id,storage_path').eq('business_id',bz[0].id); for(const g of (gars||[])) if(g.storage_path) await sb.storage.from('patguard').remove([g.storage_path]); await sb.from('patguard_files').delete().eq('business_id',bz[0].id); }
+        await sb.from('generated_invoices').delete().eq('licensee_id',jmLid).eq('business_name',jmBiz);
+        await sb.from('archived_jobs').delete().eq('licensee_id',jmLid).eq('business_name',jmBiz);
+        await sb.from('payments').delete().eq('licensee_id',jmLid).eq('business_name',jmBiz);
+        document.getElementById('jobModal').classList.remove('show'); loadInvBoard();
+      };
+    }
+    async function openJobModal(lid,biz){
+      jmLid=lid; jmBiz=biz;
+      document.getElementById('jmName').value=biz;
+      document.getElementById('jmFiles').innerHTML='Loading…';
+      document.getElementById('jmStageBtns').innerHTML='';
+      document.getElementById('jmMsg').textContent='';
+      document.getElementById('jobModal').classList.add('show');
+      await renderJob();
+    }
+    async function renderJob(){
+      const lid=jmLid, biz=jmBiz;
+      const {data:bzr}=await sb.from('businesses').select('id').eq('licensee_id',lid).eq('name',biz).limit(1);
+      const bizId=bzr&&bzr[0]?bzr[0].id:null;
+      const [docsR,garsR,genR,archR,payR,profR]=await Promise.all([
+        sb.from('documents').select('*').eq('licensee_id',lid).eq('business_name',biz),
+        bizId? sb.from('patguard_files').select('*').eq('business_id',bizId) : Promise.resolve({data:[]}),
+        sb.from('generated_invoices').select('*').eq('licensee_id',lid).eq('business_name',biz),
+        sb.from('archived_jobs').select('*').eq('licensee_id',lid).eq('business_name',biz),
+        sb.from('payments').select('*').eq('licensee_id',lid).eq('business_name',biz).order('created_at',{ascending:false}),
+        sb.from('profiles').select('full_name,email').eq('id',lid).single()
+      ]);
+      const docs=docsR.data||[], gars=garsR.data||[], gen=genR.data||[], arch=archR.data||[], pays=payR.data||[];
+      document.getElementById('jmLic').textContent=(profR.data&&(profR.data.full_name||profR.data.email))||'—';
+      const archived=arch.length>0; const pay=pays[0];
+      let stage='Received';
+      if(archived) stage=(pay&&pay.status==='sent')?'Payment check':'Complete';
+      else if(docs.length){ const pend=docs.filter(d=>d.status==='pending').length, rej=docs.filter(d=>d.status==='rejected').length; stage=pend>0?'Sent':(rej>0?'Check':'Approved'); }
+      document.getElementById('jmStage').textContent=stage;
+      const fl=[];
+      docs.forEach(d=>fl.push({label:(d.title||d.doc_type)+' ('+d.status+')',bucket:'documents',path:d.storage_path,kind:'doc',id:d.id}));
+      gars.forEach(g=>fl.push({label:'.gar — '+g.file_name,bucket:'patguard',path:g.storage_path,kind:'gar',id:g.id}));
+      gen.forEach(g=>fl.push({label:'Invoice'+(g.total!=null?' $'+g.total:''),bucket:'invoices',path:g.file_path,kind:'gen',id:g.id}));
+      _jmFiles=fl;
+      const host=document.getElementById('jmFiles');
+      host.innerHTML=fl.length?fl.map((f,i)=>`<div class="jmfile"><span>${f.label}</span><span style="display:flex;gap:6px;">${f.path?`<button class="kbtn line jmdl" data-i="${i}">\u2b07</button>`:''}<button class="kbtn warn jmdel" data-i="${i}">\u2715</button></span></div>`).join(''):'<div class="empty">No files yet.</div>';
+      host.querySelectorAll('.jmdl').forEach(b=>b.onclick=()=>{ const f=_jmFiles[b.dataset.i]; if(f.path && /^https?:/.test(f.path)) window.open(f.path,'_blank'); else if(f.path) download(f.bucket,f.path); });
+      host.querySelectorAll('.jmdel').forEach(b=>b.onclick=async()=>{ const f=_jmFiles[b.dataset.i]; if(!confirm('Delete this file?')) return;
+        if(f.kind==='doc'){ if(f.path) await sb.storage.from('documents').remove([f.path]); await sb.from('documents').delete().eq('id',f.id); }
+        else if(f.kind==='gar'){ if(f.path) await sb.storage.from('patguard').remove([f.path]); await sb.from('patguard_files').delete().eq('id',f.id); }
+        else if(f.kind==='gen'){ await sb.from('generated_invoices').delete().eq('id',f.id); }
+        renderJob(); loadInvBoard();
+      });
+      let btns='';
+      if(!archived) btns+='<button class="kbtn go" id="jmComplete">Mark Complete \u2192</button>';
+      if(archived) btns+='<button class="kbtn line" id="jmReopen">\u2190 Re-open</button>';
+      if(pay&&pay.status==='sent') btns+='<button class="kbtn go" id="jmPaid">\u2713 Mark paid</button>';
+      const sbtns=document.getElementById('jmStageBtns'); sbtns.innerHTML=btns;
+      const c=document.getElementById('jmComplete'); if(c) c.onclick=async()=>{ await sb.from('archived_jobs').insert({licensee_id:lid,business_name:biz,archived_by:session.user.id}); await maybeCreatePayment(lid,biz); await rollRebook(lid,biz); renderJob(); loadInvBoard(); };
+      const ro=document.getElementById('jmReopen'); if(ro) ro.onclick=async()=>{ await sb.from('archived_jobs').delete().eq('licensee_id',lid).eq('business_name',biz); renderJob(); loadInvBoard(); };
+      const pd=document.getElementById('jmPaid'); if(pd) pd.onclick=async()=>{ await sb.from('payments').update({status:'paid',paid_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',pay.id); renderJob(); loadInvBoard(); };
+    }
+
+    // ===== Reminders    // ===== Reminders (compliance due dates) =====
     const DUEFIELDS=[['tt_6m','Test & Tag 6-month'],['tt_12m','Test & Tag 12-month'],['fc_6m','Fire Cert 6-month'],['fc_12m','Fire Cert 12-month'],['ft_12m','Fire Training 12-month']];
     async function loadReminders(){
       const host=document.getElementById('remHost');
