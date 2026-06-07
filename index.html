@@ -81,9 +81,12 @@
   .icon.contacts{background:linear-gradient(135deg,#4338ca,#6366f1);box-shadow:0 8px 18px rgba(67,56,202,.45);}
   .icon.admin{background:linear-gradient(135deg,#111827,#374151);box-shadow:0 8px 18px rgba(17,24,39,.5);}
   .icon.xero{background:linear-gradient(135deg,#13b5ea,#0e7490);box-shadow:0 8px 18px rgba(19,181,234,.45);}
-  #salesCard{width:100%!important;max-width:none;flex-direction:row;min-height:96px;gap:22px;order:1;}
+  #salesCard{width:100% !important;max-width:none;background:linear-gradient(120deg,#0e7490 0%,#0891b2 50%,#06b6d4 100%) !important;border:none !important;color:#fff;border-radius:22px;flex-direction:row;align-items:center;justify-content:flex-start;gap:18px;padding:0 26px;min-height:106px;box-shadow:0 16px 38px rgba(8,145,178,.4);position:relative;overflow:hidden;order:1;}
+  #salesCard:hover{transform:translateY(-3px);box-shadow:0 22px 48px rgba(8,145,178,.55);}
+  #salesCard::after{content:"";position:absolute;right:-55px;top:-65px;width:210px;height:210px;border-radius:50%;background:rgba(255,255,255,.07);pointer-events:none;}
+  #salesCard::before{content:"";position:absolute;right:38px;bottom:-50px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none;}
   #bookingCard{order:2;} #contactsCard{order:3;}
-  @media(max-width:600px){ #salesCard{flex-direction:column;min-height:120px;width:100%!important;} }
+  @media(max-width:600px){ #salesCard{padding:0 18px;min-height:92px;gap:14px;} }
 
   .btn{
     display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;margin-top:auto;
@@ -220,11 +223,10 @@
       <h2>Certificate Builder</h2>
     </a>
 
-    <a class="card t-blue" id="salesCard" href="sales.html" style="display:none;">
-      <div class="icon sales">
-        <svg viewBox="0 0 24 24"><path d="M3 3h2v18H3V3zm16 8h2v10h-2V11zm-5-6h2v16h-2V5zM9 9h2v12H9V9z"/></svg>
-      </div>
-      <h2>Booking Pipeline</h2>
+    <a class="card" id="salesCard" href="sales.html" style="display:none;">
+      <div class="sales-ico"><svg viewBox="0 0 24 24"><path d="M3 3h2v18H3V3zm16 8h2v10h-2V11zm-5-6h2v16h-2V5zM9 9h2v12H9V9z"/></svg></div>
+      <div class="sales-txt"><h2>Sales Pipeline</h2><span>Your deals &amp; bookings board</span></div>
+      <div class="sales-arrow"><svg viewBox="0 0 24 24"><path d="M8.6 5.6 15 12l-6.4 6.4L7.2 17l5-5-5-5z"/></svg></div>
     </a>
 
     <a class="card t-green" id="contactsCard" href="contacts.html" style="display:none;">

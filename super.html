@@ -219,7 +219,7 @@
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
     const FN=SUPABASE_URL+'/functions/v1/admin-users';
     const TABLES=['profiles','pricing_items','training_reports','training_attendees','documents','patguard_files','report_templates'];
-    const FEATURES=[['voice','Invoice Generator'],['training','Certificate Builder'],['whatsapp','Invoice Changes'],['pricing','Price Setting'],['checker','Inv/Rep Checker'],['gar','.gar Uploader'],['bookings','Bookings'],['sales','Booking Pipeline'],['contacts','Contacts'],['payments','Payment Tracking'],['calendar','Rebook Calendar']];
+    const FEATURES=[['voice','Invoice Generator'],['training','Certificate Builder'],['whatsapp','Invoice Changes'],['pricing','Price Setting'],['checker','Inv/Rep Checker'],['gar','.gar Uploader'],['bookings','Bookings'],['sales','Sales Pipeline'],['contacts','Contacts'],['payments','Payment Tracking'],['calendar','Rebook Calendar']];
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html'); throw new Error('not signed in'); }

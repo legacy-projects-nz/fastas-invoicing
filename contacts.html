@@ -27,6 +27,19 @@
   .acts a.mail{background:#eff6ff;color:var(--brand);border:1px solid #dbe7ff;}
   .acts a.off{background:#f4f5f7;color:#9aa4b2;border:1px solid var(--line);pointer-events:none;}
   .empty{color:var(--muted);text-align:center;padding:50px 0;}
+  .modal{display:none;position:fixed;inset:0;z-index:5000;background:rgba(16,24,40,.45);align-items:center;justify-content:center;padding:18px;}
+  .modal.show{display:flex;}
+  .mcard{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:460px;box-shadow:0 16px 44px rgba(16,24,40,.25);}
+  .mcard h3{margin:0 0 4px;font-size:18px;}
+  .mcard .mh{font-size:12.5px;color:var(--muted);margin:0 0 14px;}
+  .mcard label{display:block;font-size:12px;font-weight:700;color:#344054;margin:10px 0 5px;}
+  .mcard input,.mcard textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;}
+  .mcard textarea{min-height:120px;resize:vertical;}
+  .mact{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px;}
+  .mact .send{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:700;cursor:pointer;}
+  .mact .send:disabled{opacity:.5;cursor:default;}
+  .mact .cancel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px;cursor:pointer;}
+  .cmsg{font-size:13px;min-height:16px;} .cmsg.ok{color:var(--green);} .cmsg.err{color:var(--red);}
 </style>
 </head>
 <body>
@@ -71,13 +84,51 @@
         const who=[b.first_name,b.last_name].filter(Boolean).join(' ');
         const tel=(b.phone||'').replace(/[^+\d]/g,'');
         const call=tel?`<a class="call" href="tel:${tel}">📞 Call</a>`:`<a class="call off">📞 No phone</a>`;
-        const mail=b.contact_email?`<a class="mail" href="mailto:${b.contact_email}">✉ Email</a>`:`<a class="mail off">✉ No email</a>`;
+        const mail=b.contact_email?`<a class="mail" href="#" data-email="${b.contact_email}">✉ Email</a>`:`<a class="mail off">✉ No email</a>`;
         return `<div class="c"><div class="nm">${b.name}</div>${who||b.phone||b.contact_email?`<div class="who2">${[who,b.phone,b.contact_email].filter(Boolean).join(' · ')}</div>`:''}<div class="acts">${call}${mail}</div></div>`;
       }).join('');
+      host.querySelectorAll('a.mail[data-email]').forEach(a=>a.addEventListener('click',e=>{ e.preventDefault(); openCompose(a.dataset.email); }));
     }
+    // ---- in-app email compose ----
+    const cModal=document.getElementById('cModal');
+    function openCompose(email){
+      document.getElementById('cTo').value=email||'';
+      document.getElementById('cSubject').value='';
+      document.getElementById('cMsg').value='';
+      document.getElementById('cStatus').textContent='';
+      cModal.classList.add('show');
+    }
+    document.getElementById('cCancel').addEventListener('click',()=>cModal.classList.remove('show'));
+    cModal.addEventListener('click',e=>{ if(e.target===cModal) cModal.classList.remove('show'); });
+    document.getElementById('cSend').addEventListener('click',async()=>{
+      const to=document.getElementById('cTo').value.trim();
+      const subject=document.getElementById('cSubject').value.trim();
+      const message=document.getElementById('cMsg').value.trim();
+      const st=document.getElementById('cStatus'); const btn=document.getElementById('cSend');
+      if(!to||!message){ st.textContent='Add a recipient and a message.'; st.className='cmsg err'; return; }
+      btn.disabled=true; st.textContent='Sending…'; st.className='cmsg';
+      try{
+        const r=await fetch(SUPABASE_URL+'/functions/v1/send-email',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({to,subject,message})});
+        const o=await r.json().catch(()=>({})); if(!r.ok||o.error) throw new Error(o.error||'Send failed.');
+        st.textContent='Sent ✓ — replies will come to '+(o.reply_to||'your inbox')+'.'; st.className='cmsg ok';
+        setTimeout(()=>cModal.classList.remove('show'),1400);
+      }catch(e){ st.textContent=e.message; st.className='cmsg err'; }
+      btn.disabled=false;
+    });
     search.addEventListener('input',render);
     load();
   
   </script>
+  <div class="modal" id="cModal">
+    <div class="mcard">
+      <h3>Send an email</h3>
+      <p class="mh">Sent from FAST AS on your behalf — when they reply it comes straight to your own inbox.</p>
+      <label>To</label><input id="cTo" type="email">
+      <label>Subject</label><input id="cSubject" placeholder="e.g. Your upcoming service">
+      <label>Message</label><textarea id="cMsg" placeholder="Write your message…"></textarea>
+      <div class="cmsg" id="cStatus"></div>
+      <div class="mact"><button class="cancel" id="cCancel">Cancel</button><button class="send" id="cSend">Send</button></div>
+    </div>
+  </div>
 </body>
 </html>
