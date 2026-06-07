@@ -77,6 +77,7 @@
       <div class="tab active" data-tab="overview">Overview</div>
       <div class="tab" data-tab="security">Accounts</div>
       <div class="tab" data-tab="permissions">Permissions</div>
+      <div class="tab" data-tab="data">Data</div>
       <div class="tab" data-tab="activity">Activity log</div>
       <div class="tab" data-tab="archive">Archive</div>
       <div class="tab" data-tab="danger">Danger zone</div>
@@ -137,7 +138,7 @@
     <div class="panel" id="panel-activity">
       <div class="card">
         <h2>Activity log</h2>
-        <p class="hint">Who did what across the system — sends, approvals, rejections, training decisions. <button class="ghost" id="actRefresh">Refresh</button></p>
+        <p class="hint">Who did what across the system — businesses, sends, approvals, payments, .gar uploads and rebooking activity. <button class="ghost" id="actRefresh">Refresh</button></p>
         <div id="actHost"><div class="empty">Loading…</div></div>
       </div>
     </div>
@@ -153,6 +154,39 @@
     </div>
 
     <!-- DANGER ZONE -->
+    <!-- DATA: businesses + backup/restore -->
+    <div class="panel" id="panel-data">
+      <div class="card">
+        <h2>Add a business</h2>
+        <p class="hint">Create a business for a licensee — same as the admin portal.</p>
+        <div class="row">
+          <div class="f"><label>Licensee</label><select id="bzLic"></select></div>
+          <div class="f" style="flex:1 1 180px;"><label>Business name</label><input id="bzName" placeholder="e.g. Harbour Cafe"></div>
+          <div class="f"><label>Email</label><input id="bzEmail" type="email"></div>
+          <div class="f"><label>Phone</label><input id="bzPhone"></div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div class="f"><label>First name</label><input id="bzFirst"></div>
+          <div class="f"><label>Last name</label><input id="bzLast"></div>
+          <button class="primary" id="bzAdd">Add business</button>
+        </div>
+        <div class="msg" id="bzMsg"></div>
+      </div>
+      <div class="card">
+        <h2>All businesses <button class="ghost" id="bzRefresh">Refresh</button></h2>
+        <div id="bzHost"><div class="empty">Loading…</div></div>
+      </div>
+      <div class="card">
+        <h2>Backup &amp; restore</h2>
+        <p class="hint">A full data backup is emailed to the super admin automatically every day. You can also email one now, or restore the system from a backup file (.json) if something goes wrong.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <button class="primary" id="bkNow">✉ Email me a backup now</button>
+          <label class="ghost" style="cursor:pointer;border:1px solid var(--line);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;">⤴ Restore from file<input id="rsFile" type="file" accept=".json,application/json" style="display:none;"></label>
+        </div>
+        <div class="msg" id="bkMsg"></div>
+      </div>
+    </div>
+
     <div class="panel" id="panel-danger">
       <div class="card dz">
         <h2>⚠ Danger zone</h2>
@@ -265,7 +299,7 @@
       };
     }
 
-    const ACTLABEL={doc_sent:'Sent for approval',doc_approved:'Licensee approved',doc_rejected:'Licensee rejected',training_emailed:'Training approved & sent',training_approved:'Training approved',training_rejected:'Training rejected'};
+    const ACTLABEL={doc_sent:'Sent for approval',doc_approved:'Licensee approved',doc_rejected:'Licensee rejected',training_emailed:'Training approved & sent',training_approved:'Training approved',training_rejected:'Training rejected',business_added:'Business added',gar_uploaded:'.gar uploaded',payment_added:'Payment created',payment_paid:'Payment marked paid',payment_sent:'Payment re-opened',rebook_invite:'Rebook invite sent',rebook_responded:'Customer proposed a time',rebook_call_requested:'Customer requested a call',rebook_approved:'Booking approved',rebook_declined:'Booking declined'};
     async function loadActivity(){
       const host=document.getElementById('actHost');
       const {data,error}=await sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(200);
@@ -281,6 +315,59 @@
         users.map(u=>`<tr><td>${u.full_name||'—'}</td><td>${u.email}</td><td><span class="pill ${u.role}">${u.role}</span></td><td>${new Date(u.created_at).toLocaleDateString()}</td></tr>`).join('')+'</tbody></table>';
     }
 
+    let dataLic=[];
+    async function loadData(){
+      const {data:lic}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
+      dataLic=lic||[];
+      const sel=document.getElementById('bzLic');
+      if(sel) sel.innerHTML=dataLic.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('')||'<option value="">No licensees</option>';
+      loadBizList();
+    }
+    async function loadBizList(){
+      const host=document.getElementById('bzHost'); if(!host) return;
+      const {data,error}=await sb.from('businesses').select('id,name,contact_email,phone,licensee_id').order('name');
+      if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
+      const nm={}; dataLic.forEach(l=>nm[l.id]=l.full_name||l.email);
+      if(!data.length){ host.innerHTML='<div class="empty">No businesses yet.</div>'; return; }
+      host.innerHTML='<table><thead><tr><th>Business</th><th>Licensee</th><th>Email</th><th>Phone</th><th></th></tr></thead><tbody>'+
+        data.map(b=>`<tr><td>${b.name}</td><td>${nm[b.licensee_id]||'—'}</td><td>${b.contact_email||''}</td><td>${b.phone||''}</td><td style="text-align:right"><button class="ghost bzDel" data-id="${b.id}" data-name="${(b.name||'').replace(/"/g,'&quot;')}">Delete</button></td></tr>`).join('')+'</tbody></table>';
+      host.querySelectorAll('.bzDel').forEach(x=>x.onclick=async()=>{ if(!confirm('Delete '+x.dataset.name+'? This also removes its schedules and booking requests.')) return; await sb.from('businesses').delete().eq('id',x.dataset.id); loadBizList(); });
+    }
+    function bindData(){
+      const add=document.getElementById('bzAdd');
+      if(add) add.onclick=async()=>{
+        const msg=document.getElementById('bzMsg'); msg.textContent='';
+        const lic=document.getElementById('bzLic').value, name=document.getElementById('bzName').value.trim();
+        if(!lic||!name){ msg.textContent='Pick a licensee and enter a business name.'; msg.className='msg err'; return; }
+        const rec={licensee_id:lic,name,contact_email:document.getElementById('bzEmail').value.trim()||null,phone:document.getElementById('bzPhone').value.trim()||null,first_name:document.getElementById('bzFirst').value.trim()||null,last_name:document.getElementById('bzLast').value.trim()||null};
+        const {error}=await sb.from('businesses').upsert(rec,{onConflict:'licensee_id,name'});
+        if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+        msg.textContent='Added ✓'; msg.className='msg ok';
+        ['bzName','bzEmail','bzPhone','bzFirst','bzLast'].forEach(i=>document.getElementById(i).value=''); loadBizList(); setTimeout(()=>{msg.textContent='';},1800);
+      };
+      const rf=document.getElementById('bzRefresh'); if(rf) rf.onclick=loadBizList;
+      const bk=document.getElementById('bkNow');
+      if(bk) bk.onclick=async()=>{
+        const msg=document.getElementById('bkMsg'); msg.textContent='Sending…'; msg.className='msg';
+        try{ const r=await fetch(SUPABASE_URL+'/functions/v1/data-backup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token},body:'{}'}); const o=await r.json().catch(()=>({})); if(!r.ok||o.error) throw new Error(o.error||'failed'); msg.textContent='Backup emailed to '+(o.to||'the super admin')+' ✓'; msg.className='msg ok'; }
+        catch(e){ msg.textContent='Could not send: '+e.message; msg.className='msg err'; }
+      };
+      const rs=document.getElementById('rsFile');
+      if(rs) rs.onchange=async(e)=>{
+        const f=e.target.files[0]; if(!f) return;
+        const msg=document.getElementById('bkMsg');
+        if(!confirm('Restore data from '+f.name+'? Existing records with the same IDs will be overwritten.')){ e.target.value=''; return; }
+        msg.textContent='Restoring…'; msg.className='msg';
+        try{
+          const json=JSON.parse(await f.text());
+          const r=await fetch(SUPABASE_URL+'/functions/v1/restore-backup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify(json)});
+          const o=await r.json().catch(()=>({})); if(!r.ok||o.error) throw new Error(o.error||'failed');
+          const summary=Object.entries(o.restored||{}).map(([t,n])=>t+': '+n).join(', ');
+          msg.textContent='Restore complete ✓ — '+summary; msg.className='msg ok'; loadBizList(); loadStats();
+        }catch(err){ msg.textContent='Restore failed: '+err.message; msg.className='msg err'; }
+        e.target.value='';
+      };
+    }
     function init(){
       function openPage(name,push){
         const tab=document.querySelector('.tab[data-tab="'+name+'"]');
@@ -296,7 +383,7 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'overview',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadStats(); loadAccounts(); loadPermLic(); loadActivity();
+      loadStats(); loadAccounts(); loadPermLic(); loadActivity(); loadData(); bindData();
       document.getElementById('actRefresh').addEventListener('click',loadActivity);
       document.getElementById('refreshStats').addEventListener('click',loadStats);
 
