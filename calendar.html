@@ -55,7 +55,7 @@
   .srow{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap;}
   .srow .nm{font-weight:700;font-size:13px;flex:1 1 120px;display:flex;align-items:center;gap:7px;}
   .srow select,.srow input{padding:7px 9px;border:1px solid var(--line);border-radius:8px;font-size:13px;}
-  .srow.off select,.srow.off input{opacity:.4;pointer-events:none;}
+  .srow.off .sCad,.srow.off .sDue{opacity:.5;}
   .frow{margin-top:14px;}
   .frow label{display:block;font-size:12px;font-weight:700;color:#344054;margin-bottom:5px;}
   .frow input[type=datetime-local]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;}
@@ -261,7 +261,9 @@
         return `<div class="srow ${on?'':'off'}" data-svc="${code}"><span class="nm"><input type="checkbox" class="sEnable" ${on?'checked':''}> <i class="dotc" style="background:${col}"></i>${label}</span><select class="sCad">${CAD.map(c=>`<option value="${c}" ${s&&s.cadence_months===c?'selected':''}>${c} months</option>`).join('')}</select><input type="date" class="sDue" value="${s&&s.next_due?s.next_due:''}"></div>`;
       }).join('');
       document.getElementById('svcRows').innerHTML=rows;
-      document.getElementById('svcRows').querySelectorAll('.sEnable').forEach(cb=>cb.addEventListener('change',()=>cb.closest('.srow').classList.toggle('off',!cb.checked)));
+      const svcRoot=document.getElementById('svcRows');
+      svcRoot.querySelectorAll('.sEnable').forEach(cb=>cb.addEventListener('change',()=>cb.closest('.srow').classList.toggle('off',!cb.checked)));
+      svcRoot.querySelectorAll('.sCad,.sDue').forEach(inp=>inp.addEventListener('input',()=>{ const row=inp.closest('.srow'); const cb=row.querySelector('.sEnable'); if(!cb.checked){ cb.checked=true; row.classList.remove('off'); } }));
       document.getElementById('fBooking').value=b.booking_at?toLocalInput(b.booking_at):'';
       document.getElementById('fRemind').checked=!!b.remind_email;
       document.getElementById('mMsg').textContent='';
