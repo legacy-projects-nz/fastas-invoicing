@@ -151,14 +151,24 @@
     const fStage=document.getElementById('fStage');
     fStage.innerHTML=STAGES.map(s=>`<option value="${s[0]}">${s[1]}</option>`).join('');
 
-    let deals=[], reqs=[];
+    let deals=[], reqs=[], dueGroups=[];
     const REQSTAGE={sent:'to_rebook',responded:'pending_booking',call_requested:'pending_booking'};
+    const SVCNAME={tt:'Test & Tag',ec:'Extinguisher Cert',ft:'Fire Training'};
+    function ymd(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+    function monthEndStr(){ const n=new Date(); return ymd(new Date(n.getFullYear(),n.getMonth()+1,0)); }
+    function monthStartStr(){ const n=new Date(); return ymd(new Date(n.getFullYear(),n.getMonth(),1)); }
     async function load(){
       const {data,error}=await sb.from('bookings').select('*').order('created_at',{ascending:false});
       if(error){ document.getElementById('board').innerHTML='<div class="colempty">'+error.message+'</div>'; return; }
       deals=data||[];
       const {data:rq}=await sb.from('booking_requests').select('*, businesses(name,phone,contact_email)').in('status',['sent','responded','call_requested']).order('updated_at',{ascending:false});
       reqs=rq||[];
+      // Rebooks due historically through the current month (overdue + due this month), excluding any with a live request
+      const {data:sch}=await sb.from('rebook_schedules').select('business_id,service,next_due,businesses(name)').not('next_due','is',null).lte('next_due',monthEndStr());
+      const active=new Set(reqs.map(r=>r.business_id));
+      const ms=monthStartStr(), map={};
+      (sch||[]).forEach(r=>{ if(active.has(r.business_id)) return; const g=map[r.business_id]||(map[r.business_id]={name:(r.businesses&&r.businesses.name)||'Business',svcs:[],earliest:r.next_due}); g.svcs.push(r.service); if(r.next_due<g.earliest) g.earliest=r.next_due; });
+      dueGroups=Object.values(map).map(g=>({name:g.name,svcs:g.svcs,earliest:g.earliest,overdue:g.earliest<ms})).sort((a,b)=>a.earliest.localeCompare(b.earliest));
       render();
     }
     function money(v){ return v?('$'+Number(v).toLocaleString()):'$0'; }
@@ -177,6 +187,11 @@
       const appr = r.status==='responded'?`<button class="rappr" data-id="${r.id}" data-biz="${r.business_id}" data-date="${r.proposed_date||''}" data-ampm="${r.proposed_ampm||''}">Approve</button>`:'';
       return `<div class="rcard"><div class="dt"><span class="rbadge">REBOOK</span>${b.name||'Business'}</div><div class="dc">${info}${r.proposed_note?' · “'+r.proposed_note+'”':''}</div>${appr?'<div style="margin-top:6px">'+appr+'</div>':''}</div>`;
     }
+    function dueCard(g){
+      const svcs=g.svcs.map(x=>SVCNAME[x]||x).join(', ');
+      const badge=g.overdue?'<span class="rbadge" style="background:#fee2e2;color:#b91c1c">OVERDUE</span>':'<span class="rbadge">DUE</span>';
+      return `<div class="rcard"><div class="dt">${badge}${g.name}</div><div class="dc">${svcs} · due ${fmtDue(g.earliest)}</div></div>`;
+    }
     function render(){
       const board=document.getElementById('board');
       let total=0,count=deals.length; deals.forEach(d=>total+=Number(d.amount)||0);
@@ -184,9 +199,11 @@
       board.innerHTML=STAGES.map(s=>{
         const inStage=deals.filter(d=>d.stage===s[0]);
         const stReqs=reqs.filter(r=>REQSTAGE[r.status]===s[0]);
+        const due=s[0]==='to_rebook'?dueGroups:[];
         const sum=inStage.reduce((a,d)=>a+(Number(d.amount)||0),0);
-        const cards=inStage.map(dealCard).join('')+stReqs.map(reqCard).join('');
-        return `<div class="col"><div class="colhead">${s[1]}<span class="pct">${s[2]} · ${money(sum)} (${inStage.length+stReqs.length})</span></div>
+        const cards=inStage.map(dealCard).join('')+stReqs.map(reqCard).join('')+due.map(dueCard).join('');
+        const n=inStage.length+stReqs.length+due.length;
+        return `<div class="col"><div class="colhead">${s[1]}<span class="pct">${s[2]} · ${money(sum)} (${n})</span></div>
           <div class="colbody" data-stage="${s[0]}">${cards||'<div class="colempty">—</div>'}</div></div>`;
       }).join('');
       bind();
