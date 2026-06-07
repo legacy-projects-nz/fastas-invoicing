@@ -36,8 +36,10 @@
   .deal .dc{color:var(--muted);font-size:11px;margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .deal .dm{font-size:11px;margin-top:2px;} .deal .dm b{color:var(--ink);} .deal .dm .dd{color:var(--red);font-weight:600;}
   .deal .fas{display:inline-block;font-size:8.5px;font-weight:800;background:#eef2ff;color:var(--brand);border-radius:4px;padding:1px 4px;margin-left:5px;vertical-align:middle;}
+  .deal.locked{cursor:default;background:#f8fafc;border-style:dashed;opacity:.92;}
+  .deal .lk{font-size:9px;font-weight:700;color:#64748b;margin-top:3px;}
   .colempty{color:#9aa4b2;font-size:11px;text-align:center;padding:12px 4px;}
-  .rcard{background:#eff6ff;border:1px solid #dbe7ff;border-radius:7px;padding:6px 8px;margin-bottom:6px;}
+  .rcard{background:#eff6ff;border:1px solid #dbe7ff;border-radius:7px;padding:6px 8px;margin-bottom:6px;cursor:pointer;}
   .rcard .dt{font-weight:700;font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .rcard .dc{color:var(--muted);font-size:10.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .rbadge{font-size:8px;font-weight:800;background:#2563eb;color:#fff;border-radius:4px;padding:1px 4px;}
@@ -119,10 +121,26 @@
       </div>
       <label>Stage</label>
       <select id="fStage"></select>
+      <button class="primary" id="fNext" style="width:100%;margin-top:12px;display:none;">Move to next stage →</button>
       <div class="msg" id="mMsg"></div>
       <div class="mact">
         <button class="del" id="fDelete" style="visibility:hidden;">Delete</button>
         <span style="display:flex;gap:10px;"><button class="ghost" id="fCancel">Cancel</button><button class="primary" id="fSave">Save</button></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- rebook tile modal (REBOOK / DUE tiles) -->
+  <div class="modal" id="rebModal">
+    <div class="mcard">
+      <h3 id="rebTitle">Rebook</h3>
+      <p class="hint" id="rebSub" style="padding:0;margin:-4px 0 10px;"></p>
+      <label>Appointment (day &amp; time)</label>
+      <input id="rebDate" type="datetime-local">
+      <div class="msg" id="rebMsg"></div>
+      <div class="mact">
+        <button class="del" id="rebDecline">Decline</button>
+        <span style="display:flex;gap:10px;"><button class="ghost" id="rebCancel">Cancel</button><button class="primary" id="rebSave">Book</button></span>
       </div>
     </div>
   </div>
@@ -140,6 +158,7 @@
       try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
       location.href='index.html'; });
     const {data:prof}=await sb.from('profiles').select('role,full_name,features').eq('id',session.user.id).single();
+    const isAdmin=(prof?.role==='admin'||prof?.role==='superadmin');
     if((prof?.role||'licensee')==='licensee' && prof?.features?.sales===false){ location.href='index.html'; }
     document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+(prof?.role||'licensee');
 
@@ -148,6 +167,11 @@
       ['pending_job','Pending Job','90%'],['job_finished','Job Finished','93%'],['email_invrep','Email/Inv/Rep (FAS)','96%'],
       ['check_send','Check Inv/Rep>Send','97%'],['paid_rebook','Paid/Rebook (FAS)','98%']
     ];
+    const ADMIN_STAGES=['onboard','email_invrep','paid_rebook']; // FAS-driven — read-only for the licensee
+    const STAGELABEL=Object.fromEntries(STAGES.map(s=>[s[0],s[1]]));
+    const NEXT={to_rebook:'pending_booking',pending_booking:'onboard',onboard:'pending_job',pending_job:'job_finished',job_finished:'email_invrep',email_invrep:'check_send',check_send:'paid_rebook',paid_rebook:null};
+    // field that must be filled before a stage can advance: [inputId, friendly name]
+    const REQUIRE={to_rebook:['fDue','a booking date'],job_finished:['fAmount','the job amount so FAS can invoice']};
     const fStage=document.getElementById('fStage');
     fStage.innerHTML=STAGES.map(s=>`<option value="${s[0]}">${s[1]}</option>`).join('');
 
@@ -164,33 +188,36 @@
       const {data:rq}=await sb.from('booking_requests').select('*, businesses(name,phone,contact_email)').in('status',['sent','responded','call_requested']).order('updated_at',{ascending:false});
       reqs=rq||[];
       // Rebooks due historically through the current month (overdue + due this month), excluding any with a live request
-      const {data:sch}=await sb.from('rebook_schedules').select('business_id,service,next_due,businesses(name)').not('next_due','is',null).lte('next_due',monthEndStr());
+      const {data:sch}=await sb.from('rebook_schedules').select('business_id,service,next_due,businesses(name,booking_at)').not('next_due','is',null).lte('next_due',monthEndStr());
       const active=new Set(reqs.map(r=>r.business_id));
-      const ms=monthStartStr(), map={};
-      (sch||[]).forEach(r=>{ if(active.has(r.business_id)) return; const g=map[r.business_id]||(map[r.business_id]={name:(r.businesses&&r.businesses.name)||'Business',svcs:[],earliest:r.next_due}); g.svcs.push(r.service); if(r.next_due<g.earliest) g.earliest=r.next_due; });
-      dueGroups=Object.values(map).map(g=>({name:g.name,svcs:g.svcs,earliest:g.earliest,overdue:g.earliest<ms})).sort((a,b)=>a.earliest.localeCompare(b.earliest));
+      const ms=monthStartStr(), now=new Date(), map={};
+      (sch||[]).forEach(r=>{ if(active.has(r.business_id)) return; const bk=r.businesses&&r.businesses.booking_at; if(bk && new Date(bk)>=now) return; const g=map[r.business_id]||(map[r.business_id]={bizId:r.business_id,name:(r.businesses&&r.businesses.name)||'Business',svcs:[],earliest:r.next_due}); g.svcs.push(r.service); if(r.next_due<g.earliest) g.earliest=r.next_due; });
+      dueGroups=Object.values(map).map(g=>({bizId:g.bizId,name:g.name,svcs:g.svcs,earliest:g.earliest,overdue:g.earliest<ms})).sort((a,b)=>a.earliest.localeCompare(b.earliest));
       render();
     }
     function money(v){ return v?('$'+Number(v).toLocaleString()):'$0'; }
     function fmtDue(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-NZ',{day:'numeric',month:'short'}); }
     function dealCard(d){
-      const fas=['onboard','email_invrep','paid_rebook'].includes(d.stage)?'<span class="fas">FAS</span>':'';
-      return `<div class="deal" draggable="true" data-id="${d.id}">
+      const locked=ADMIN_STAGES.includes(d.stage) && !isAdmin;
+      const fas=locked?'<span class="fas">FAS</span>':'';
+      return `<div class="deal${locked?' locked':''}" ${locked?'':'draggable="true"'} data-id="${d.id}">
         <div class="dt"><span class="bagq"></span>${d.title}${fas}</div>
         ${d.contact?`<div class="dc">${d.contact}</div>`:''}
         <div class="dm"><b>${money(d.amount)}</b>${d.due_date?` on <span class="dd">${fmtDue(d.due_date)}</span>`:''}</div>
+        ${locked?'<div class="lk">🔒 Managed by FAS</div>':''}
       </div>`;
     }
     function reqCard(r){
       const b=r.businesses||{};
       const info = r.status==='responded'?('📅 '+fmtDue(r.proposed_date)+' '+(r.proposed_ampm==='pm'?'PM':'AM')) : (r.status==='call_requested'?'📞 Call requested':'✉ Invite sent');
       const appr = r.status==='responded'?`<button class="rappr" data-id="${r.id}" data-biz="${r.business_id}" data-date="${r.proposed_date||''}" data-ampm="${r.proposed_ampm||''}">Approve</button>`:'';
-      return `<div class="rcard"><div class="dt"><span class="rbadge">REBOOK</span>${b.name||'Business'}</div><div class="dc">${info}${r.proposed_note?' · “'+r.proposed_note+'”':''}</div>${appr?'<div style="margin-top:6px">'+appr+'</div>':''}</div>`;
+      const preset = r.proposed_date?(r.proposed_date+'T'+(r.proposed_ampm==='pm'?'13:00':'09:00')):'';
+      return `<div class="rcard" data-rtype="req" data-id="${r.id}" data-biz="${r.business_id}" data-name="${(b.name||'Business').replace(/"/g,'&quot;')}" data-preset="${preset}"><div class="dt"><span class="rbadge">REBOOK</span>${b.name||'Business'}</div><div class="dc">${info}${r.proposed_note?' · “'+r.proposed_note+'”':''}</div>${appr?'<div style="margin-top:6px">'+appr+'</div>':''}</div>`;
     }
     function dueCard(g){
       const svcs=g.svcs.map(x=>SVCNAME[x]||x).join(', ');
       const badge=g.overdue?'<span class="rbadge" style="background:#fee2e2;color:#b91c1c">OVERDUE</span>':'<span class="rbadge">DUE</span>';
-      return `<div class="rcard"><div class="dt">${badge}${g.name}</div><div class="dc">${svcs} · due ${fmtDue(g.earliest)}</div></div>`;
+      return `<div class="rcard" data-rtype="due" data-biz="${g.bizId}" data-name="${(g.name||'Business').replace(/"/g,'&quot;')}"><div class="dt">${badge}${g.name}</div><div class="dc">${svcs} · due ${fmtDue(g.earliest)}</div></div>`;
     }
     function render(){
       const board=document.getElementById('board');
@@ -210,11 +237,14 @@
     }
     function bind(){
       document.querySelectorAll('.deal').forEach(el=>{
+        if(el.classList.contains('locked')) return; // admin-driven — read-only on the licensee side
         el.addEventListener('dragstart',e=>{ el.classList.add('dragging'); e.dataTransfer.setData('text/plain',el.dataset.id); });
         el.addEventListener('dragend',()=>el.classList.remove('dragging'));
         el.addEventListener('click',()=>openEdit(el.dataset.id));
       });
-      document.querySelectorAll('.rappr').forEach(b=>b.addEventListener('click',async()=>{
+      document.querySelectorAll('.rcard[data-rtype]').forEach(el=>el.addEventListener('click',()=>openReb({type:el.dataset.rtype,reqId:el.dataset.id,bizId:el.dataset.biz,name:el.dataset.name,preset:el.dataset.preset||''})));
+      document.querySelectorAll('.rappr').forEach(b=>b.addEventListener('click',async(ev)=>{
+        ev.stopPropagation();
         const date=b.dataset.date,ampm=b.dataset.ampm; let iso=null;
         if(date){ iso=new Date(date+'T'+(ampm==='pm'?'13:00:00':'09:00:00')).toISOString(); }
         await sb.from('booking_requests').update({status:'approved',approved_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',b.dataset.id);
@@ -237,11 +267,13 @@
     const modal=document.getElementById('modal'); let editingId=null;
     function openAdd(){ editingId=null; document.getElementById('mTitle').textContent='Add deal';
       ['fTitle','fContact','fAmount','fDue'].forEach(i=>document.getElementById(i).value=''); fStage.value='to_rebook';
-      document.getElementById('fDelete').style.visibility='hidden'; document.getElementById('mMsg').textContent=''; modal.classList.add('show'); }
+      document.getElementById('fDelete').style.visibility='hidden'; document.getElementById('fNext').style.display='none'; document.getElementById('mMsg').textContent=''; modal.classList.add('show'); }
     function openEdit(id){ const d=deals.find(x=>x.id===id); if(!d) return; editingId=id;
       document.getElementById('mTitle').textContent='Edit deal';
       document.getElementById('fTitle').value=d.title||''; document.getElementById('fContact').value=d.contact||'';
       document.getElementById('fAmount').value=d.amount||''; document.getElementById('fDue').value=d.due_date||''; fStage.value=d.stage;
+      const nx=NEXT[d.stage], fN=document.getElementById('fNext');
+      if(nx){ fN.style.display='block'; fN.textContent='Move to '+STAGELABEL[nx]+' →'; } else { fN.style.display='none'; }
       document.getElementById('fDelete').style.visibility='visible'; document.getElementById('mMsg').textContent=''; modal.classList.add('show'); }
     document.getElementById('addDeal').addEventListener('click',openAdd);
     document.getElementById('fCancel').addEventListener('click',()=>modal.classList.remove('show'));
@@ -262,6 +294,50 @@
     document.getElementById('fDelete').addEventListener('click',async()=>{
       if(!editingId||!confirm('Delete this deal?')) return;
       await sb.from('bookings').delete().eq('id',editingId); modal.classList.remove('show'); load();
+    });
+    document.getElementById('fNext').addEventListener('click',async()=>{
+      if(!editingId) return; const d=deals.find(x=>x.id===editingId); if(!d) return;
+      const nx=NEXT[d.stage]; if(!nx) return;
+      const msg=document.getElementById('mMsg'); msg.className='msg';
+      const title=document.getElementById('fTitle').value.trim();
+      if(!title){ msg.textContent='Name is required.'; msg.className='msg err'; return; }
+      const req=REQUIRE[d.stage];
+      if(req && !document.getElementById(req[0]).value){ msg.textContent='Add '+req[1]+' before moving on.'; msg.className='msg err'; return; }
+      const rec={ title, contact:document.getElementById('fContact').value.trim()||null,
+        amount:document.getElementById('fAmount').value?Number(document.getElementById('fAmount').value):null,
+        due_date:document.getElementById('fDue').value||null, stage:nx, updated_at:new Date().toISOString() };
+      const {error}=await sb.from('bookings').update(rec).eq('id',editingId);
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      modal.classList.remove('show'); load();
+    });
+
+    // ---- rebook tile editor (REBOOK / DUE tiles) ----
+    const rebModal=document.getElementById('rebModal'); let rebCtx=null;
+    function openReb(ctx){
+      rebCtx=ctx;
+      document.getElementById('rebTitle').textContent=ctx.name||'Rebook';
+      document.getElementById('rebSub').textContent = ctx.type==='req' ? 'Set the appointment and approve, or decline the request.' : 'Book this rebooking in — it shows on the calendar and clears from this column.';
+      document.getElementById('rebDate').value=ctx.preset||'';
+      document.getElementById('rebMsg').textContent='';
+      document.getElementById('rebDecline').style.display = ctx.type==='req' ? 'inline-block' : 'none';
+      rebModal.classList.add('show');
+    }
+    document.getElementById('rebCancel').addEventListener('click',()=>rebModal.classList.remove('show'));
+    rebModal.addEventListener('click',e=>{ if(e.target===rebModal) rebModal.classList.remove('show'); });
+    document.getElementById('rebSave').addEventListener('click',async()=>{
+      if(!rebCtx) return; const msg=document.getElementById('rebMsg'); msg.textContent='Saving…'; msg.className='msg';
+      const val=document.getElementById('rebDate').value; const iso=val?new Date(val).toISOString():null;
+      try{
+        if(iso){ const {error}=await sb.from('businesses').update({booking_at:iso}).eq('id',rebCtx.bizId); if(error) throw error; }
+        if(rebCtx.type==='req'){ const {error}=await sb.from('booking_requests').update({status:'approved',approved_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',rebCtx.reqId); if(error) throw error; }
+        rebModal.classList.remove('show'); load();
+      }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
+    });
+    document.getElementById('rebDecline').addEventListener('click',async()=>{
+      if(!rebCtx||rebCtx.type!=='req') return;
+      if(!confirm('Decline this rebook request?')) return;
+      await sb.from('booking_requests').update({status:'declined',updated_at:new Date().toISOString()}).eq('id',rebCtx.reqId);
+      rebModal.classList.remove('show'); load();
     });
 
     load();

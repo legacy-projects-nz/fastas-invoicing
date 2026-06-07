@@ -173,17 +173,6 @@
         <div class="board" id="trainBoard"><div class="empty">Loading…</div></div>
       </div>
 
-      <div class="card">
-        <h2 style="margin:0 0 6px;">Onboarding pipeline</h2>
-        <p class="hint">Track new clients toward onboarding.</p>
-        <div class="row" style="margin:6px 0 14px;">
-          <div class="f" style="flex:1 1 180px;"><label>Business / client</label><input id="onbName" placeholder="e.g. Harbour Cafe"></div>
-          <div class="f"><label>Contact</label><input id="onbContact" placeholder="name / phone / email"></div>
-          <button class="primary" id="onbAdd">+ Add to pipeline</button>
-        </div>
-        <div class="msg" id="onbMsg"></div>
-        <div class="board" id="onbBoard"><div class="empty">Loading…</div></div>
-      </div>
 
       <div class="card">
         <h2>Booking pipeline (all licensees)</h2>
@@ -410,11 +399,10 @@
       window.addEventListener('hashchange',()=>openPage(location.hash.replace('#','')||'pipeline',false));
       const start=location.hash.replace('#','');
       if(start) openPage(start,false);
-      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadReminders(); loadBookingsBoard(); loadPayFlags(); bindJobModal();
+      loadUsers(); loadTemplates(); loadLicenseeOptions(); loadPatguard(); loadInvBoard(); loadTrainBoard(); loadReminders(); loadBookingsBoard(); loadPayFlags(); bindJobModal();
       document.getElementById('rcSend').addEventListener('click',sendRecord);
       document.getElementById('pgUpload').addEventListener('click',uploadGar);
-      document.getElementById('onbAdd').addEventListener('click',addOnb);
-      document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); loadOnbBoard(); loadBookingsBoard(); loadPayFlags(); });
+      document.getElementById('pipeRefresh').addEventListener('click',()=>{ loadInvBoard(); loadTrainBoard(); loadBookingsBoard(); loadPayFlags(); });
       document.getElementById('pipeFilter').addEventListener('change',()=>{ loadInvBoard(); loadTrainBoard(); loadBookingsBoard(); });
       document.getElementById('pgFilter').addEventListener('change',loadPatguard);
       document.getElementById('remRefresh').addEventListener('click',loadReminders);
@@ -820,33 +808,6 @@
       }catch(_){}
     }
 
-    // ===== Onboarding board =====
-    const ONB=[['lead','Lead','s-recv'],['contacted','Contacted','s-sent'],['quoted','Quoted','s-check'],['onboarded','Onboarded','s-appr']];
-    async function loadOnbBoard(){
-      const board=document.getElementById('onbBoard');
-      const {data}=await sb.from('onboarding').select('*').order('created_at',{ascending:false});
-      const by={lead:[],contacted:[],quoted:[],onboarded:[]};
-      (data||[]).forEach(o=>{ (by[o.stage]=by[o.stage]||[]).push(onbCard(o)); });
-      board.innerHTML=ONB.map(s=>kcol(s[1],s[2],by[s[0]]||[])).join('');
-      board.querySelectorAll('.omove').forEach(b=>b.addEventListener('click',async()=>{ await sb.from('onboarding').update({stage:b.dataset.stage,updated_at:new Date().toISOString()}).eq('id',b.dataset.id); loadOnbBoard(); }));
-      board.querySelectorAll('.odel').forEach(b=>b.addEventListener('click',async()=>{ if(!confirm('Remove from onboarding?')) return; await sb.from('onboarding').delete().eq('id',b.dataset.id); loadOnbBoard(); }));
-    }
-    function onbCard(o){
-      const i=ONB.findIndex(s=>s[0]===o.stage);
-      const back=i>0?`<button class="kbtn line omove" data-id="${o.id}" data-stage="${ONB[i-1][0]}">←</button>`:'';
-      const fwd=i<ONB.length-1?`<button class="kbtn go omove" data-id="${o.id}" data-stage="${ONB[i+1][0]}">→</button>`:'';
-      return `<div class="kcard"><div class="kt">${o.name}</div>${o.contact?`<div class="ks">${o.contact}</div>`:''}${o.note?`<div class="knote">${o.note}</div>`:''}<div class="kactions">${back}${fwd}<button class="kbtn warn odel" data-id="${o.id}">✕</button></div></div>`;
-    }
-    async function addOnb(){
-      const msg=document.getElementById('onbMsg'); msg.textContent='';
-      const name=document.getElementById('onbName').value.trim();
-      if(!name){ msg.textContent='Enter a business / client name.'; msg.className='msg err'; return; }
-      const contact=document.getElementById('onbContact').value.trim();
-      const {error}=await sb.from('onboarding').insert({name,contact:contact||null,stage:'lead'});
-      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
-      document.getElementById('onbName').value=''; document.getElementById('onbContact').value='';
-      loadOnbBoard();
-    }
     async function loadBizList(licId){
       const dl=document.getElementById('bizList'); if(!dl) return;
       if(!licId){ dl.innerHTML=''; return; }
