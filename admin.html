@@ -351,11 +351,11 @@
 
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;"><h2 style="margin:0;">Commission calculator</h2><button class="ghost" id="ccSave">Save calculator</button></div>
-        <p class="hint">Editable per licensee. <b>Bottle profit</b> = charged price − cost (set the cost per item). <b>$ per unit</b> and <b>% of line</b> apply to that item's quantity/line total. The <b>Job fee</b> is added once per invoice; <b>RCD</b> applies to any RCD test &amp; tag line.</p>
+        <p class="hint">Editable per licensee. <b>Bottle commission</b> = (charged price − cost) × the commission % below (set each item’s cost). <b>$ per unit</b> and <b>% of line</b> apply to that item's quantity/line total. The <b>Job fee</b> is added once per invoice; <b>RCD</b> applies to any RCD test &amp; tag line.</p>
         <div class="row" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
           <div class="f"><label style="font-size:12px;font-weight:600;">Job fee ($/invoice)</label><input id="ccJob" type="number" step="0.01" style="padding:8px;border:1px solid var(--line);border-radius:8px;width:120px;"></div>
           <div class="f"><label style="font-size:12px;font-weight:600;">RCD test &amp; tag ($/item)</label><input id="ccRcd" type="number" step="0.01" style="padding:8px;border:1px solid var(--line);border-radius:8px;width:140px;"></div>
-          <div class="f"><label style="font-size:12px;font-weight:600;">Bottle profit share (%)</label><input id="ccShare" type="number" step="1" style="padding:8px;border:1px solid var(--line);border-radius:8px;width:140px;"></div>
+          <div class="f"><label style="font-size:12px;font-weight:600;">Tech commission on bottle profit (%)</label><input id="ccShare" type="number" step="1" style="padding:8px;border:1px solid var(--line);border-radius:8px;width:140px;"></div>
         </div>
         <div id="ccRules"><div class="empty">Pick a licensee…</div></div>
         <div class="msg" id="ccMsg"></div>
@@ -475,7 +475,7 @@
     }
 
     // ===== Technician fees / commission =====
-    let techCfg={job_fee:25,rcd_rate:4.5,bottle_share:100,rules:{}};
+    let techCfg={job_fee:25,rcd_rate:4.5,bottle_share:10,rules:{}};
     let techItems=[], techFees=[];
     function techLicId(){ const s=document.getElementById('techLic'); return s?s.value:''; }
     function defaultRule(code){
@@ -488,7 +488,7 @@
       return {m:'ignore',v:0};
     }
     async function loadTechConfig(lic){
-      techCfg={job_fee:25,rcd_rate:4.5,bottle_share:100,rules:{}};
+      techCfg={job_fee:25,rcd_rate:4.5,bottle_share:10,rules:{}};
       const {data}=await sb.from('commission_config').select('config').eq('owner_id',lic).maybeSingle();
       if(data&&data.config){ techCfg=Object.assign(techCfg,data.config); techCfg.rules=Object.assign({},data.config.rules||{}); }
       const {data:pi}=await sb.from('pricing_items').select('item_code,item_name,unit_price,cost').eq('owner_id',lic).order('sort_order');
@@ -518,7 +518,7 @@
       const msg=document.getElementById('ccMsg'); msg.textContent='Saving…'; msg.className='msg';
       techCfg.job_fee=Number(document.getElementById('ccJob').value)||0;
       techCfg.rcd_rate=Number(document.getElementById('ccRcd').value)||0;
-      techCfg.bottle_share=Number(document.getElementById('ccShare').value)||100;
+      techCfg.bottle_share=(document.getElementById('ccShare').value===''?10:Number(document.getElementById('ccShare').value)||0);
       document.getElementById('ccRules').querySelectorAll('.ccV').forEach(i=>{ techCfg.rules[i.dataset.code]=techCfg.rules[i.dataset.code]||{m:'unit'}; techCfg.rules[i.dataset.code].v=Number(i.value)||0; });
       const costUpdates=[]; document.getElementById('ccRules').querySelectorAll('.ccCost').forEach(i=>costUpdates.push({code:i.dataset.code,cost:Number(i.value)||0}));
       try{
@@ -539,7 +539,7 @@
       items.forEach(l=>{
         const rule=cfg.rules[l.code]||{m:'ignore',v:0}; let amt=0;
         if(/rcd/i.test(l.code)||rule.m==='rcd') amt=(Number(cfg.rcd_rate)||0)*l.qty;
-        else if(rule.m==='profit'){ const cost=Number(costMap[l.code]||0); amt=(l.unit-cost)*l.qty*((Number(cfg.bottle_share)||100)/100); }
+        else if(rule.m==='profit'){ const cost=Number(costMap[l.code]||0); amt=(l.unit-cost)*l.qty*((cfg.bottle_share==null?10:Number(cfg.bottle_share))/100); }
         else if(rule.m==='unit') amt=(Number(rule.v)||0)*l.qty;
         else if(rule.m==='pct') amt=(Number(rule.v)||0)/100*(l.unit*l.qty);
         if(amt){ bd.push({code:l.code,qty:l.qty,amount:Math.round(amt*100)/100}); total+=amt; }
