@@ -95,6 +95,7 @@
     const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
     const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
     // ===== Spam protection (Cloudflare Turnstile) =====
     // Paste your Turnstile *site* key here to switch it on. Leave '' to disable.

@@ -93,9 +93,12 @@
     const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
     const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    let _aal=null; try{ _aal=(await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data; }catch(_e){}
+    if(_aal && _aal.currentLevel!=='aal2'){ location.replace('index.html'); throw new Error('2fa required'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{ e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
       try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
@@ -166,7 +169,7 @@
           <div class="actions"><button class="approve" data-act="approve" data-id="${d.id}">✓ Approve</button><button class="reject" data-act="reject" data-id="${d.id}">✕ Reject</button></div>
           <div class="msg" id="m-${d.id}"></div>`;
       }else{
-        inner+=`${d.licensee_note?`<div class="note-shown"><b>Your note:</b> ${d.licensee_note}</div>`:''}<div class="decided">${d.status==='approved'?'Approved':'Rejected'}${d.decided_at?' · '+new Date(d.decided_at).toLocaleString():''}</div>`;
+        inner+=`${d.licensee_note?`<div class="note-shown"><b>Your note:</b> ${esc(d.licensee_note)}</div>`:''}<div class="decided">${d.status==='approved'?'Approved':'Rejected'}${d.decided_at?' · '+new Date(d.decided_at).toLocaleString():''}</div>`;
       }
       return `<div class="docrow">${inner}</div>`;
     }

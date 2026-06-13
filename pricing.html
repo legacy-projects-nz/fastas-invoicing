@@ -100,9 +100,12 @@
     const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
     const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    let _aal=null; try{ _aal=(await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data; }catch(_e){}
+    if(_aal && _aal.currentLevel!=='aal2'){ location.replace('index.html'); throw new Error('2fa required'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{
       e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
@@ -129,7 +132,7 @@
       document.getElementById('sub').textContent='Pick a licensee, then add / edit / remove their items and prices.';
       const {data:licensees}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
       const sel=document.getElementById('ownerSel');
-      sel.innerHTML=(licensees||[]).map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('') || '<option value="">No licensees yet</option>';
+      sel.innerHTML=(licensees||[]).map(l=>`<option value="${l.id}">${esc(l.full_name||l.email)} (${esc(l.email)})</option>`).join('') || '<option value="">No licensees yet</option>';
       ownerId=licensees&&licensees.length?licensees[0].id:'';
       sel.addEventListener('change',()=>{ ownerId=sel.value; resetPending(); load(); });
     }
@@ -159,21 +162,23 @@
       const rows=items.filter(it=>(showInactive||cur(it,'status')==='active'||dels.has(it.id)))
         .filter(it=>!q||it.item_code.toLowerCase().includes(q)||String(cur(it,'item_name')).toLowerCase().includes(q));
       if(!rows.length){ host.innerHTML='<div class="loading">No items yet — use “+ Add item”.</div>'; return; }
-      let html='<table><thead><tr><th>Code</th><th>Description</th><th>Status</th><th style="text-align:right">Unit price (NZD)</th><th></th></tr></thead><tbody>';
+      let html='<table><thead><tr><th>Code</th><th>Description</th><th>Status</th><th style="text-align:right">Unit price (NZD)</th><th style="text-align:right">Cost (NZD)</th><th></th></tr></thead><tbody>';
       for(const it of rows){
         const isDel=dels.has(it.id);
         const changed=!!edits[it.id];
         html+=`<tr class="${isDel?'del':(changed?'changed':'')}" data-id="${it.id}">
-          <td class="code">${it.item_code}</td>
+          <td class="code">${esc(it.item_code)}</td>
           <td><input class="name" data-id="${it.id}" value="${String(cur(it,'item_name')).replace(/"/g,'&quot;')}" ${isDel?'disabled':''}></td>
           <td><select class="status" data-id="${it.id}" ${isDel?'disabled':''}><option value="active"${cur(it,'status')==='active'?' selected':''}>Active</option><option value="inactive"${cur(it,'status')!=='active'?' selected':''}>Inactive</option></select></td>
           <td><div style="display:flex;align-items:center;gap:4px;justify-content:flex-end"><span style="color:#667085">$</span><input class="price" type="number" step="0.01" min="0" value="${Number(cur(it,'unit_price')).toFixed(2)}" data-id="${it.id}" ${isDel?'disabled':''}></div></td>
+          <td><div style="display:flex;align-items:center;gap:4px;justify-content:flex-end"><span style="color:#667085">$</span><input class="cost" type="number" step="0.01" min="0" value="${Number(cur(it,'cost')||0).toFixed(2)}" data-id="${it.id}" ${isDel?'disabled':''}></div></td>
           <td style="text-align:right">${isDel?`<button class="undo" data-id="${it.id}">Undo</button>`:`<button class="rm" data-id="${it.id}">Delete</button>`}</td>
         </tr>`;
       }
       host.innerHTML=html+'</tbody></table>';
       host.querySelectorAll('input.name').forEach(i=>i.addEventListener('input',()=>setEdit(items.find(x=>x.id===i.dataset.id),'item_name',i.value)));
       host.querySelectorAll('input.price').forEach(i=>i.addEventListener('input',()=>{ setEdit(items.find(x=>x.id===i.dataset.id),'unit_price',i.value); i.closest('tr').classList.toggle('changed',!!edits[i.dataset.id]); }));
+      host.querySelectorAll('input.cost').forEach(i=>i.addEventListener('input',()=>{ setEdit(items.find(x=>x.id===i.dataset.id),'cost',i.value); i.closest('tr').classList.toggle('changed',!!edits[i.dataset.id]); }));
       host.querySelectorAll('select.status').forEach(s=>s.addEventListener('change',()=>setEdit(items.find(x=>x.id===s.dataset.id),'status',s.value)));
       host.querySelectorAll('button.rm').forEach(b=>b.addEventListener('click',()=>{ dels.add(b.dataset.id); delete edits[b.dataset.id]; render(); refreshSaveBar(); }));
       host.querySelectorAll('button.undo').forEach(b=>b.addEventListener('click',()=>{ dels.delete(b.dataset.id); render(); refreshSaveBar(); }));
@@ -193,7 +198,7 @@
       try{
         for(const [id,fields] of Object.entries(edits)){
           if(dels.has(id)) continue;
-          const payload={}; if(fields.item_name!==undefined)payload.item_name=fields.item_name; if(fields.unit_price!==undefined)payload.unit_price=Number(fields.unit_price); if(fields.status!==undefined)payload.status=fields.status;
+          const payload={}; if(fields.item_name!==undefined)payload.item_name=fields.item_name; if(fields.unit_price!==undefined)payload.unit_price=Number(fields.unit_price); if(fields.cost!==undefined)payload.cost=Number(fields.cost); if(fields.status!==undefined)payload.status=fields.status;
           const {error}=await sb.from('pricing_items').update(payload).eq('id',id); if(error) throw error;
         }
         for(const id of dels){ const {error}=await sb.from('pricing_items').delete().eq('id',id); if(error) throw error; }

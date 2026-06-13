@@ -323,6 +323,19 @@
       </div>
 
       <div class="card">
+        <h2>Technician contacts</h2>
+        <p class="hint">Names &amp; emails for this licensee's technicians — payout reports go here. (The licensee can also set these from their own profile.)</p>
+        <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;">
+          <div class="f"><label style="font-size:12px;font-weight:600;">Tech 1 name</label><input id="teT1n" style="padding:8px;border:1px solid var(--line);border-radius:8px;width:130px;"></div>
+          <div class="f" style="flex:1 1 200px;"><label style="font-size:12px;font-weight:600;">Tech 1 email</label><input id="teT1e" type="email" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;"></div>
+          <div class="f"><label style="font-size:12px;font-weight:600;">Tech 2 name</label><input id="teT2n" style="padding:8px;border:1px solid var(--line);border-radius:8px;width:130px;"></div>
+          <div class="f" style="flex:1 1 200px;"><label style="font-size:12px;font-weight:600;">Tech 2 email</label><input id="teT2e" type="email" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;"></div>
+          <button class="primary" id="teSave">Save contacts</button>
+        </div>
+        <div class="msg" id="teMsg"></div>
+      </div>
+
+      <div class="card">
         <h2>Add a manual invoice / fee</h2>
         <p class="hint">Enter a commission directly (work it out with the calculator below if needed).</p>
         <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;">
@@ -375,6 +388,28 @@
 
   <div class="wrap" id="denied" style="display:none;"><div class="card"><h2>Admins only</h2><p class="hint">You're signed in but this area is for admins. <a href="index.html">← Main menu</a></p></div></div>
 
+  <div class="modal" id="feeModal">
+    <div class="mcard">
+      <div class="mhead"><h3>Commission summary</h3><button class="mclose" id="fmClose">✕</button></div>
+      <div class="mbody">
+        <div class="row" style="align-items:flex-end;gap:8px;flex-wrap:wrap;">
+          <div class="f" style="flex:1 1 180px;"><label>Business</label><input id="fmBiz"></div>
+          <div class="f"><label>Invoice #</label><input id="fmRef" style="width:110px;"></div>
+          <div class="f"><label>Technician</label><select id="fmTech"><option value="1">Technician 1</option><option value="2">Technician 2</option></select></div>
+        </div>
+        <h4 style="margin:12px 0 6px;">Commission lines</h4>
+        <table class="cc" id="fmLines"></table>
+        <button class="kbtn" id="fmAddLine" style="margin-top:8px;">+ Add item</button>
+        <p style="margin:12px 0 0;font-weight:700;text-align:right;">Total: <span id="fmTotal">$0.00</span></p>
+        <div class="msg" id="fmMsg"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:14px;gap:8px;">
+          <button id="fmDelete" style="background:#fff;border:1px solid #f0caca;color:#b91c1c;border-radius:9px;padding:9px 14px;cursor:pointer;font-weight:600;">Delete fee</button>
+          <span style="display:flex;gap:8px;"><button class="ghost" id="fmCancel">Cancel</button><button class="primary" id="fmSave">Save</button></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal" id="jobModal">
     <div class="mcard">
       <div class="mhead"><h3>Edit job</h3><button class="mclose" id="jmClose">✕</button></div>
@@ -406,10 +441,13 @@
     const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
     const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
     const FN=SUPABASE_URL+'/functions/v1/admin-users';
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    let _aal=null; try{ _aal=(await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data; }catch(_e){}
+    if(_aal && _aal.currentLevel!=='aal2'){ location.replace('index.html'); throw new Error('2fa required'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{
       e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
@@ -540,8 +578,11 @@
     }
     function feeCard(f){
       const t='T'+(f.technician||1);
-      const paidBtn=(!f.invoice_paid&&f.status!=='reported')?'<button class="kbtn go tfPaid" data-id="'+f.id+'">✓ Paid</button>':'';
-      return '<div class="kcard"><div class="kt">'+(f.business_name||'—')+'<span style="float:right">$'+Number(f.amount||0).toFixed(2)+'</span></div><div class="ks">'+(f.invoice_ref||f.source)+'</div><div class="kactions"><button class="kbtn line tfTech" data-id="'+f.id+'" title="toggle technician">'+t+'</button>'+paidBtn+'<button class="kbtn warn tfDel" data-id="'+f.id+'">✕</button></div></div>';
+      let move;
+      if(f.status==='reported') move='<button class="kbtn line tfReopen" data-id="'+f.id+'">↩ Reopen</button>';
+      else if(f.invoice_paid) move='<button class="kbtn line tfUnpaid" data-id="'+f.id+'">↩ Unpaid</button>';
+      else move='<button class="kbtn go tfPaid" data-id="'+f.id+'">✓ Paid</button>';
+      return '<div class="kcard tfcard" data-id="'+f.id+'" style="cursor:pointer"><div class="kt">'+(f.business_name||'—')+'<span style="float:right">$'+Number(f.amount||0).toFixed(2)+'</span></div><div class="ks">'+esc(f.invoice_ref||f.source)+'</div><div class="kactions"><button class="kbtn line tfTech" data-id="'+f.id+'" title="toggle technician">'+t+'</button>'+move+'<button class="kbtn warn tfDel" data-id="'+f.id+'">✕</button></div></div>';
     }
     async function loadTechBoard(){
       const lic=techLicId(); const board=document.getElementById('techBoard');
@@ -553,7 +594,10 @@
       board.innerHTML=kcol('Waiting (unpaid)','s-recv',col.waiting)+kcol('Payable (paid)','s-appr',col.payable)+kcol('Reported','s-done',col.reported);
       board.querySelectorAll('.tfTech').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); const f=techFees.find(x=>x.id===b.dataset.id); await sb.from('technician_fees').update({technician:f.technician===1?2:1,updated_at:new Date().toISOString()}).eq('id',b.dataset.id); loadTechBoard(); }));
       board.querySelectorAll('.tfPaid').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); await sb.from('technician_fees').update({invoice_paid:true,status:'payable',updated_at:new Date().toISOString()}).eq('id',b.dataset.id); loadTechBoard(); }));
+      board.querySelectorAll('.tfUnpaid').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); await sb.from('technician_fees').update({invoice_paid:false,status:'waiting',updated_at:new Date().toISOString()}).eq('id',b.dataset.id); loadTechBoard(); }));
+      board.querySelectorAll('.tfReopen').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); await sb.from('technician_fees').update({status:'payable',reported_at:null,updated_at:new Date().toISOString()}).eq('id',b.dataset.id); loadTechBoard(); }));
       board.querySelectorAll('.tfDel').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); if(!confirm('Delete this fee?'))return; await sb.from('technician_fees').delete().eq('id',b.dataset.id); loadTechBoard(); }));
+      board.querySelectorAll('.tfcard').forEach(c=>c.addEventListener('click',()=>openFeeModal(c.dataset.id)));
       renderTechTotals();
     }
     function renderTechTotals(){
@@ -561,9 +605,10 @@
         const list=techFees.filter(f=>f.technician===n&&f.invoice_paid&&f.status!=='reported');
         const sum=list.reduce((a,f)=>a+Number(f.amount||0),0);
         const el=document.getElementById('techTot'+n); if(!el) return;
-        el.innerHTML='<div class="tl">Technician '+n+' — payable</div><b>$'+sum.toFixed(2)+'</b> <span class="tl">('+list.length+' invoice'+(list.length!==1?'s':'')+')</span><br><button class="kbtn tfReport" data-tech="'+n+'" style="margin-top:6px;">✉ Send report</button>';
+        el.innerHTML='<div class="tl">Technician '+n+' — payable</div><b>$'+sum.toFixed(2)+'</b> <span class="tl">('+list.length+' invoice'+(list.length!==1?'s':'')+')</span><br><button class="kbtn tfReport" data-tech="'+n+'" style="margin-top:6px;">✉ Send report</button> <button class="kbtn tfDownload" data-tech="'+n+'" style="margin-top:6px;">⬇ Download</button>';
       });
       document.querySelectorAll('.tfReport').forEach(b=>b.addEventListener('click',()=>sendTechReport(Number(b.dataset.tech))));
+      document.querySelectorAll('.tfDownload').forEach(b=>b.addEventListener('click',()=>downloadTechReport(Number(b.dataset.tech))));
     }
     async function sendTechReport(n){
       const lic=techLicId(); if(!lic) return;
@@ -587,12 +632,75 @@
       ['mfBiz','mfRef','mfAmount'].forEach(i=>document.getElementById(i).value=''); document.getElementById('mfPaid').checked=false;
       msg.textContent='Added ✓'; msg.className='msg ok'; setTimeout(()=>{msg.textContent='';},1200); loadTechBoard();
     }
-    async function loadTechAll(){ const lic=techLicId(); if(!lic) return; await loadTechConfig(lic); await loadTechBoard(); }
+    async function loadTechAll(){ const lic=techLicId(); if(!lic) return; await loadTechConfig(lic); await loadTechEmails(); await loadTechBoard(); }
+    // fee summary modal (editable)
+    let fmId=null, fmLines=[];
+    function fmTotal(){ const t=fmLines.reduce((a,l)=>a+(Number(l.amount)||0),0); const el=document.getElementById('fmTotal'); if(el) el.textContent='$'+t.toFixed(2); return t; }
+    function renderFmLines(){
+      const tb=document.getElementById('fmLines'); const esc=s=>(s||'').replace(/"/g,'&quot;');
+      tb.innerHTML='<thead><tr><th>Item / code</th><th>Qty</th><th>Amount $</th><th></th></tr></thead><tbody>'+fmLines.map((l,i)=>'<tr><td><input class="fmc" data-i="'+i+'" value="'+esc(l.code)+'"></td><td><input class="fmq" data-i="'+i+'" type="number" step="0.01" value="'+(l.qty!=null?l.qty:1)+'" style="width:60px"></td><td><input class="fma" data-i="'+i+'" type="number" step="0.01" value="'+(l.amount!=null?l.amount:0)+'" style="width:84px"></td><td><button class="kbtn warn fmLineDel" data-i="'+i+'">✕</button></td></tr>').join('')+'</tbody>';
+      tb.querySelectorAll('.fmc').forEach(i=>i.addEventListener('input',()=>{ fmLines[i.dataset.i].code=i.value; }));
+      tb.querySelectorAll('.fmq').forEach(i=>i.addEventListener('input',()=>{ fmLines[i.dataset.i].qty=Number(i.value)||0; }));
+      tb.querySelectorAll('.fma').forEach(i=>i.addEventListener('input',()=>{ fmLines[i.dataset.i].amount=Number(i.value)||0; fmTotal(); }));
+      tb.querySelectorAll('.fmLineDel').forEach(b=>b.addEventListener('click',()=>{ fmLines.splice(Number(b.dataset.i),1); renderFmLines(); }));
+      fmTotal();
+    }
+    function openFeeModal(id){
+      const f=techFees.find(x=>x.id===id); if(!f) return; fmId=id;
+      document.getElementById('fmBiz').value=f.business_name||'';
+      document.getElementById('fmRef').value=f.invoice_ref||'';
+      document.getElementById('fmTech').value=f.technician||1;
+      fmLines=Array.isArray(f.breakdown)?JSON.parse(JSON.stringify(f.breakdown)):[];
+      document.getElementById('fmMsg').textContent='';
+      renderFmLines();
+      document.getElementById('feeModal').classList.add('show');
+    }
+    function bindFeeModal(){
+      const m=document.getElementById('feeModal'); if(!m) return;
+      document.getElementById('fmClose').onclick=()=>m.classList.remove('show');
+      document.getElementById('fmCancel').onclick=()=>m.classList.remove('show');
+      m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('show'); });
+      document.getElementById('fmAddLine').onclick=()=>{ fmLines.push({code:'',qty:1,amount:0}); renderFmLines(); };
+      document.getElementById('fmSave').onclick=async()=>{
+        if(!fmId) return; const msg=document.getElementById('fmMsg'); msg.textContent='Saving…'; msg.className='msg';
+        const total=fmTotal();
+        const rec={business_name:document.getElementById('fmBiz').value.trim()||null,invoice_ref:document.getElementById('fmRef').value.trim()||null,technician:Number(document.getElementById('fmTech').value)||1,breakdown:fmLines,amount:Math.round(total*100)/100,updated_at:new Date().toISOString()};
+        const {error}=await sb.from('technician_fees').update(rec).eq('id',fmId);
+        if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+        m.classList.remove('show'); loadTechBoard();
+      };
+      document.getElementById('fmDelete').onclick=async()=>{ if(!fmId||!confirm('Delete this fee?'))return; await sb.from('technician_fees').delete().eq('id',fmId); m.classList.remove('show'); loadTechBoard(); };
+    }
+    // technician contacts (admin can set for any licensee)
+    async function loadTechEmails(){
+      const lic=techLicId(); if(!lic) return;
+      const {data}=await sb.from('profiles').select('tech1_name,tech1_email,tech2_name,tech2_email').eq('id',lic).single();
+      const d=data||{};
+      const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.value=v||''; };
+      set('teT1n',d.tech1_name); set('teT1e',d.tech1_email); set('teT2n',d.tech2_name); set('teT2e',d.tech2_email);
+    }
+    async function saveTechEmails(){
+      const lic=techLicId(); const msg=document.getElementById('teMsg'); msg.className='msg'; if(!lic) return;
+      const rec={tech1_name:document.getElementById('teT1n').value.trim()||null,tech1_email:document.getElementById('teT1e').value.trim()||null,tech2_name:document.getElementById('teT2n').value.trim()||null,tech2_email:document.getElementById('teT2e').value.trim()||null};
+      const {error}=await sb.from('profiles').update(rec).eq('id',lic);
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      msg.textContent='Saved ✓'; msg.className='msg ok'; setTimeout(()=>{msg.textContent='';},1500);
+    }
+    function downloadTechReport(n){
+      const list=techFees.filter(f=>f.technician===n&&f.invoice_paid&&f.status!=='reported');
+      if(!list.length){ alert('Nothing payable for Technician '+n+'.'); return; }
+      let csv='Business,Invoice,Commission\n';
+      list.forEach(f=>{ csv+='"'+(f.business_name||'').replace(/"/g,'""')+'","'+(f.invoice_ref||'')+'",'+Number(f.amount||0).toFixed(2)+'\n'; });
+      csv+='Total,,'+list.reduce((a,f)=>a+Number(f.amount||0),0).toFixed(2)+'\n';
+      const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='technician'+n+'-payout-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+    }
     function bindTech(){
       const sel=document.getElementById('techLic'); if(sel) sel.addEventListener('change',loadTechAll);
       const rc=document.getElementById('techRecalc'); if(rc) rc.addEventListener('click',recalcFees);
       const cs=document.getElementById('ccSave'); if(cs) cs.addEventListener('click',saveCalc);
       const ma=document.getElementById('mfAdd'); if(ma) ma.addEventListener('click',addManualFee);
+      const ts=document.getElementById('teSave'); if(ts) ts.addEventListener('click',saveTechEmails);
+      bindFeeModal();
     }
 
     function init(){
@@ -660,9 +768,9 @@
         for(const u of users){
           const controls=(myRole==='superadmin'&&u.role!=='superadmin')
             ?`<select data-uid="${u.id}" class="roleSel"><option value="licensee"${u.role==='licensee'?' selected':''}>Licensee</option><option value="admin"${u.role==='admin'?' selected':''}>Admin</option></select>
-              <button class="ghost danger delUser" data-uid="${u.id}" data-email="${u.email}">Remove</button>`
+              <button class="ghost danger delUser" data-uid="${u.id}" data-email="${esc(u.email)}">Remove</button>`
             :'<span style="color:var(--muted);font-size:12px;">'+(u.role==='superadmin'?'—':'super admin only')+'</span>';
-          h+=`<tr><td>${u.full_name||'—'}</td><td>${u.email}</td>
+          h+=`<tr><td>${esc(u.full_name||'—')}</td><td>${esc(u.email)}</td>
             <td><span class="pill ${u.role}">${u.role}</span></td>
             <td style="text-align:right">${controls}</td></tr>`;
         }
@@ -735,7 +843,7 @@
       if(hasGen && g.gen[0].file_path){ const fp=g.gen[0].file_path; files+=fileExt('Invoice', 'invoices', fp, /^https?:\/\//.test(fp)); }
       g.gars.forEach(x=>files+=fileExt('.gar','patguard',x.storage_path,false));
       g.items.forEach(d=>files+=fileExt(d.title||d.doc_type,'documents',d.storage_path,false));
-      const notes=g.items.filter(d=>d.status==='rejected'&&d.licensee_note).map(d=>`<div class="knote">${d.licensee_note}</div>`).join('');
+      const notes=g.items.filter(d=>d.status==='rejected'&&d.licensee_note).map(d=>`<div class="knote">${esc(d.licensee_note)}</div>`).join('');
       let act='';
       if(stage==='received') act=`<button class="kbtn go jbuild" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">Build →</button>`;
       else if(stage==='check') act=`<button class="kbtn jresend" data-lic="${g.lid}" data-biz="${encodeURIComponent(g.biz)}">↻ Resend</button>`;
@@ -746,7 +854,7 @@
       else if(stage==='paycheck') stat = 'awaiting payment'+(pay&&pay.amount!=null?' · $'+Number(pay.amount).toLocaleString():'');
       const waLink=wa[g.lid]?`<a class="kwa" href="${wa[g.lid]}" target="_blank" rel="noopener" title="WhatsApp channel">💬</a>`:'';
       const bubs=`<div class="kbubs"><span class="kbub ${hasGar?'on':'off'}" title="${hasGar?'.gar received':'.gar not received'}">.gar</span><span class="kbub ${hasGen?'on':'off'}" title="${hasGen?'invoice received':'invoice not received'}">.inv</span></div>`;
-      return `<div class="kcard${ghost?' ghost':''}" data-lid="${g.lid}" data-biz="${encodeURIComponent(g.biz)}"><div class="ktop"><span class="kt" title="${g.biz}">${g.biz}</span>${waLink}</div><div class="ks">${nm[g.lid]||'—'}</div>${bubs}${stat?`<div class="kstat">${stat}</div>`:''}${files}${notes}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
+      return `<div class="kcard${ghost?' ghost':''}" data-lid="${g.lid}" data-biz="${encodeURIComponent(g.biz)}"><div class="ktop"><span class="kt" title="${esc(g.biz)}">${esc(g.biz)}</span>${waLink}</div><div class="ks">${esc(nm[g.lid]||'—')}</div>${bubs}${stat?`<div class="kstat">${stat}</div>`:''}${files}${notes}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
     }
     function bindInv(board){
       board.querySelectorAll('a.kdl[data-bucket]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();download(a.dataset.bucket,a.dataset.path);}));
@@ -837,7 +945,7 @@
       gen.forEach(g=>fl.push({label:'Invoice'+(g.total!=null?' $'+g.total:''),bucket:'invoices',path:g.file_path,kind:'gen',id:g.id}));
       _jmFiles=fl;
       const host=document.getElementById('jmFiles');
-      host.innerHTML=fl.length?fl.map((f,i)=>`<div class="jmfile"><span>${f.label}</span><span style="display:flex;gap:6px;">${f.path?`<button class="kbtn line jmdl" data-i="${i}">\u2b07</button>`:''}<button class="kbtn warn jmdel" data-i="${i}">\u2715</button></span></div>`).join(''):'<div class="empty">No files yet.</div>';
+      host.innerHTML=fl.length?fl.map((f,i)=>`<div class="jmfile"><span>${esc(f.label)}</span><span style="display:flex;gap:6px;">${f.path?`<button class="kbtn line jmdl" data-i="${i}">\u2b07</button>`:''}<button class="kbtn warn jmdel" data-i="${i}">\u2715</button></span></div>`).join(''):'<div class="empty">No files yet.</div>';
       host.querySelectorAll('.jmdl').forEach(b=>b.onclick=()=>{ const f=_jmFiles[b.dataset.i]; if(f.path && /^https?:/.test(f.path)) window.open(f.path,'_blank'); else if(f.path) download(f.bucket,f.path); });
       host.querySelectorAll('.jmdel').forEach(b=>b.onclick=async()=>{ const f=_jmFiles[b.dataset.i]; if(!confirm('Delete this file?')) return;
         if(f.kind==='doc'){ if(f.path) await sb.storage.from('documents').remove([f.path]); await sb.from('documents').delete().eq('id',f.id); }
@@ -878,7 +986,7 @@
       if(items.length){ badge.textContent=items.length; badge.style.display='inline-block'; } else badge.style.display='none';
       if(!items.length){ host.innerHTML='<div class="empty">Nothing due in the next 60 days.</div>'; return; }
       host.innerHTML='<table><thead><tr><th>Business</th><th>Licensee</th><th>Check</th><th>Due</th><th>Status</th></tr></thead><tbody>'+
-        items.map(i=>`<tr><td><b>${i.biz}</b></td><td>${i.lic}</td><td>${i.label}</td><td>${i.date}</td>
+        items.map(i=>`<tr><td><b>${esc(i.biz)}</b></td><td>${esc(i.lic)}</td><td>${esc(i.label)}</td><td>${i.date}</td>
           <td>${i.days<0?`<span class="pill rejected">overdue ${-i.days}d</span>`:(i.days<=14?`<span class="pill pending">in ${i.days}d</span>`:`<span class="pill" style="background:#eef2f8;color:#667085">in ${i.days}d</span>`)}</td></tr>`).join('')+'</tbody></table>';
     }
 
@@ -891,8 +999,8 @@
       if(error){ host.innerHTML='<div class="empty">'+error.message+'</div>'; return; }
       if(!data.length){ host.innerHTML='<div class="empty">No businesses yet.</div>'; return; }
       host.innerHTML='<table><thead><tr><th>Business</th><th>Contact</th><th>Email</th><th>Phone</th><th></th></tr></thead><tbody>'+
-        data.map(b=>`<tr><td><b>${b.name}</b></td><td>${[b.first_name,b.last_name].filter(Boolean).join(' ')||'—'}</td><td>${b.contact_email||'—'}</td><td>${b.phone||'—'}</td>
-          <td style="text-align:right"><button class="ghost danger bzDel" data-id="${b.id}" data-name="${b.name}">Delete</button></td></tr>`).join('')+'</tbody></table>';
+        data.map(b=>`<tr><td><b>${esc(b.name)}</b></td><td>${[b.first_name,b.last_name].filter(Boolean).join(' ')||'—'}</td><td>${esc(b.contact_email||'—')}</td><td>${b.phone||'—'}</td>
+          <td style="text-align:right"><button class="ghost danger bzDel" data-id="${b.id}" data-name="${esc(b.name)}">Delete</button></td></tr>`).join('')+'</tbody></table>';
       host.querySelectorAll('.bzDel').forEach(x=>x.addEventListener('click',async()=>{ if(!confirm('Delete '+x.dataset.name+'?')) return; await sb.from('businesses').delete().eq('id',x.dataset.id); loadBzList(bzLicId()); }));
     }
     async function addBusiness(){
@@ -950,8 +1058,8 @@
         const fas=s[1].includes('(FAS)')||s[0]==='check_send';
         const items=rows.filter(b=>b.stage===s[0]);
         const sreq=reqs.filter(r=>RS[r.status]===s[0]);
-        const rcards=sreq.map(r=>{ const info=r.status==='responded'?('📅 '+(r.proposed_date||'')+' '+(r.proposed_ampm==='pm'?'PM':'AM')):(r.status==='call_requested'?'📞 Call requested':'✉ Invite sent'); const appr=r.status==='responded'?`<button class="kbtn go rkappr" data-id="${r.id}" data-biz="${r.business_id}" data-date="${r.proposed_date||''}" data-ampm="${r.proposed_ampm||''}">Approve</button>`:''; return `<div class="kcard rkcard"><div class="kt"><span class="rbadge">REBOOK</span>${(r.businesses&&r.businesses.name)||'Business'}</div><div class="ks">${nm[r.licensee_id]||''}</div><div class="ks">${info}</div>${appr}</div>`; });
-        const cards=items.map(b=>`<div class="kcard bkcard" draggable="true" data-id="${b.id}"><div class="kt">${b.title}</div><div class="ks">${nm[b.licensee_id]||''}</div><div class="ks">${b.amount?'$'+Number(b.amount).toLocaleString():'$0'}${b.due_date?' · '+b.due_date:''}</div></div>`);
+        const rcards=sreq.map(r=>{ const info=r.status==='responded'?('📅 '+(r.proposed_date||'')+' '+(r.proposed_ampm==='pm'?'PM':'AM')):(r.status==='call_requested'?'📞 Call requested':'✉ Invite sent'); const appr=r.status==='responded'?`<button class="kbtn go rkappr" data-id="${r.id}" data-biz="${r.business_id}" data-date="${r.proposed_date||''}" data-ampm="${r.proposed_ampm||''}">Approve</button>`:''; return `<div class="kcard rkcard"><div class="kt"><span class="rbadge">REBOOK</span>${esc((r.businesses&&r.businesses.name)||'Business')}</div><div class="ks">${esc(nm[r.licensee_id]||'')}</div><div class="ks">${info}</div>${appr}</div>`; });
+        const cards=items.map(b=>`<div class="kcard bkcard" draggable="true" data-id="${b.id}"><div class="kt">${esc(b.title)}</div><div class="ks">${esc(nm[b.licensee_id]||'')}</div><div class="ks">${b.amount?'$'+Number(b.amount).toLocaleString():'$0'}${b.due_date?' · '+b.due_date:''}</div></div>`);
         return `<div class="col"><div class="colhead ${fas?'s-sent':'s-recv'}">${s[1]}<span class="ct">${items.length+sreq.length}</span></div><div class="colbody bkdrop" data-stage="${s[0]}">${cards.concat(rcards).join('')||'<div class="kempty">—</div>'}</div></div>`;
       }).join('');
       board.querySelectorAll('.bkcard').forEach(el=>{
@@ -996,7 +1104,7 @@
       if(error){ host.innerHTML='<span class="empty">'+error.message+'</span>'; return; }
       host.innerHTML=(data||[]).map(l=>{
         const on=!!(l.features&&l.features.payments===true);
-        return `<label style="display:inline-flex;align-items:center;gap:7px;background:${on?'#eef2ff':'#eef1f6'};border:1px solid ${on?'#c7d2fe':'var(--line)'};border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;"><input type="checkbox" class="payflag" data-id="${l.id}" ${on?'checked':''} style="cursor:pointer;">${l.full_name||l.email}</label>`;
+        return `<label style="display:inline-flex;align-items:center;gap:7px;background:${on?'#eef2ff':'#eef1f6'};border:1px solid ${on?'#c7d2fe':'var(--line)'};border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;"><input type="checkbox" class="payflag" data-id="${l.id}" ${on?'checked':''} style="cursor:pointer;">${esc(l.full_name||l.email)}</label>`;
       }).join('')||'<span class="empty">No licensees.</span>';
       host.querySelectorAll('.payflag').forEach(c=>c.addEventListener('change',async()=>{
         const id=c.dataset.id, val=c.checked;
@@ -1046,11 +1154,11 @@
     }
     function trainCard(r,stage,nm,certs){
       const rdl=r.report_pdf_path?`<a class="kdl" data-bucket="reports" data-path="${r.report_pdf_path}" href="#">⬇ Report</a>`:'';
-      const cdl=(certs[r.id]||[]).filter(a=>a.certificate_pdf_path).map(a=>`<a class="kdl" data-bucket="certificates" data-path="${a.certificate_pdf_path}" href="#">⬇ ${a.first_name}</a>`).join(' ');
+      const cdl=(certs[r.id]||[]).filter(a=>a.certificate_pdf_path).map(a=>`<a class="kdl" data-bucket="certificates" data-path="${a.certificate_pdf_path}" href="#">⬇ ${esc(a.first_name)}</a>`).join(' ');
       let act='';
-      if(stage==='req') act=`<button class="kbtn go tappr" data-id="${r.id}">Approve &amp; send</button><button class="kbtn warn trej" data-id="${r.id}" data-ref="${r.report_ref}">Reject</button>`;
+      if(stage==='req') act=`<button class="kbtn go tappr" data-id="${r.id}">Approve &amp; send</button><button class="kbtn warn trej" data-id="${r.id}" data-ref="${esc(r.report_ref)}">Reject</button>`;
       else if(stage==='iss') act=`<button class="kbtn go tcomplete" data-id="${r.id}">✓ Complete</button>`;
-      return `<div class="kcard"><div class="kt">${r.business_name}</div><div class="ks">${r.report_ref||''} · ${nm[r.licensee_id]||''} · ${r.total_attendees} att.</div>${(rdl||cdl)?'<div style="margin-top:6px">'+rdl+(rdl&&cdl?' ':'')+cdl+'</div>':''}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
+      return `<div class="kcard"><div class="kt">${esc(r.business_name)}</div><div class="ks">${esc(r.report_ref||'')} · ${esc(nm[r.licensee_id]||'')} · ${r.total_attendees} att.</div>${(rdl||cdl)?'<div style="margin-top:6px">'+rdl+(rdl&&cdl?' ':'')+cdl+'</div>':''}${act?'<div class="kactions">'+act+'</div>':''}</div>`;
     }
     function bindTrain(board){
       board.querySelectorAll('a.kdl').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();download(a.dataset.bucket,a.dataset.path);}));
@@ -1071,7 +1179,7 @@
       const c=colors[state];
       return `<div style="display:flex;align-items:center;gap:14px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;">
         <span style="width:12px;height:12px;border-radius:50%;background:${c[1]};box-shadow:0 0 0 4px ${c[0]};flex:0 0 auto;"></span>
-        <b style="flex:0 0 90px;">${s.name}</b>
+        <b style="flex:0 0 90px;">${esc(s.name)}</b>
         <span style="color:var(--muted);font-size:13px;flex:1;">${s.desc}</span>
         <span style="font-size:13px;font-weight:700;color:${c[1]};">${detail||c[2]}</span>
       </div>`;
@@ -1124,13 +1232,13 @@
     async function loadLicenseeOptions(){
       const {data}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
       licenseeList=data||[];
-      const opts=licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('')||'<option value="">No licensees</option>';
+      const opts=licenseeList.map(l=>`<option value="${l.id}">${esc(l.full_name||l.email)} (${esc(l.email)})</option>`).join('')||'<option value="">No licensees</option>';
       document.getElementById('rcLic').innerHTML=opts;
       document.getElementById('pgLic').innerHTML=opts;
       document.querySelectorAll('.licSel').forEach(s=>s.innerHTML=opts);
       const filt=document.getElementById('pipeFilter');
-      if(filt) filt.innerHTML='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
-      const allOpt='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
+      if(filt) filt.innerHTML='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${esc(l.full_name||l.email)}</option>`).join('');
+      const allOpt='<option value="">All licensees</option>'+licenseeList.map(l=>`<option value="${l.id}">${esc(l.full_name||l.email)}</option>`).join('');
       const pgf=document.getElementById('pgFilter'); if(pgf) pgf.innerHTML=allOpt;
       const remf=document.getElementById('remFilter'); if(remf) remf.innerHTML=allOpt;
       const first=licenseeList[0]?licenseeList[0].id:'';
@@ -1141,7 +1249,7 @@
       const sel=document.getElementById('pgBiz'); if(!sel) return;
       if(!licId){ sel.innerHTML='<option value="">— pick a licensee —</option>'; return; }
       const {data}=await sb.from('businesses').select('id,name').eq('licensee_id',licId).order('name');
-      sel.innerHTML=(data||[]).map(b=>`<option value="${b.id}">${b.name}</option>`).join('')+'<option value="__new">+ New business…</option>';
+      sel.innerHTML=(data||[]).map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')+'<option value="__new">+ New business…</option>';
       onPgBizChange();
     }
     function onPgBizChange(){

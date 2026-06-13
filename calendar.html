@@ -144,9 +144,12 @@
     const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
     const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    let _aal=null; try{ _aal=(await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data; }catch(_e){}
+    if(_aal && _aal.currentLevel!=='aal2'){ location.replace('index.html'); throw new Error('2fa required'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{ e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
       try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
@@ -177,7 +180,7 @@
         const {data:ls}=await sb.from('profiles').select('id,full_name,email').eq('role','licensee');
         (ls||[]).forEach(l=>licName[l.id]=l.full_name||l.email);
         licFilter.style.display='inline-block';
-        licFilter.innerHTML='<option value="">All licensees</option>'+(ls||[]).map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('');
+        licFilter.innerHTML='<option value="">All licensees</option>'+(ls||[]).map(l=>`<option value="${l.id}">${esc(l.full_name||l.email)}</option>`).join('');
       }
       render();
     }
@@ -191,7 +194,7 @@
 
     function render(){
       const fb=filtered();
-      bizPick.innerHTML='<option value="">+ Schedule a business…</option>'+fb.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
+      bizPick.innerHTML='<option value="">+ Schedule a business…</option>'+fb.map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('');
       document.getElementById('availBtn').style.display = (role==='licensee') ? 'inline-block' : 'none';
       const mc=document.getElementById('myCalBtn'); if(mc){ if(role==='licensee' && myCalLink){ mc.href=myCalLink; mc.style.display='inline-block'; } else mc.style.display='none'; }
       const today=new Date(); const curKey=mkey(new Date(today.getFullYear(),today.getMonth(),1));
@@ -230,16 +233,16 @@
       if(r && (!r.due_month || mkeyStr(r.due_month)===k)){
         const tel=(b.phone||'').replace(/[^+\d]/g,'');
         const callBtn=tel?`<a class="call" href="tel:${tel}">📞 Call</a>`:'';
-        const mailBtn=b.contact_email?`<a class="mail" href="mailto:${b.contact_email}">✉ Email</a>`:'';
+        const mailBtn=b.contact_email?`<a class="mail" href="mailto:${esc(b.contact_email)}">✉ Email</a>`:'';
         if(r.status==='responded'){
-          reqHtml=`<div class="req responded">✔ Proposed: ${fmtDay(r.proposed_date)} · ${r.proposed_ampm==='pm'?'afternoon':'morning'}${r.proposed_note?'<br><span style="font-weight:400">“'+r.proposed_note+'”</span>':''}</div><div class="reqbtns"><button class="appr" data-req="${r.id}">Approve</button>${callBtn}${mailBtn}</div>`;
+          reqHtml=`<div class="req responded">✔ Proposed: ${fmtDay(r.proposed_date)} · ${r.proposed_ampm==='pm'?'afternoon':'morning'}${r.proposed_note?'<br><span style="font-weight:400">“'+esc(r.proposed_note)+'”</span>':''}</div><div class="reqbtns"><button class="appr" data-req="${r.id}">Approve</button>${callBtn}${mailBtn}</div>`;
         } else if(r.status==='call_requested'){
-          reqHtml=`<div class="req call_requested">📞 Call requested${r.proposed_note?'<br><span style="font-weight:400">“'+r.proposed_note+'”</span>':''}</div><div class="reqbtns">${callBtn}${mailBtn}</div>`;
+          reqHtml=`<div class="req call_requested">📞 Call requested${r.proposed_note?'<br><span style="font-weight:400">“'+esc(r.proposed_note)+'”</span>':''}</div><div class="reqbtns">${callBtn}${mailBtn}</div>`;
         } else if(r.status==='sent'){
           reqHtml=`<div class="req sent">✉ Invite sent — awaiting reply</div><div class="reqbtns">${callBtn}${mailBtn}</div>`;
         }
       }
-      return `<div class="tile"><div class="tt">${b.name}${bell}</div>${lic}<div class="badges">${badges||'<span class="emptym">no services set</span>'}</div>${bk}${reqHtml}<button class="edit" data-id="${b.id}">Edit schedule / booking</button></div>`;
+      return `<div class="tile"><div class="tt">${esc(b.name)}${bell}</div>${lic}<div class="badges">${badges||'<span class="emptym">no services set</span>'}</div>${bk}${reqHtml}<button class="edit" data-id="${b.id}">Edit schedule / booking</button></div>`;
     }
 
     async function approveReq(reqId){

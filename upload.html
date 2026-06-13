@@ -95,6 +95,8 @@
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    let _aal=null; try{ _aal=(await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data; }catch(_e){}
+    if(_aal && _aal.currentLevel!=='aal2'){ location.replace('index.html'); throw new Error('2fa required'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{
       e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}

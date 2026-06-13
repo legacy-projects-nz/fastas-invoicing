@@ -150,9 +150,12 @@
     const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
     const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    let _aal=null; try{ _aal=(await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data; }catch(_e){}
+    if(_aal && _aal.currentLevel!=='aal2'){ location.replace('index.html'); throw new Error('2fa required'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{ e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
       try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
@@ -201,8 +204,8 @@
       const locked=ADMIN_STAGES.includes(d.stage) && !isAdmin;
       const fas=locked?'<span class="fas">FAS</span>':'';
       return `<div class="deal${locked?' locked':''}" ${locked?'':'draggable="true"'} data-id="${d.id}">
-        <div class="dt"><span class="bagq"></span>${d.title}${fas}</div>
-        ${d.contact?`<div class="dc">${d.contact}</div>`:''}
+        <div class="dt"><span class="bagq"></span>${esc(d.title)}${fas}</div>
+        ${d.contact?`<div class="dc">${esc(d.contact)}</div>`:''}
         <div class="dm"><b>${money(d.amount)}</b>${d.due_date?` on <span class="dd">${fmtDue(d.due_date)}</span>`:''}</div>
         ${locked?'<div class="lk">🔒 Managed by FAS</div>':''}
       </div>`;
@@ -212,12 +215,12 @@
       const info = r.status==='responded'?('📅 '+fmtDue(r.proposed_date)+' '+(r.proposed_ampm==='pm'?'PM':'AM')) : (r.status==='call_requested'?'📞 Call requested':'✉ Invite sent');
       const appr = r.status==='responded'?`<button class="rappr" data-id="${r.id}" data-biz="${r.business_id}" data-date="${r.proposed_date||''}" data-ampm="${r.proposed_ampm||''}">Approve</button>`:'';
       const preset = r.proposed_date?(r.proposed_date+'T'+(r.proposed_ampm==='pm'?'13:00':'09:00')):'';
-      return `<div class="rcard" data-rtype="req" data-id="${r.id}" data-biz="${r.business_id}" data-name="${(b.name||'Business').replace(/"/g,'&quot;')}" data-preset="${preset}"><div class="dt"><span class="rbadge">REBOOK</span>${b.name||'Business'}</div><div class="dc">${info}${r.proposed_note?' · “'+r.proposed_note+'”':''}</div>${appr?'<div style="margin-top:6px">'+appr+'</div>':''}</div>`;
+      return `<div class="rcard" data-rtype="req" data-id="${r.id}" data-biz="${r.business_id}" data-name="${(b.name||'Business').replace(/"/g,'&quot;')}" data-preset="${preset}"><div class="dt"><span class="rbadge">REBOOK</span>${esc(b.name||'Business')}</div><div class="dc">${info}${r.proposed_note?' · “'+esc(r.proposed_note)+'”':''}</div>${appr?'<div style="margin-top:6px">'+appr+'</div>':''}</div>`;
     }
     function dueCard(g){
       const svcs=g.svcs.map(x=>SVCNAME[x]||x).join(', ');
       const badge=g.overdue?'<span class="rbadge" style="background:#fee2e2;color:#b91c1c">OVERDUE</span>':'<span class="rbadge">DUE</span>';
-      return `<div class="rcard" data-rtype="due" data-biz="${g.bizId}" data-name="${(g.name||'Business').replace(/"/g,'&quot;')}"><div class="dt">${badge}${g.name}</div><div class="dc">${svcs} · due ${fmtDue(g.earliest)}</div></div>`;
+      return `<div class="rcard" data-rtype="due" data-biz="${g.bizId}" data-name="${(g.name||'Business').replace(/"/g,'&quot;')}"><div class="dt">${badge}${esc(g.name)}</div><div class="dc">${svcs} · due ${fmtDue(g.earliest)}</div></div>`;
     }
     function render(){
       const board=document.getElementById('board');
@@ -360,7 +363,7 @@
         const sum=items.reduce((a,p)=>a+(Number(p.amount)||0),0);
         const cards=items.map(p=>{
           const when=p.status==='paid'?('paid'+(p.paid_at?' '+fmtDue(p.paid_at.slice(0,10)):'')):('sent'+(p.sent_at?' '+fmtDue(p.sent_at.slice(0,10)):''));
-          return `<div class="paycard" data-id="${p.id}"><div class="pt">${p.business_name}</div><div class="pm"><b>${p.amount!=null?money(p.amount):'—'}</b> · ${when}</div></div>`;
+          return `<div class="paycard" data-id="${p.id}"><div class="pt">${esc(p.business_name)}</div><div class="pm"><b>${p.amount!=null?money(p.amount):'—'}</b> · ${when}</div></div>`;
         });
         return `<div class="paycol"><div class="payhead" style="background:${s[2]};">${s[1]}<span class="pct">${money(sum)} (${items.length})</span></div><div class="paybody" data-status="${s[0]}">${cards.join('')||'<div class="colempty">—</div>'}</div></div>`;
       }).join('');

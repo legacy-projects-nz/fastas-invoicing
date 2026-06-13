@@ -94,9 +94,12 @@
     const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
     const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    let _aal=null; try{ _aal=(await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data; }catch(_e){}
+    if(_aal && _aal.currentLevel!=='aal2'){ location.replace('index.html'); throw new Error('2fa required'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{ e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
       try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
@@ -119,16 +122,16 @@
     }
     function leadCard(l){
       const today=ymd(new Date());
-      const fu = l.follow_up_at ? `<div class="lfu${l.follow_up_at<=today?' due':''}">⏰ ${l.follow_up_action?l.follow_up_action+' · ':''}${fmtDue(l.follow_up_at)}</div>` : (l.follow_up_action?`<div class="lfu">⏰ ${l.follow_up_action}</div>`:'');
+      const fu = l.follow_up_at ? `<div class="lfu${l.follow_up_at<=today?' due':''}">⏰ ${l.follow_up_action?esc(l.follow_up_action)+' · ':''}${fmtDue(l.follow_up_at)}</div>` : (l.follow_up_action?`<div class="lfu">⏰ ${esc(l.follow_up_action)}</div>`:'');
       if(l.stage==='won'||l.stage==='lost'){
         const badge=l.stage==='won'?'<span class="lbadge" style="background:#16a34a">WON</span>':'<span class="lbadge" style="background:#94a3b8">LOST</span>';
-        return `<div class="lead" data-id="${l.id}"><div class="lt">${badge} ${l.name}</div>${l.contact?`<div class="lc">${l.contact}</div>`:''}${fu}<div class="lactions"><button class="lbtn line lmove" data-id="${l.id}" data-stage="followup">↩ Reopen</button></div></div>`;
+        return `<div class="lead" data-id="${l.id}"><div class="lt">${badge} ${esc(l.name)}</div>${l.contact?`<div class="lc">${esc(l.contact)}</div>`:''}${fu}<div class="lactions"><button class="lbtn line lmove" data-id="${l.id}" data-stage="followup">↩ Reopen</button></div></div>`;
       }
       let act='';
       if(l.stage==='new') act=`<button class="lbtn go lmove" data-id="${l.id}" data-stage="waiting">→ Waiting</button>`;
       else if(l.stage==='waiting') act=`<button class="lbtn line lmove" data-id="${l.id}" data-stage="new">←</button><button class="lbtn go lmove" data-id="${l.id}" data-stage="followup">→ Follow up</button>`;
       else if(l.stage==='followup') act=`<button class="lbtn line lmove" data-id="${l.id}" data-stage="waiting">←</button><button class="lbtn win lwon" data-id="${l.id}">✓ Won</button><button class="lbtn lose llost" data-id="${l.id}">Lost</button>`;
-      return `<div class="lead" data-id="${l.id}"><div class="lt">${l.name}</div>${l.contact?`<div class="lc">${l.contact}</div>`:''}${fu}<div class="lactions">${act}</div></div>`;
+      return `<div class="lead" data-id="${l.id}"><div class="lt">${esc(l.name)}</div>${l.contact?`<div class="lc">${esc(l.contact)}</div>`:''}${fu}<div class="lactions">${act}</div></div>`;
     }
     function renderLeads(){
       const board=document.getElementById('leadBoard');

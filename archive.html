@@ -67,9 +67,12 @@
     const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
     const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    let _aal=null; try{ _aal=(await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data; }catch(_e){}
+    if(_aal && _aal.currentLevel!=='aal2'){ location.replace('index.html'); throw new Error('2fa required'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{ e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
       try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
@@ -101,7 +104,7 @@
       if(!files.length){ host.innerHTML='<div class="empty">No invoices or reports on file for this business yet.</div>'; return; }
       host.innerHTML=files.map((f,i)=>`<div class="frow">
         <input type="checkbox" data-i="${i}">
-        <div class="fmeta"><div class="fname"><span class="ftag ${f.type==='invoice'?'inv':'rep'}">${f.type==='invoice'?'Invoice':'Report'}</span>${f.name}</div>
+        <div class="fmeta"><div class="fname"><span class="ftag ${f.type==='invoice'?'inv':'rep'}">${f.type==='invoice'?'Invoice':'Report'}</span>${esc(f.name)}</div>
         <div class="fsub">${f.status||''}${f.when?' · '+fmt(f.when):''} · <a class="dl" href="#" data-dl="${i}">Download</a></div></div>
       </div>`).join('');
       host.querySelectorAll('a[data-dl]').forEach(a=>a.addEventListener('click',async e=>{ e.preventDefault();

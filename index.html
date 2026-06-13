@@ -190,6 +190,24 @@
     </form>
   </div>
 
+  <!-- two-factor (TOTP) overlay -->
+  <div id="mfa" style="position:fixed;inset:0;z-index:200001;background:linear-gradient(160deg,var(--bg1),var(--bg2));display:none;align-items:center;justify-content:center;padding:24px;">
+    <div class="gate-card">
+      <div class="brand-mark">FA</div>
+      <h2 id="mfaTitle">Two-factor verification</h2>
+      <p id="mfaIntro" style="font-size:13px;color:#667085;margin:0 0 12px;"></p>
+      <div id="mfaQRwrap" style="display:none;margin:0 0 12px;">
+        <img id="mfaQR" alt="2FA QR code" style="width:188px;height:188px;display:block;margin:0 auto;border:1px solid var(--line);border-radius:10px;background:#fff;">
+        <p style="font-size:11px;color:#667085;margin:8px 0 2px;">Can't scan? Enter this key in your app:</p>
+        <code id="mfaSecret" style="font-size:12px;word-break:break-all;color:#344054;"></code>
+      </div>
+      <div class="gate-msg" id="mfaMsg"></div>
+      <input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code" style="width:100%;padding:12px;font-size:18px;letter-spacing:4px;text-align:center;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;outline:none;">
+      <button class="primary" id="mfaVerify" style="width:100%;padding:13px;font-size:16px;font-weight:700;color:#fff;border:none;border-radius:12px;cursor:pointer;background:linear-gradient(135deg,#2563eb,#1d4ed8);">Verify</button>
+      <div class="gate-toggle" style="margin-top:10px;"><a href="#" id="mfaSignout" style="color:#667085;text-decoration:none;">Sign out</a></div>
+    </div>
+  </div>
+
   <header>
     <div class="brand">
       <div class="brand-mark">FA</div>
@@ -363,6 +381,7 @@
     const SUPABASE_URL = 'https://ecgvkifvlrcfrnqbades.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
     window.fastasSB = sb;
 
     const gate=document.getElementById('gate');
@@ -401,8 +420,63 @@
     const checkBadge=document.getElementById('checkBadge');
     const adminCard=document.getElementById('adminCard');
     const adminBadge=document.getElementById('adminBadge');
+    // ===== Two-factor authentication (TOTP) — required for everyone =====
+    const mfaEl=document.getElementById('mfa');
+    let mfaFactorId=null;
+    function setMfaMsg(t,kind){ const m=document.getElementById('mfaMsg'); if(m){ m.textContent=t||''; m.className='gate-msg '+(kind||''); } }
+    function showMfa(){ gate.classList.add('hidden'); mfaEl.style.display='flex'; document.body.classList.add('locked'); document.getElementById('mfaCode').focus(); }
+    function hideMfa(){ mfaEl.style.display='none'; }
+    async function ensureMFA(){
+      let aal;
+      try{ const r=await sb.auth.mfa.getAuthenticatorAssuranceLevel(); aal=r.data; }catch(_){ return true; }
+      if(!aal){ return true; }
+      if(aal.currentLevel==='aal2'){ hideMfa(); return true; }
+      if(aal.nextLevel==='aal2'){ await startChallenge(); } else { await startEnroll(); }
+      return false;
+    }
+    async function startEnroll(){
+      setMfaMsg(''); document.getElementById('mfaTitle').textContent='Set up two-factor authentication';
+      document.getElementById('mfaIntro').textContent='Scan this QR code with an authenticator app (Google Authenticator, Authy, 1Password…), then enter the 6-digit code to finish.';
+      document.getElementById('mfaQRwrap').style.display='block';
+      try{
+        const lf=await sb.auth.mfa.listFactors();
+        const stale=((lf.data&&lf.data.totp)||[]).find(x=>x.status!=='verified');
+        if(stale){ try{ await sb.auth.mfa.unenroll({factorId:stale.id}); }catch(_){} }
+        const {data,error}=await sb.auth.mfa.enroll({factorType:'totp',friendlyName:'FASTAS '+Date.now()});
+        if(error) throw error;
+        mfaFactorId=data.id;
+        document.getElementById('mfaQR').src=data.totp.qr_code;
+        document.getElementById('mfaSecret').textContent=data.totp.secret;
+      }catch(e){ setMfaMsg(e.message||'Could not start setup.','err'); }
+      showMfa();
+    }
+    async function startChallenge(){
+      setMfaMsg(''); document.getElementById('mfaTitle').textContent='Two-factor verification';
+      document.getElementById('mfaIntro').textContent='Enter the 6-digit code from your authenticator app.';
+      document.getElementById('mfaQRwrap').style.display='none';
+      try{ const lf=await sb.auth.mfa.listFactors(); const t=((lf.data&&lf.data.totp)||[]).find(x=>x.status==='verified')||((lf.data&&lf.data.totp)||[])[0]; mfaFactorId=t?t.id:null; }catch(e){ setMfaMsg(e.message,'err'); }
+      showMfa();
+    }
+    async function mfaSubmit(){
+      const code=(document.getElementById('mfaCode').value||'').replace(/\s/g,'');
+      if(!mfaFactorId){ setMfaMsg('No authenticator set up yet — reload and try again.','err'); return; }
+      if(!/^[0-9]{6}$/.test(code)){ setMfaMsg('Enter the 6-digit code.','err'); return; }
+      const vbtn=document.getElementById('mfaVerify'); vbtn.disabled=true; setMfaMsg('Checking…');
+      try{
+        const ch=await sb.auth.mfa.challenge({factorId:mfaFactorId}); if(ch.error) throw ch.error;
+        const v=await sb.auth.mfa.verify({factorId:mfaFactorId,challengeId:ch.data.id,code}); if(v.error) throw v.error;
+        document.getElementById('mfaCode').value=''; setMfaMsg(''); hideMfa();
+        const {data:{session:s2}}=await sb.auth.getSession();
+        await applySession(s2);
+      }catch(e){ setMfaMsg(e.message||'That code did not match. Try again.','err'); vbtn.disabled=false; }
+    }
+    document.getElementById('mfaVerify').addEventListener('click',mfaSubmit);
+    document.getElementById('mfaCode').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); mfaSubmit(); } });
+    document.getElementById('mfaSignout').addEventListener('click',async(e)=>{ e.preventDefault(); try{ await sb.auth.signOut({scope:'local'}); }catch(_){} try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){} location.reload(); });
+
     async function applySession(session){
       if(!session){ lock(); userbar.style.display='none'; checkerCard.style.display='none'; adminCard.style.display='none'; return; }
+      if(!(await ensureMFA())) return;
       unlock(); userbar.style.display='flex';
       const {data:prof}=await sb.from('profiles').select('role,full_name,whatsapp_link,calendar_link,features,whatsapp_channels,contact_email,phone,tech1_name,tech1_email,tech2_name,tech2_email').eq('id',session.user.id).single();
       const role=prof?.role||'licensee';

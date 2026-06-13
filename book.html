@@ -49,6 +49,7 @@
     }
     function fmtDay(ds){ const d=new Date(ds+'T00:00:00'); return d.toLocaleDateString('en-NZ',{weekday:'short',day:'numeric',month:'short'}); }
 
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
     function done(msg){ wrap.innerHTML='<div class="card"><div class="ok">'+msg+'</div></div>'; }
 
     async function load(){
@@ -75,7 +76,7 @@
           <span class="slots"><button class="slot" data-ampm="am">Morning</button><button class="slot" data-ampm="pm">Afternoon</button></span>`;
       }
       wrap.innerHTML=`
-        <h1>Hi ${d.business||'there'}</h1>
+        <h1>Hi ${esc(d.business||'there')}</h1>
         <p class="sub">Your FAST AS service with <b>${d.licensee}</b> is due in <b>${d.monthLabel}</b>. Choose a time that suits, or ask us to call.</p>
         <div class="card">
           <label>Preferred day &amp; time</label>

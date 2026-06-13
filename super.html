@@ -114,6 +114,15 @@
         </div>
         <div class="msg" id="pwMsg"></div>
       </div>
+      <div class="card">
+        <h2>Reset a user's two-factor (2FA)</h2>
+        <p class="hint">Clears the user's authenticator so they can set up 2FA again at their next login. Use this if someone has lost or replaced their phone.</p>
+        <div class="row">
+          <div class="f"><label>User</label><select id="mfaUser"></select></div>
+          <button class="danger" id="mfaResetBtn">Reset 2FA</button>
+        </div>
+        <div class="msg" id="mfaResetMsg"></div>
+      </div>
     </div>
 
     <!-- PERMISSIONS -->
@@ -227,12 +236,15 @@
     const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
     const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
     const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+    function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
     const FN=SUPABASE_URL+'/functions/v1/admin-users';
     const TABLES=['profiles','pricing_items','training_reports','training_attendees','documents','patguard_files','report_templates'];
     const FEATURES=[['voice','Invoice Generator'],['training','Certificate Builder'],['whatsapp','Invoice Changes'],['pricing','Price Setting'],['checker','Inv/Rep Checker'],['gar','.gar Uploader'],['bookings','Bookings'],['sales','Sales Pipeline'],['contacts','Contacts'],['payments','Payment Tracking'],['calendar','Rebook Calendar']];
 
     const {data:{session}}=await sb.auth.getSession();
     if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    let _aal=null; try{ _aal=(await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data; }catch(_e){}
+    if(_aal && _aal.currentLevel!=='aal2'){ location.replace('index.html'); throw new Error('2fa required'); }
     document.getElementById('signoutLink').addEventListener('click',async(e)=>{
       e.preventDefault();
       try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
@@ -270,7 +282,7 @@
       const {data}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
       permLicensees=data||[];
       const sel=document.getElementById('permLic');
-      sel.innerHTML=permLicensees.map(l=>`<option value="${l.id}">${l.full_name||l.email} (${l.email})</option>`).join('')||'<option value="">No licensees</option>';
+      sel.innerHTML=permLicensees.map(l=>`<option value="${l.id}">${esc(l.full_name||l.email)} (${esc(l.email)})</option>`).join('')||'<option value="">No licensees</option>';
       sel.onchange=()=>renderPermFor(sel.value);
       if(permLicensees.length) renderPermFor(permLicensees[0].id);
     }
@@ -320,9 +332,10 @@
     }
     async function loadAccounts(){
       const {users}=await callFn({action:'list_users'});
-      document.getElementById('pwUser').innerHTML=users.map(u=>`<option value="${u.id}">${u.full_name||u.email} (${u.email}) — ${u.role}</option>`).join('');
+      document.getElementById('pwUser').innerHTML=users.map(u=>`<option value="${u.id}">${esc(u.full_name||u.email)} (${esc(u.email)}) — ${u.role}</option>`).join('');
+      { const mu=document.getElementById('mfaUser'); if(mu) mu.innerHTML=users.map(u=>`<option value="${u.id}">${esc(u.full_name||u.email)} (${esc(u.email)}) — ${u.role}</option>`).join(''); }
       document.getElementById('accHost').innerHTML='<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Created</th></tr></thead><tbody>'+
-        users.map(u=>`<tr><td>${u.full_name||'—'}</td><td>${u.email}</td><td><span class="pill ${u.role}">${u.role}</span></td><td>${new Date(u.created_at).toLocaleDateString()}</td></tr>`).join('')+'</tbody></table>';
+        users.map(u=>`<tr><td>${esc(u.full_name||'—')}</td><td>${esc(u.email)}</td><td><span class="pill ${u.role}">${u.role}</span></td><td>${new Date(u.created_at).toLocaleDateString()}</td></tr>`).join('')+'</tbody></table>';
     }
 
     function weekPrice(n){ return n<=0?0:59+(Math.ceil(n/5)-1)*20; }
@@ -344,7 +357,7 @@
         const tw=weeks[thisWk]||0;
         const rows=keys.length?keys.map(k=>`<tr${k===thisWk?' style="font-weight:600;background:#f8fafc"':''}><td>${fmtWeek(k)}${k===thisWk?' <span class="pill" style="background:#dbeafe;color:#1e40af">this week</span>':''}</td><td style="text-align:center">${weeks[k]}</td><td style="text-align:right">$${weekPrice(weeks[k])}</td></tr>`).join(''):'<tr><td colspan="3" class="empty" style="padding:8px">No invoices billed yet.</td></tr>';
         return `<div class="card" style="margin-bottom:14px">
-          <h2 style="margin-bottom:2px">${l.full_name||l.email}</h2>
+          <h2 style="margin-bottom:2px">${esc(l.full_name||l.email)}</h2>
           <p class="hint" style="margin-top:0">This week: <b>${tw}</b> invoice${tw===1?'':'s'} · <b>$${weekPrice(tw)}</b> &nbsp;|&nbsp; Billed to date: <b>$${total}</b></p>
           <table><thead><tr><th>Week</th><th style="text-align:center">Invoices</th><th style="text-align:right">Charge</th></tr></thead><tbody>${rows}</tbody></table>
         </div>`;
@@ -357,7 +370,7 @@
       const {data:lic}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');
       dataLic=lic||[];
       const sel=document.getElementById('bzLic');
-      if(sel) sel.innerHTML=dataLic.map(l=>`<option value="${l.id}">${l.full_name||l.email}</option>`).join('')||'<option value="">No licensees</option>';
+      if(sel) sel.innerHTML=dataLic.map(l=>`<option value="${l.id}">${esc(l.full_name||l.email)}</option>`).join('')||'<option value="">No licensees</option>';
       loadBizList();
     }
     async function loadBizList(){
@@ -367,7 +380,7 @@
       const nm={}; dataLic.forEach(l=>nm[l.id]=l.full_name||l.email);
       if(!data.length){ host.innerHTML='<div class="empty">No businesses yet.</div>'; return; }
       host.innerHTML='<table><thead><tr><th>Business</th><th>Licensee</th><th>Email</th><th>Phone</th><th></th></tr></thead><tbody>'+
-        data.map(b=>`<tr><td>${b.name}</td><td>${nm[b.licensee_id]||'—'}</td><td>${b.contact_email||''}</td><td>${b.phone||''}</td><td style="text-align:right"><button class="ghost bzDel" data-id="${b.id}" data-name="${(b.name||'').replace(/"/g,'&quot;')}">Delete</button></td></tr>`).join('')+'</tbody></table>';
+        data.map(b=>`<tr><td>${esc(b.name)}</td><td>${esc(nm[b.licensee_id]||'—')}</td><td>${esc(b.contact_email||'')}</td><td>${b.phone||''}</td><td style="text-align:right"><button class="ghost bzDel" data-id="${b.id}" data-name="${(b.name||'').replace(/"/g,'&quot;')}">Delete</button></td></tr>`).join('')+'</tbody></table>';
       host.querySelectorAll('.bzDel').forEach(x=>x.onclick=async()=>{ if(!confirm('Delete '+x.dataset.name+'? This also removes its schedules and booking requests.')) return; await sb.from('businesses').delete().eq('id',x.dataset.id); loadBizList(); });
     }
     function bindData(){
@@ -431,6 +444,20 @@
           await callFn({action:'set_password',user_id:document.getElementById('pwUser').value,password:document.getElementById('pwNew').value});
           msg.textContent='Password updated ✓'; msg.className='msg ok'; document.getElementById('pwNew').value='';
         }catch(e){ msg.textContent=e.message; msg.className='msg err'; }
+      });
+
+      const mfaBtn=document.getElementById('mfaResetBtn');
+      if(mfaBtn) mfaBtn.addEventListener('click',async()=>{
+        const sel=document.getElementById('mfaUser'); const msg=document.getElementById('mfaResetMsg'); msg.className='msg';
+        const uid=sel&&sel.value; const label=sel&&sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text:'this user';
+        if(!uid){ msg.textContent='Pick a user.'; msg.className='msg err'; return; }
+        if(!confirm('Reset two-factor for '+label+'? They will be asked to set up 2FA again at their next login.')) return;
+        msg.textContent='Resetting…';
+        try{
+          const r=await fetch(SUPABASE_URL+'/functions/v1/admin-reset-mfa',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({user_id:uid})});
+          const o=await r.json().catch(()=>({})); if(!r.ok||o.error) throw new Error(o.error||'failed');
+          msg.textContent='2FA reset ✓ — '+(o.removed||0)+' factor(s) cleared. They will re-enrol next login.'; msg.className='msg ok';
+        }catch(e){ msg.textContent='Could not reset: '+e.message; msg.className='msg err'; }
       });
 
       document.getElementById('archiveBtn').addEventListener('click',async()=>{
