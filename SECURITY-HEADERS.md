@@ -33,7 +33,7 @@ blocked, rename the header to `Content-Security-Policy` to enforce it.
 **Value (single line):**
 
 ```
-default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://challenges.cloudflare.com https://*.elevenlabs.io; connect-src 'self' https://ecgvkifvlrcfrnqbades.supabase.co wss://ecgvkifvlrcfrnqbades.supabase.co https://*.elevenlabs.io wss://*.elevenlabs.io https://challenges.cloudflare.com; media-src 'self' blob: https://*.elevenlabs.io; frame-src https://challenges.cloudflare.com https://*.elevenlabs.io; worker-src 'self' blob:
+default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://challenges.cloudflare.com https://*.elevenlabs.io https://js.stripe.com; connect-src 'self' https://ecgvkifvlrcfrnqbades.supabase.co wss://ecgvkifvlrcfrnqbades.supabase.co https://*.elevenlabs.io wss://*.elevenlabs.io https://challenges.cloudflare.com https://api.stripe.com; media-src 'self' blob: https://*.elevenlabs.io; frame-src https://challenges.cloudflare.com https://*.elevenlabs.io https://js.stripe.com https://hooks.stripe.com; worker-src 'self' blob:
 ```
 
 Notes:
