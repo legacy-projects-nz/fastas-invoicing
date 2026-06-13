@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASTAS · Lead Pipeline</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232563eb'/%3E%3Cstop offset='1' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial' font-size='30' font-weight='800' fill='white' text-anchor='middle'%3EFA%3C/text%3E%3C/svg%3E">
+<style>
+  :root{--ink:#101828;--muted:#667085;--line:#e6e9ef;--brand:#2563eb;--red:#475569;--green:#4f46e5;--bg1:#f7f9fc;--bg2:#eef2f8;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .topbar a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;margin-left:14px;}
+  .topbar .who{font-size:13px;color:var(--muted);}
+  .bar{display:flex;align-items:center;gap:12px;padding:14px 22px;flex-wrap:wrap;}
+  h1{font-size:22px;margin:0;}
+  button.add{background:#4f46e5;color:#fff;border:none;border-radius:999px;padding:10px 20px;font-weight:800;cursor:pointer;font-size:14px;}
+  .totals{font-size:13px;color:var(--muted);}
+  .hint{font-size:12.5px;color:var(--muted);padding:0 22px 10px;max-width:760px;}
+  .board{display:flex;gap:0;overflow-x:auto;padding:0 14px 28px;-webkit-overflow-scrolling:touch;}
+  .col{flex:0 0 210px;min-width:210px;display:flex;flex-direction:column;}
+  .colhead{position:relative;color:#fff;padding:8px 10px 8px 18px;font-weight:700;font-size:11.5px;margin-right:8px;background:#475569;}
+  .colhead .pct{display:block;font-weight:600;opacity:.85;font-size:10.5px;margin-top:1px;}
+  .colhead:after{content:'';position:absolute;top:0;right:-14px;width:0;height:0;border-top:16px solid transparent;border-bottom:16px solid transparent;border-left:14px solid #475569;z-index:2;}
+  .col:last-child .colhead:after{display:none;} .col:last-child .colhead{margin-right:0;}
+  .colbody{background:#eef1f6;border:1px solid var(--line);border-top:none;margin-right:8px;padding:7px;min-height:160px;border-radius:0 0 8px 8px;}
+  .col:last-child .colbody{margin-right:0;}
+  .colempty{color:#9aa4b2;font-size:11px;text-align:center;padding:12px 4px;}
+  .lead{background:#fff;border:1px solid #e6e9ef;border-radius:7px;padding:7px 9px;margin-bottom:6px;box-shadow:0 1px 2px rgba(16,24,40,.08);cursor:pointer;}
+  .lead .lt{font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .lead .lc{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .lead .lfu{font-size:10.5px;margin-top:3px;color:#334155;background:#f1f5f9;border-radius:5px;padding:2px 5px;display:inline-block;}
+  .lead .lfu.due{background:#fee2e2;color:#b91c1c;font-weight:700;}
+  .lead .lbadge{font-size:8px;font-weight:800;border-radius:4px;padding:1px 5px;color:#fff;}
+  .lead .lactions{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+  .lbtn{border:none;border-radius:6px;padding:4px 8px;font-size:10.5px;font-weight:700;cursor:pointer;background:#eef2ff;color:#3730a3;}
+  .lbtn.go{background:#4f46e5;color:#fff;} .lbtn.win{background:#16a34a;color:#fff;} .lbtn.lose{background:#fff;border:1px solid #cbd5e1;color:#475569;} .lbtn.line{background:#fff;border:1px solid var(--line);color:#475569;}
+  .modal{display:none;position:fixed;inset:0;z-index:5000;background:rgba(16,24,40,.45);align-items:center;justify-content:center;padding:20px;}
+  .modal.show{display:flex;}
+  .mcard{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:420px;box-shadow:0 16px 44px rgba(16,24,40,.25);}
+  .mcard h3{margin:0 0 14px;font-size:18px;}
+  .mcard label{display:block;font-size:12px;font-weight:600;color:#344054;margin:10px 0 5px;}
+  .mcard input,.mcard select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;}
+  .mrow{display:flex;gap:10px;} .mrow>div{flex:1;}
+  .mact{display:flex;justify-content:space-between;margin-top:18px;gap:10px;}
+  button.primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:11px 20px;font-weight:700;cursor:pointer;}
+  button.ghost{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 16px;cursor:pointer;}
+  button.del{background:#fff;border:1px solid #cbd5e1;color:var(--red);border-radius:10px;padding:11px 16px;cursor:pointer;}
+  .msg{font-size:13px;margin-top:8px;min-height:16px;} .msg.err{color:var(--red);}
+  @media(max-width:820px){ .bar{padding:10px 16px;} .hint{padding:0 16px 8px;} .board{padding:0 10px 18px;} .col{flex:0 0 168px;min-width:168px;} }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><div class="brand-mark">FA</div><b>Lead Pipeline</b></div>
+    <div style="display:flex;align-items:center;gap:16px;"><span class="who" id="who"></span><a href="sales.html">← Sales pipeline</a><a href="index.html">Main menu</a><a href="#" id="signoutLink" style="color:#475569;">Sign out</a></div>
+  </div>
+  <div class="bar">
+    <h1>Lead pipeline</h1>
+    <span class="totals" id="leadTotals"></span>
+    <button class="add" id="addLead">+ Add lead</button>
+  </div>
+  <p class="hint">Track prospects before they become bookings. Add temporary contact details, set a follow-up action &amp; reminder date while a lead is <b>Waiting</b>, then mark it <b>Won</b> to drop it into <b>Pending Booking</b> on the sales pipeline (or <b>Lost</b> to close it).</p>
+  <div class="board" id="leadBoard"></div>
+
+  <!-- lead add/edit modal -->
+  <div class="modal" id="leadModal">
+    <div class="mcard">
+      <h3 id="lmTitle">Add lead</h3>
+      <label>Name *</label>
+      <input id="lmName" placeholder="Prospect / business name">
+      <label>Temporary contact details</label>
+      <input id="lmContact" placeholder="phone / email / who to ask for">
+      <label>Notes</label>
+      <input id="lmNotes" placeholder="anything useful">
+      <div class="mrow">
+        <div><label>Follow-up action</label><input id="lmAction" placeholder="e.g. call back, send quote"></div>
+        <div><label>Reminder date</label><input id="lmDate" type="date"></div>
+      </div>
+      <label>Stage</label>
+      <select id="lmStage"></select>
+      <div class="msg" id="lmMsg"></div>
+      <div class="mact">
+        <button class="del" id="lmDelete" style="visibility:hidden;">Delete</button>
+        <span style="display:flex;gap:10px;"><button class="ghost" id="lmCancel">Cancel</button><button class="primary" id="lmSave">Save</button></span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    const SUPABASE_URL='https://ecgvkifvlrcfrnqbades.supabase.co';
+    const SUPABASE_KEY='sb_publishable_qGgoGsfKwLELehUzbC25Bw_u_rwVwk2';
+    const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){ location.replace('index.html'); throw new Error('not signed in'); }
+    document.getElementById('signoutLink').addEventListener('click',async(e)=>{ e.preventDefault();
+      try{ await sb.auth.signOut({scope:'local'}); }catch(_){}
+      try{ Object.keys(localStorage).forEach(k=>{ if(k.indexOf('sb-')===0) localStorage.removeItem(k); }); }catch(_){}
+      location.href='index.html'; });
+    const {data:prof}=await sb.from('profiles').select('role,full_name,features').eq('id',session.user.id).single();
+    if((prof?.role||'licensee')==='licensee' && prof?.features?.sales===false){ location.href='index.html'; }
+    document.getElementById('who').textContent=(prof?.full_name||session.user.email)+' — '+(prof?.role||'licensee');
+
+    function ymd(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+    function fmtDue(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-NZ',{day:'numeric',month:'short'}); }
+
+    const LEADSTAGES=[['new','New'],['waiting','Waiting'],['followup','Follow up'],['wonlost','Won / Lost']];
+    let leads=[];
+    const lmStage=document.getElementById('lmStage');
+    lmStage.innerHTML=[['new','New'],['waiting','Waiting'],['followup','Follow up'],['won','Won'],['lost','Lost']].map(s=>`<option value="${s[0]}">${s[1]}</option>`).join('');
+    async function loadLeads(){
+      const {data,error}=await sb.from('leads').select('*').order('updated_at',{ascending:false});
+      if(error){ document.getElementById('leadBoard').innerHTML='<div class="colempty">'+error.message+'</div>'; return; }
+      leads=data||[]; renderLeads();
+    }
+    function leadCard(l){
+      const today=ymd(new Date());
+      const fu = l.follow_up_at ? `<div class="lfu${l.follow_up_at<=today?' due':''}">⏰ ${l.follow_up_action?l.follow_up_action+' · ':''}${fmtDue(l.follow_up_at)}</div>` : (l.follow_up_action?`<div class="lfu">⏰ ${l.follow_up_action}</div>`:'');
+      if(l.stage==='won'||l.stage==='lost'){
+        const badge=l.stage==='won'?'<span class="lbadge" style="background:#16a34a">WON</span>':'<span class="lbadge" style="background:#94a3b8">LOST</span>';
+        return `<div class="lead" data-id="${l.id}"><div class="lt">${badge} ${l.name}</div>${l.contact?`<div class="lc">${l.contact}</div>`:''}${fu}<div class="lactions"><button class="lbtn line lmove" data-id="${l.id}" data-stage="followup">↩ Reopen</button></div></div>`;
+      }
+      let act='';
+      if(l.stage==='new') act=`<button class="lbtn go lmove" data-id="${l.id}" data-stage="waiting">→ Waiting</button>`;
+      else if(l.stage==='waiting') act=`<button class="lbtn line lmove" data-id="${l.id}" data-stage="new">←</button><button class="lbtn go lmove" data-id="${l.id}" data-stage="followup">→ Follow up</button>`;
+      else if(l.stage==='followup') act=`<button class="lbtn line lmove" data-id="${l.id}" data-stage="waiting">←</button><button class="lbtn win lwon" data-id="${l.id}">✓ Won</button><button class="lbtn lose llost" data-id="${l.id}">Lost</button>`;
+      return `<div class="lead" data-id="${l.id}"><div class="lt">${l.name}</div>${l.contact?`<div class="lc">${l.contact}</div>`:''}${fu}<div class="lactions">${act}</div></div>`;
+    }
+    function renderLeads(){
+      const board=document.getElementById('leadBoard');
+      const open=leads.filter(l=>['new','waiting','followup'].includes(l.stage)).length;
+      document.getElementById('leadTotals').textContent=open+' active lead'+(open!==1?'s':'');
+      board.innerHTML=LEADSTAGES.map(s=>{
+        const items = s[0]==='wonlost' ? leads.filter(l=>l.stage==='won'||l.stage==='lost') : leads.filter(l=>l.stage===s[0]);
+        const cards=items.map(leadCard).join('');
+        return `<div class="col"><div class="colhead">${s[1]}<span class="pct">${items.length}</span></div><div class="colbody">${cards||'<div class="colempty">—</div>'}</div></div>`;
+      }).join('');
+      bindLeads();
+    }
+    function bindLeads(){
+      const board=document.getElementById('leadBoard');
+      board.querySelectorAll('.lmove').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); await sb.from('leads').update({stage:b.dataset.stage,updated_at:new Date().toISOString()}).eq('id',b.dataset.id); loadLeads(); }));
+      board.querySelectorAll('.lwon').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); await markWon(b.dataset.id); }));
+      board.querySelectorAll('.llost').forEach(b=>b.addEventListener('click',async e=>{ e.stopPropagation(); await sb.from('leads').update({stage:'lost',updated_at:new Date().toISOString()}).eq('id',b.dataset.id); loadLeads(); }));
+      board.querySelectorAll('.lead').forEach(c=>c.addEventListener('click',()=>openLead(c.dataset.id)));
+    }
+    async function markWon(id){
+      const l=leads.find(x=>x.id===id); if(!l) return;
+      if(!confirm('Mark “'+l.name+'” as Won? This adds it to Pending Booking on the sales pipeline.')) return;
+      await sb.from('leads').update({stage:'won',updated_at:new Date().toISOString()}).eq('id',id);
+      await sb.from('bookings').insert({licensee_id:session.user.id,title:l.name,contact:l.contact||null,notes:l.notes||null,stage:'pending_booking'});
+      loadLeads();
+    }
+    const leadModal=document.getElementById('leadModal'); let editLead=null;
+    function openAddLead(){ editLead=null; document.getElementById('lmTitle').textContent='Add lead';
+      ['lmName','lmContact','lmNotes','lmAction','lmDate'].forEach(i=>document.getElementById(i).value=''); lmStage.value='new';
+      document.getElementById('lmDelete').style.visibility='hidden'; document.getElementById('lmMsg').textContent=''; leadModal.classList.add('show'); }
+    function openLead(id){ const l=leads.find(x=>x.id===id); if(!l) return; editLead=id;
+      document.getElementById('lmTitle').textContent='Edit lead';
+      document.getElementById('lmName').value=l.name||''; document.getElementById('lmContact').value=l.contact||''; document.getElementById('lmNotes').value=l.notes||'';
+      document.getElementById('lmAction').value=l.follow_up_action||''; document.getElementById('lmDate').value=l.follow_up_at||''; lmStage.value=l.stage;
+      document.getElementById('lmDelete').style.visibility='visible'; document.getElementById('lmMsg').textContent=''; leadModal.classList.add('show'); }
+    document.getElementById('addLead').addEventListener('click',openAddLead);
+    document.getElementById('lmCancel').addEventListener('click',()=>leadModal.classList.remove('show'));
+    leadModal.addEventListener('click',e=>{ if(e.target===leadModal) leadModal.classList.remove('show'); });
+    document.getElementById('lmSave').addEventListener('click',async()=>{
+      const msg=document.getElementById('lmMsg'); msg.className='msg';
+      const name=document.getElementById('lmName').value.trim();
+      if(!name){ msg.textContent='Name is required.'; msg.className='msg err'; return; }
+      const prevStage = editLead ? ((leads.find(x=>x.id===editLead)||{}).stage) : 'new';
+      const newStage = lmStage.value;
+      const rec={ name, contact:document.getElementById('lmContact').value.trim()||null, notes:document.getElementById('lmNotes').value.trim()||null,
+        follow_up_action:document.getElementById('lmAction').value.trim()||null, follow_up_at:document.getElementById('lmDate').value||null,
+        stage:newStage, updated_at:new Date().toISOString() };
+      let error;
+      if(editLead){ ({error}=await sb.from('leads').update(rec).eq('id',editLead)); }
+      else { rec.licensee_id=session.user.id; ({error}=await sb.from('leads').insert(rec)); }
+      if(error){ msg.textContent=error.message; msg.className='msg err'; return; }
+      if(newStage==='won' && prevStage!=='won'){ await sb.from('bookings').insert({licensee_id:session.user.id,title:name,contact:rec.contact,notes:rec.notes,stage:'pending_booking'}); }
+      leadModal.classList.remove('show'); loadLeads();
+    });
+    document.getElementById('lmDelete').addEventListener('click',async()=>{
+      if(!editLead||!confirm('Delete this lead?')) return;
+      await sb.from('leads').delete().eq('id',editLead); leadModal.classList.remove('show'); loadLeads();
+    });
+    loadLeads();
+  </script>
+</body>
+</html>
