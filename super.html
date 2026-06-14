@@ -149,7 +149,7 @@
     <div class="panel" id="panel-billing">
       <div class="card">
         <h2>Licensee billing <button class="ghost" id="billRefresh">Refresh</button></h2>
-        <p class="hint">Each invoice that lands in the pipeline is billed once at that licensee's per-invoice charge. Set a <b>standard charge</b> and override it per licensee below. Weeks run Monday–Sunday.</p>
+        <p class="hint">Set <b>standard charges</b> (a flat weekly service fee plus a per-invoice rate) and override either per licensee below. Email PDF statements and filter history per licensee. Weeks run Monday–Sunday.</p>
         <div id="billHost"><div class="empty">Loading…</div></div>
       </div>
     </div>
@@ -340,9 +340,12 @@
 
     function mondayKey(d){ const dt=new Date(d); const off=(dt.getDay()+6)%7; dt.setHours(0,0,0,0); dt.setDate(dt.getDate()-off); return dt.toISOString().slice(0,10); }
     function fmtWeek(k){ const d=new Date(k+'T00:00:00'); const e=new Date(d); e.setDate(e.getDate()+6); const o={day:'numeric',month:'short'}; return d.toLocaleDateString(undefined,o)+' – '+e.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}); }
+    function ymdLocal(d){ const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
     async function saveBillingDefault(){
-      const v=Number(document.getElementById('billDef').value); const m=document.getElementById('billDefMsg'); m.className='msg';
-      const {error}=await sb.from('billing_settings').upsert({id:true,default_per_invoice:isNaN(v)?12:v,updated_at:new Date().toISOString()},{onConflict:'id'});
+      const sv=Number(document.getElementById('billDefSvc').value);
+      const iv=Number(document.getElementById('billDef').value);
+      const m=document.getElementById('billDefMsg'); m.className='msg';
+      const {error}=await sb.from('billing_settings').upsert({id:true,default_service_rate:isNaN(sv)?0:sv,default_per_invoice:isNaN(iv)?12:iv,updated_at:new Date().toISOString()},{onConflict:'id'});
       if(error){ m.textContent=error.message; m.className='msg err'; return; }
       m.textContent='Saved ✓'; m.className='msg ok'; loadBilling();
     }
@@ -350,49 +353,74 @@
       const m=document.getElementById('billRateMsg'); m.className='msg'; m.textContent='Saving…';
       try{
         for(const i of document.querySelectorAll('input.brate')){
-          const id=i.dataset.id, val=i.value.trim();
-          if(val===''){ await sb.from('licensee_billing').delete().eq('licensee_id',id); }
-          else { await sb.from('licensee_billing').upsert({licensee_id:id,per_invoice:Number(val),updated_at:new Date().toISOString()},{onConflict:'licensee_id'}); }
+          const id=i.dataset.id; const inv=i.value.trim();
+          const s=document.querySelector('input.bsvc[data-id="'+id+'"]'); const svc=s?s.value.trim():'';
+          if(inv===''&&svc===''){ await sb.from('licensee_billing').delete().eq('licensee_id',id); }
+          else { await sb.from('licensee_billing').upsert({licensee_id:id,per_invoice:inv===''?null:Number(inv),service_rate:svc===''?null:Number(svc),updated_at:new Date().toISOString()},{onConflict:'licensee_id'}); }
         }
         m.textContent='Saved ✓'; m.className='msg ok'; loadBilling();
       }catch(e){ m.textContent=e.message; m.className='msg err'; }
+    }
+    function bindStatement(){
+      const lic=document.getElementById('stmtLic'), from=document.getElementById('stmtFrom'), to=document.getElementById('stmtTo'), msg=document.getElementById('stmtMsg');
+      async function call(preview){ if(!lic||!lic.value){ throw new Error('Pick a licensee.'); }
+        const r=await fetch(SUPABASE_URL+'/functions/v1/billing-statement',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({licensee_id:lic.value,period_start:from.value,period_end:to.value,preview})});
+        const o=await r.json().catch(()=>({})); if(!r.ok||o.error) throw new Error(o.error||'failed'); return o; }
+      const pv=document.getElementById('stmtPreview'); if(pv) pv.addEventListener('click',async()=>{ msg.textContent='Calculating…'; msg.className='msg'; try{ const o=await call(true); const s=o.summary; msg.textContent=s.weeks+' week(s), '+s.total_invoices+' invoice(s) — service $'+s.total_service_fees.toFixed(2)+' + invoices $'+s.total_invoice_charges.toFixed(2)+' = $'+s.grand_total.toFixed(2); msg.className='msg ok'; }catch(e){ msg.textContent=e.message; msg.className='msg err'; } });
+      const sd=document.getElementById('stmtSend'); if(sd) sd.addEventListener('click',async()=>{ if(!confirm('Email this PDF statement to the licensee?')) return; sd.disabled=true; msg.textContent='Generating + sending…'; msg.className='msg'; try{ const o=await call(false); msg.textContent='Statement emailed to '+o.sent_to+' ✓ ($'+o.summary.grand_total.toFixed(2)+')'; msg.className='msg ok'; }catch(e){ msg.textContent=e.message; msg.className='msg err'; } sd.disabled=false; });
     }
     async function loadBilling(){
       const host=document.getElementById('billHost'); if(!host) return;
       host.innerHTML='<div class="empty">Loading…</div>';
       const [a,b,c,d]=await Promise.all([
-        sb.from('billing_settings').select('default_per_invoice').maybeSingle(),
+        sb.from('billing_settings').select('default_per_invoice,default_service_rate').maybeSingle(),
         sb.from('profiles').select('id,email,full_name,stripe_mandate_status').eq('role','licensee').order('email'),
-        sb.from('licensee_billing').select('licensee_id,per_invoice'),
+        sb.from('licensee_billing').select('licensee_id,per_invoice,service_rate'),
         sb.from('billing_events').select('licensee_id,billed_at').order('billed_at',{ascending:false})
       ]);
       const lic=b.data||[]; if(d.error){ host.innerHTML='<div class="empty">'+d.error.message+'</div>'; return; }
-      const def = a.data? Number(a.data.default_per_invoice): 12;
-      const ovrMap={}; (c.data||[]).forEach(o=>ovrMap[o.licensee_id]=Number(o.per_invoice));
-      const rate=id=> ovrMap[id]!=null? ovrMap[id] : def;
+      const defInv = a.data&&a.data.default_per_invoice!=null? Number(a.data.default_per_invoice): 12;
+      const defSvc = a.data&&a.data.default_service_rate!=null? Number(a.data.default_service_rate): 0;
+      const ovMap={}; (c.data||[]).forEach(o=>ovMap[o.licensee_id]=o);
+      const invRate=id=> ovMap[id]&&ovMap[id].per_invoice!=null? Number(ovMap[id].per_invoice) : defInv;
+      const svcRate=id=> ovMap[id]&&ovMap[id].service_rate!=null? Number(ovMap[id].service_rate) : defSvc;
       const money=n=>'$'+Number(n||0).toFixed(2);
       const byLic={};
       (d.data||[]).forEach(e=>{ const wk=mondayKey(e.billed_at); (byLic[e.licensee_id]=byLic[e.licensee_id]||{}); byLic[e.licensee_id][wk]=(byLic[e.licensee_id][wk]||0)+1; });
       const thisWk=mondayKey(new Date()); let grand=0;
       const rows=lic.map(l=>{
-        const weeks=byLic[l.id]||{}; const total=Object.values(weeks).reduce((x,n)=>x+n,0); const r=rate(l.id); const billed=total*r; grand+=billed;
-        const tw=weeks[thisWk]||0; const ov=ovrMap[l.id]!=null?ovrMap[l.id]:'';
+        const weeks=byLic[l.id]||{}; const keys=Object.keys(weeks); const ir=invRate(l.id), sr=svcRate(l.id);
+        const totInv=keys.reduce((x,k)=>x+weeks[k],0); const billed=totInv*ir + keys.length*sr; grand+=billed;
+        const tw=weeks[thisWk]||0; const twCharge=tw*ir + (tw>0?sr:0);
+        const ovI=ovMap[l.id]&&ovMap[l.id].per_invoice!=null?ovMap[l.id].per_invoice:'';
+        const ovS=ovMap[l.id]&&ovMap[l.id].service_rate!=null?ovMap[l.id].service_rate:'';
         const dd=l.stripe_mandate_status||'none';
         const ddPill=dd==='active'?'<span class="pill" style="background:#dcfce7;color:#166534">Active</span>':dd==='pending'?'<span class="pill" style="background:#fef9c3;color:#854d0e">Pending</span>':dd==='failed'?'<span class="pill" style="background:#fee2e2;color:#b91c1c">Failed</span>':'<span class="pill" style="background:#f1f5f9;color:#64748b">Not set</span>';
-        return `<tr><td>${esc(l.full_name||l.email)}</td><td><span style="color:#667085">$</span><input class="brate" data-id="${l.id}" type="number" step="0.01" value="${ov}" placeholder="${def}" style="width:80px;padding:6px 8px;"></td><td style="text-align:center">${tw}</td><td style="text-align:right">${money(tw*r)}</td><td style="text-align:right">${money(billed)}</td><td style="text-align:center">${ddPill} <button class="ghost ddRefresh" data-id="${l.id}" title="Refresh from Stripe" style="padding:2px 7px;font-size:12px;margin-left:4px;">↻</button>${dd==='active'?` <button class="ghost ddCharge" data-id="${l.id}" title="Charge this week" style="padding:2px 8px;font-size:12px;">Charge</button>`:''}</td></tr>`;
-      }).join('')||'<tr><td colspan="6" class="empty">No licensees yet.</td></tr>';
+        return '<tr><td>'+esc(l.full_name||l.email)+'</td>'+
+          '<td><span style="color:#667085">$</span><input class="bsvc" data-id="'+l.id+'" type="number" step="0.01" value="'+ovS+'" placeholder="'+defSvc+'" style="width:74px;padding:6px 8px;"></td>'+
+          '<td><span style="color:#667085">$</span><input class="brate" data-id="'+l.id+'" type="number" step="0.01" value="'+ovI+'" placeholder="'+defInv+'" style="width:74px;padding:6px 8px;"></td>'+
+          '<td style="text-align:center">'+tw+'</td>'+
+          '<td style="text-align:right">'+money(twCharge)+'</td>'+
+          '<td style="text-align:right">'+money(billed)+'</td>'+
+          '<td style="text-align:center">'+ddPill+' <button class="ghost ddRefresh" data-id="'+l.id+'" title="Refresh from Stripe" style="padding:2px 7px;font-size:12px;margin-left:4px;">↻</button>'+(dd==='active'?' <button class="ghost ddCharge" data-id="'+l.id+'" title="Charge this week" style="padding:2px 8px;font-size:12px;">Charge</button>':'')+'</td></tr>';
+      }).join('')||'<tr><td colspan="7" class="empty">No licensees yet.</td></tr>';
       const hist=lic.map(l=>{
-        const weeks=byLic[l.id]||{}; const keys=Object.keys(weeks).sort().reverse(); const r=rate(l.id);
+        const weeks=byLic[l.id]||{}; const keys=Object.keys(weeks).sort().reverse(); const ir=invRate(l.id), sr=svcRate(l.id);
         if(!keys.length) return '';
-        const trs=keys.map(k=>`<tr${k===thisWk?' style="font-weight:600;background:#f8fafc"':''}><td>${fmtWeek(k)}${k===thisWk?' <span class="pill" style="background:#dbeafe;color:#1e40af">this week</span>':''}</td><td style="text-align:center">${weeks[k]}</td><td style="text-align:right">${money(weeks[k]*r)}</td></tr>`).join('');
-        return `<div class="card" style="margin-bottom:12px"><h2 style="margin-bottom:2px;font-size:15px">${esc(l.full_name||l.email)} <span class="hint" style="font-weight:400">· ${money(r)}/invoice</span></h2><table><thead><tr><th>Week</th><th style="text-align:center">Invoices</th><th style="text-align:right">Charge</th></tr></thead><tbody>${trs}</tbody></table></div>`;
+        const trs=keys.map(k=>{ const charge=weeks[k]*ir+sr; return '<tr'+(k===thisWk?' style="font-weight:600;background:#f8fafc"':'')+'><td>'+fmtWeek(k)+(k===thisWk?' <span class="pill" style="background:#dbeafe;color:#1e40af">this week</span>':'')+'</td><td style="text-align:center">'+weeks[k]+'</td><td style="text-align:right">'+money(weeks[k]*ir)+'</td><td style="text-align:right">'+money(sr)+'</td><td style="text-align:right">'+money(charge)+'</td></tr>'; }).join('');
+        return '<div class="card histcard" data-lic="'+l.id+'" style="margin-bottom:12px"><h2 style="margin-bottom:2px;font-size:15px">'+esc(l.full_name||l.email)+' <span class="hint" style="font-weight:400">· '+money(sr)+'/wk + '+money(ir)+'/invoice</span></h2><table><thead><tr><th>Week</th><th style="text-align:center">Invoices</th><th style="text-align:right">Invoice charge</th><th style="text-align:right">Service fee</th><th style="text-align:right">Total</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
       }).join('');
+      const licOpts=lic.map(l=>'<option value="'+l.id+'">'+esc(l.full_name||l.email)+'</option>').join('');
+      const todayStr=ymdLocal(new Date()); const fromD=new Date(); fromD.setDate(fromD.getDate()-84); const fromStr=ymdLocal(fromD);
       host.innerHTML=
-        `<div class="card" style="margin-bottom:14px"><h2 style="font-size:15px">Standard charge</h2><div class="row" style="align-items:end"><div class="f"><label>Default charge per invoice ($)</label><input id="billDef" type="number" step="0.01" value="${def}" style="width:150px"></div><button class="primary" id="billDefSave">Save standard</button><span class="msg" id="billDefMsg"></span></div><p class="hint" style="margin-bottom:0">Applies to every licensee unless overridden below.</p></div>`+
-        `<div class="card" style="margin-bottom:14px"><h2 style="font-size:15px">Active licensees <span class="hint" style="font-weight:400">· total billed to date <b>${money(grand)}</b></span></h2><table><thead><tr><th>Licensee</th><th>Charge / invoice</th><th style="text-align:center">This week</th><th style="text-align:right">This week</th><th style="text-align:right">Billed to date</th><th style="text-align:center">Direct debit</th></tr></thead><tbody>${rows}</tbody></table><div style="margin-top:10px"><button class="primary" id="billRateSave">Save rates</button> <span class="msg" id="billRateMsg"></span></div><p class="hint" style="margin-bottom:0">Leave a licensee\'s charge blank to use the standard rate. Direct-debit authorisation: licensees log in and visit <b>/stripe-setup.html</b> to set up their bank debit.</p></div>`+
-        `<h2 style="font-size:15px;margin:6px 0">Weekly history</h2>`+(hist||'<div class="empty">No invoices billed yet.</div>');
+        '<div class="card" style="margin-bottom:14px"><h2 style="font-size:15px">Standard charges</h2><div class="row" style="align-items:end;gap:14px;flex-wrap:wrap"><div class="f"><label>Service fee ($ / week)</label><input id="billDefSvc" type="number" step="0.01" value="'+defSvc+'" style="width:140px"></div><div class="f"><label>Charge per invoice ($)</label><input id="billDef" type="number" step="0.01" value="'+defInv+'" style="width:140px"></div><button class="primary" id="billDefSave">Save standard</button><span class="msg" id="billDefMsg"></span></div><p class="hint" style="margin-bottom:0">Applies to every licensee unless overridden below. The service fee is a flat weekly charge; the invoice charge is per invoice processed.</p></div>'+
+        '<div class="card" style="margin-bottom:14px"><h2 style="font-size:15px">Active licensees <span class="hint" style="font-weight:400">· total billed to date <b>'+money(grand)+'</b></span></h2><div style="overflow-x:auto"><table><thead><tr><th>Licensee</th><th>Service /wk</th><th>Charge /invoice</th><th style="text-align:center">Invoices this wk</th><th style="text-align:right">This week</th><th style="text-align:right">Billed to date</th><th style="text-align:center">Direct debit</th></tr></thead><tbody>'+rows+'</tbody></table></div><div style="margin-top:10px"><button class="primary" id="billRateSave">Save rates</button> <span class="msg" id="billRateMsg"></span></div><p class="hint" style="margin-bottom:0">Leave a field blank to use the standard rate. Direct-debit authorisation: licensees log in and visit <b>/stripe-setup.html</b>.</p></div>'+
+        '<div class="card" style="margin-bottom:14px"><h2 style="font-size:15px">Email a statement (PDF)</h2><div class="row" style="align-items:end;gap:12px;flex-wrap:wrap"><div class="f"><label>Licensee</label><select id="stmtLic" style="min-width:180px">'+licOpts+'</select></div><div class="f"><label>From</label><input id="stmtFrom" type="date" value="'+fromStr+'"></div><div class="f"><label>To</label><input id="stmtTo" type="date" value="'+todayStr+'"></div><button class="ghost" id="stmtPreview">Preview total</button><button class="primary" id="stmtSend">Email PDF statement</button></div><span class="msg" id="stmtMsg"></span><p class="hint" style="margin-bottom:0">Builds a PDF statement of the licensee’s invoices for the period (service fee per active week + invoice charges) and emails it to them.</p></div>'+
+        '<div class="row" style="align-items:end;justify-content:space-between;margin:6px 0"><h2 style="font-size:15px;margin:0">Weekly history</h2><div class="f" style="margin:0"><label>Filter licensee</label><select id="billHistLic" style="min-width:180px"><option value="">All licensees</option>'+licOpts+'</select></div></div>'+(hist||'<div class="empty">No invoices billed yet.</div>');
       const ds=document.getElementById('billDefSave'); if(ds) ds.addEventListener('click',saveBillingDefault);
       const rs=document.getElementById('billRateSave'); if(rs) rs.addEventListener('click',saveBillingRates);
+      const hf=document.getElementById('billHistLic'); if(hf) hf.addEventListener('change',()=>{ const v=hf.value; document.querySelectorAll('.histcard').forEach(el=>{ el.style.display=(!v||el.dataset.lic===v)?'':'none'; }); });
+      bindStatement();
       document.querySelectorAll('.ddRefresh').forEach(btn=>btn.addEventListener('click',async()=>{ btn.disabled=true; const t=btn.textContent; btn.textContent='…';
         try{ const r=await fetch(SUPABASE_URL+'/functions/v1/stripe-refresh-mandate',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({licensee_id:btn.dataset.id})}); const o=await r.json().catch(()=>({})); if(!r.ok||o.error) throw new Error(o.error||'failed'); loadBilling(); }
         catch(e){ alert('Refresh failed: '+e.message); btn.disabled=false; btn.textContent=t; } }));
@@ -402,11 +430,10 @@
         try{ const r=await fetch(SUPABASE_URL+'/functions/v1/billing-charge',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY,'Authorization':'Bearer '+session.access_token},body:JSON.stringify({licensee_id:btn.dataset.id})}); const o=await r.json().catch(()=>({})); if(!r.ok||o.error) throw new Error(o.error||'failed');
           if(o.nothing) alert('No invoices billed this week — nothing to charge.');
           else if(o.already) alert('Already charged this week: $'+Number(o.charge.amount).toFixed(2)+' ('+o.charge.status+').');
-          else alert('Charged '+o.invoices+' invoice(s) = $'+Number(o.amount).toFixed(2)+'.\nStatus: '+o.status+' — direct debits show as pending until the bank confirms.');
+          else alert('Charged '+o.invoices+' invoice(s) + base $'+Number(o.service_amount).toFixed(2)+' = $'+Number(o.amount).toFixed(2)+'.\nStatus: '+o.status+' — direct debits show as pending until the bank confirms.');
           loadBilling();
         }catch(e){ alert('Charge failed: '+e.message); btn.disabled=false; btn.textContent=t; } }));
     }
-
     let dataLic=[];
     async function loadData(){
       const {data:lic}=await sb.from('profiles').select('id,email,full_name').eq('role','licensee').order('email');

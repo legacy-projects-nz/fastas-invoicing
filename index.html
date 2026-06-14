@@ -465,9 +465,9 @@
       try{
         const ch=await sb.auth.mfa.challenge({factorId:mfaFactorId}); if(ch.error) throw ch.error;
         const v=await sb.auth.mfa.verify({factorId:mfaFactorId,challengeId:ch.data.id,code}); if(v.error) throw v.error;
-        document.getElementById('mfaCode').value=''; setMfaMsg(''); hideMfa();
-        const {data:{session:s2}}=await sb.auth.getSession();
-        await applySession(s2);
+        document.getElementById('mfaCode').value=''; setMfaMsg('Verified ✓ — loading…','ok');
+        // reload so the fresh page reads the now-2FA-verified (aal2) session and routes correctly
+        location.reload();
       }catch(e){ setMfaMsg(e.message||'That code did not match. Try again.','err'); vbtn.disabled=false; }
     }
     document.getElementById('mfaVerify').addEventListener('click',mfaSubmit);
